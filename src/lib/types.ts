@@ -143,11 +143,46 @@ export interface Turn {
   rationale: string | null;
 }
 
-/** The planner's one-time interview plan. Shape firms up with the planner. */
+export type FocusStrategy =
+  | "verify_depth"
+  | "probe_gap"
+  | "rebuild_confidence"
+  | "pressure_test";
+
+export const FOCUS_STRATEGIES: FocusStrategy[] = [
+  "verify_depth",
+  "probe_gap",
+  "rebuild_confidence",
+  "pressure_test",
+];
+
+export interface FocusDay {
+  day: number;
+  title: string;
+  /** Why THIS candidate — must reference their actual record. */
+  reason: string;
+  /** 1-5. */
+  startDepth: number;
+  strategy: FocusStrategy;
+}
+
+/** How many questions to spend in each phase. Sums to targetQuestions. */
+export interface InterviewArc {
+  warmup: number;
+  build: number;
+  stress: number;
+  land: number;
+}
+
+/** The planner's one-time interview plan, produced once per session. */
 export interface Blueprint {
-  targetDays: number[];
-  focus?: string;
-  [key: string]: unknown;
+  persona: string;
+  openingLine: string;
+  /** 8-12. */
+  targetQuestions: number;
+  arc: InterviewArc;
+  /** 4-6 days, never SETUP. */
+  focusDays: FocusDay[];
 }
 
 /** Mutable per-session state. Lives in Supabase only — never in memory. */

@@ -408,3 +408,77 @@ reconstructed. Three gaps found and fixed in this entry:
 **Convention going forward:** one entry per work session, appended
 before the commit that carries the work, with the prompt verbatim in a
 fenced block. Redact only credentials, and say so when redacting.
+
+---
+
+## Entry 8 — Latency experiment and the Planner
+
+**Prompt:** add a per-call `thinking` override to `callLLM`, sweep the
+interviewer role across high/medium/low/minimal on a realistic ~2000-token
+input and report latency + thought tokens; then build the Planner
+(`src/lib/prompts/planner.ts`), `scripts/plan.ts`, and run it for
+CAND-018, CAND-017, CAND-011, CAND-010 and CAND-008.
+
+**STEP 0 — the sweep did not support picking a thinking level.**
+
+At ~1500 input tokens, 2 trials each on gemini-3.6-flash:
+
+| level | mean | trials | thought tokens |
+|---|---|---|---|
+| high | 19066ms | 24070, 14062 | 622 |
+| medium | 12841ms | 13045, 12636 | 488 |
+| low | 17934ms | 10882, 24985 | 123 |
+| minimal | 17543ms | 18167, 16918 | 0 |
+
+Thought tokens scale cleanly with the level, so `thinking_level` is
+definitely being applied. Latency does not follow it at all — `minimal`
+(0 thought tokens) averaged slower than `medium`. Within-level spread
+reached 14s while between-level differences were ~5s, so the ranking is
+noise. The actionable finding is that **no thinking level gets a call
+under ~11s**, so thinking_level is not the lever for the latency problem.
+A follow-up 5-trial run on the two contenders was rate-limited before it
+could finish.
+
+**THE REAL BLOCKER — gemini-3.6-flash is capped at 20 requests per DAY.**
+
+The 429 body is explicit: `Quota exceeded for metric:
+generate_content_free_tier_requests, limit: 20, model: gemini-3.6-flash`.
+Honouring the API's own `Please retry in 58.7s` and waiting it out still
+returned 429, and a same-moment probe of gemini-3.5-flash-lite succeeded
+— so the quota is per model and daily, not per minute. Planner,
+Interviewer and Reporter all use gemini-3.6-flash. One 10-turn interview
+is ~12 calls on that model, so a single key allows roughly one and a half
+interviews per day.
+
+**Two wrapper fixes this exposed:**
+- The backoff guessed 1s/2s/4s and gave up after 7s, while the API was
+  stating exactly how long to wait. It now parses `Please retry in Xs`
+  and honours it, falling back to exponential when absent.
+- Waiting ~59s is fine offline but impossible in a serverless handler, so
+  `maxWaitMs` was added — default 8s so request paths fail fast and
+  degrade, with offline scripts passing 70s to wait the window out.
+- Added a per-call `model` override alongside `thinking`, since free-tier
+  quota is per model and having a fallback beats having no answer.
+
+**Outcome:** Planner built and 5/5 blueprints generated. Every one
+satisfied the hard requirements: 4-5 focus days, targetQuestions 10, arc
+summing exactly to targetQuestions, no SETUP days.
+
+The strategy rules held against the real records. Tyler (3% first-try)
+got startDepth 1-2 and rebuild_confidence throughout. Diane (100%
+first-try) got startDepth 4-5 and pressure_test. Mia's day-10 reason
+correctly cited her skipped days 7 and 8; Gerald's day-10 reason
+correctly identified it as one of his three genuine failures; Harold's
+day-15 pick correctly targeted his skipped 14/15 as a probe_gap.
+
+**CAVEAT — these blueprints were generated on gemini-3.5-flash-lite, not
+the configured gemini-3.6-flash**, because that model's daily quota was
+exhausted by the sweep. They must be regenerated on the real model before
+this is considered verified.
+
+**Known weakness:** `missions[]` is a ~10-day subset, so for a focus day
+outside that subset the model infers the record rather than reading it.
+For Diane (100% coverage, 100% first-try) the inference is sound; for
+Harold (56% first-try) the day-25 claim that he "passed this on a
+standard attempt" is not supported by his record. Worth constraining in
+the prompt, or restricting focus days to those present in `missions[]`.

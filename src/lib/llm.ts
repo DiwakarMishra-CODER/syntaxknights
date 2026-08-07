@@ -13,7 +13,7 @@ import { GoogleGenAI } from "@google/genai";
 
 export type Role = "planner" | "interviewer" | "evaluator" | "reporter";
 
-type ThinkingLevel = "minimal" | "low" | "medium" | "high";
+export type ThinkingLevel = "minimal" | "low" | "medium" | "high";
 
 interface RoleConfig {
   model: string;
@@ -47,6 +47,8 @@ export const ROLE_CONFIG: Record<Role, RoleConfig> = {
 
 const MAX_ROUNDS = 3;
 const BACKOFF_MS = [1000, 2000, 4000];
+/** Safe for a serverless handler. Offline scripts pass a much larger value. */
+const DEFAULT_MAX_WAIT_MS = 8000;
 
 export type LLMErrorKind =
   | "config"
@@ -120,7 +122,26 @@ function isRateLimited(err: unknown): boolean {
   const e = err as { status?: number; code?: number; message?: string };
   if (e?.status === 429 || e?.code === 429) return true;
   const msg = String(e?.message ?? err ?? "");
-  return msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED");
+  return (
+    msg.includes("429") ||
+    msg.includes("RESOURCE_EXHAUSTED") ||
+    msg.includes("too_many_requests")
+  );
+}
+
+/**
+ * Gemini's 429 body states exactly how long to wait
+ * ("Please retry in 58.730922968s"). Honour it rather than guessing —
+ * the free tier limit is per MINUTE, so a 1s/2s/4s guess gives up about
+ * eight times too early.
+ */
+function retryAfterMs(err: unknown): number | null {
+  const msg = String((err as { message?: string })?.message ?? err ?? "");
+  const m = msg.match(/retry in ([\d.]+)s/i);
+  if (!m) return null;
+  const seconds = Number(m[1]);
+  if (!Number.isFinite(seconds)) return null;
+  return Math.ceil(seconds * 1000) + 500; // small cushion past the boundary
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -136,6 +157,35 @@ export interface CallOptions {
   input: string;
   /** JSON Schema. When present the response is schema-enforced JSON. */
   schema?: Record<string, unknown>;
+  /** Overrides the role's configured thinking level for this call only. */
+  thinking?: ThinkingLevel;
+  /**
+   * Overrides the role's configured model for this call only. Free-tier
+   * quota is per model, so this is the escape hatch when one model's
+   * budget is exhausted and the alternative is no answer at all.
+   */
+  model?: string;
+  /** Observability hook — fires on the successful attempt only. */
+  onUsage?: (u: CallUsage) => void;
+  /**
+   * Ceiling on any single rate-limit wait. The free tier resets per minute
+   * and the API asks for ~59s, but a serverless handler cannot block that
+   * long — so request paths keep the default and fail fast, while offline
+   * scripts raise it and simply wait the window out.
+   */
+  maxWaitMs?: number;
+}
+
+export interface CallUsage {
+  model: string;
+  thinkingLevel: ThinkingLevel;
+  keyIndex: number;
+  latencyMs: number;
+  input: number;
+  output: number;
+  thought: number;
+  cached: number;
+  total: number;
 }
 
 export async function callLLM<T = unknown>(
@@ -147,9 +197,19 @@ export async function callLLM(
 export async function callLLM<T = unknown>(
   opts: CallOptions
 ): Promise<T | string> {
-  const { role, system, input, schema } = opts;
-  const cfg = ROLE_CONFIG[role];
-  if (!cfg) throw new LLMError("config", `Unknown role "${role}"`, role);
+  const { role, system, input, schema, thinking, onUsage } = opts;
+  const maxWait = opts.maxWaitMs ?? DEFAULT_MAX_WAIT_MS;
+  const base = ROLE_CONFIG[role];
+  if (!base) throw new LLMError("config", `Unknown role "${role}"`, role);
+
+  const cfg: RoleConfig =
+    thinking || opts.model
+      ? {
+          ...base,
+          thinkingLevel: thinking ?? base.thinkingLevel,
+          model: opts.model ?? base.model,
+        }
+      : base;
 
   const total = apiKeys().length;
   let lastError: unknown = null;
@@ -185,7 +245,9 @@ export async function callLLM<T = unknown>(
 
         const latency = Date.now() - started;
         const text = interaction.output_text ?? "";
-        logCall(role, cfg, keyIndex, latency, interaction.usage);
+        const usage = toUsage(cfg, keyIndex, latency, interaction.usage);
+        logCall(role, usage);
+        onUsage?.(usage);
 
         if (!schema) return text;
 
@@ -232,9 +294,20 @@ export async function callLLM<T = unknown>(
 
     // Every key in the pool was rate limited — back off and try again.
     if (rateLimitedThisRound > 0 && round < MAX_ROUNDS - 1) {
-      const wait = BACKOFF_MS[round] ?? 4000;
+      const asked = retryAfterMs(lastError);
+      const wait = Math.min(asked ?? BACKOFF_MS[round] ?? 4000, maxWait);
+
+      if (asked !== null && asked > maxWait) {
+        console.warn(
+          `[llm] ${role}: API asked for ${Math.round(asked / 1000)}s but the ` +
+            `${Math.round(maxWait / 1000)}s ceiling is lower — giving up rather than blocking`
+        );
+        break;
+      }
+
       console.warn(
-        `[llm] ${role}: all ${total} key(s) rate limited, backing off ${wait}ms (round ${round + 1}/${MAX_ROUNDS})`
+        `[llm] ${role}: all ${total} key(s) rate limited, waiting ${wait}ms ` +
+          `(${asked !== null ? "API-specified" : "exponential"}, round ${round + 1}/${MAX_ROUNDS})`
       );
       await sleep(wait);
     }
@@ -265,22 +338,32 @@ interface Usage {
   total_cached_tokens?: number;
 }
 
-function logCall(
-  role: Role,
+function toUsage(
   cfg: RoleConfig,
   keyIndex: number,
   latencyMs: number,
   usage: Usage | undefined
-) {
-  const inTok = usage?.total_input_tokens ?? 0;
-  const outTok = usage?.total_output_tokens ?? 0;
-  const thoughtTok = usage?.total_thought_tokens ?? 0;
-  const cached = usage?.total_cached_tokens ?? 0;
+): CallUsage {
+  const input = usage?.total_input_tokens ?? 0;
+  const output = usage?.total_output_tokens ?? 0;
+  return {
+    model: cfg.model,
+    thinkingLevel: cfg.thinkingLevel,
+    keyIndex,
+    latencyMs,
+    input,
+    output,
+    thought: usage?.total_thought_tokens ?? 0,
+    cached: usage?.total_cached_tokens ?? 0,
+    total: usage?.total_tokens ?? input + output,
+  };
+}
 
+function logCall(role: Role, u: CallUsage) {
   console.log(
-    `[llm] ${role} model=${cfg.model} thinking=${cfg.thinkingLevel} ` +
-      `key#${keyIndex} ${latencyMs}ms ` +
-      `in=${inTok} out=${outTok} thought=${thoughtTok} cached=${cached} ` +
-      `total=${usage?.total_tokens ?? inTok + outTok}`
+    `[llm] ${role} model=${u.model} thinking=${u.thinkingLevel} ` +
+      `key#${u.keyIndex} ${u.latencyMs}ms ` +
+      `in=${u.input} out=${u.output} thought=${u.thought} cached=${u.cached} ` +
+      `total=${u.total}`
   );
 }

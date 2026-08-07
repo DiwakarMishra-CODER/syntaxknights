@@ -48,13 +48,25 @@ async function main() {
   console.log(`session id: ${SESSION_ID}\n`);
 
   console.log("createSession / loadSession");
-  await createSession(SESSION_ID, candidate, { targetDays: [7, 12, 22] });
+  await createSession(SESSION_ID, candidate, {
+    persona: "A staff engineer on a healthcare AI team.",
+    openingLine: "Tell me about the retrieval layer you shipped.",
+    targetQuestions: 10,
+    arc: { warmup: 2, build: 4, stress: 3, land: 1 },
+    focusDays: [
+      { day: 7, title: "d7", reason: "r", startDepth: 2, strategy: "probe_gap" },
+      { day: 12, title: "d12", reason: "r", startDepth: 3, strategy: "verify_depth" },
+      { day: 22, title: "d22", reason: "r", startDepth: 3, strategy: "pressure_test" },
+      { day: 27, title: "d27", reason: "r", startDepth: 2, strategy: "probe_gap" },
+    ],
+  });
   const loaded = await loadSession(SESSION_ID);
   check("session round-trips", loaded !== null);
   check("candidate jsonb survives", loaded?.candidate?.member?.id === "CAND-018");
   check(
     "blueprint jsonb survives",
-    JSON.stringify(loaded?.blueprint?.targetDays) === "[7,12,22]"
+    loaded?.blueprint?.focusDays?.length === 4 &&
+      loaded?.blueprint?.arc?.build === 4
   );
   check("status defaults to active", loaded?.status === "active");
 
