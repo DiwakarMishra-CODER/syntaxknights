@@ -1,6 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
-import { parseQuotaError, recordQuotaEvent } from "./quota-log";
+import {
+  describeReset,
+  parseQuotaError,
+  recordQuotaEvent,
+  tallyKey,
+  todayTallies,
+  type Tally,
+} from "./quota-log";
 
 /**
  * The single place any model is ever called.
@@ -84,6 +91,7 @@ const DEFAULT_MAX_WAIT_MS = 8000;
 export type LLMErrorKind =
   | "config"
   | "rate_limited"
+  | "quota_exhausted"
   | "malformed_output"
   | "api_error";
 
@@ -136,6 +144,93 @@ function apiKeys(): string[] {
 /** One key or six — same code path either way. */
 export function keyCount(): number {
   return apiKeys().length;
+}
+
+/**
+ * Scripts may pin a key with GEMINI_KEY_INDEX so a known-good key can be
+ * spent deliberately. The request path never sets this and always uses
+ * automatic selection.
+ */
+export function pinnedKeyIndex(): number | null {
+  const raw = process.env.GEMINI_KEY_INDEX;
+  if (raw === undefined || raw.trim() === "") return null;
+
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 0) {
+    throw new LLMError("config", `GEMINI_KEY_INDEX must be a non-negative integer, got "${raw}"`);
+  }
+  return n;
+}
+
+export class QuotaExhaustedError extends LLMError {
+  constructor(model: string, total: number) {
+    super(
+      "quota_exhausted",
+      `All ${total} key(s) have already hit their daily quota for ${model}. ` +
+        `Resets ${describeReset()}. Add more keys to GEMINI_API_KEYS or use a different model.`
+    );
+  }
+}
+
+/**
+ * Orders keys for one model by today's usage, cheapest first.
+ *
+ * A key that has already 429'd today for this model is dropped entirely —
+ * its RPD is spent, so trying it again buys nothing but another 429.
+ * Among the rest, fewest successes wins so usage spreads evenly.
+ *
+ * Pure so it can be tested against mocked tallies.
+ */
+export function orderKeysByQuota(opts: {
+  keyCount: number;
+  model: string;
+  tallies: Map<string, Tally>;
+  cursor?: number;
+}): number[] {
+  const { keyCount: n, model, tallies, cursor = 0 } = opts;
+
+  const usable: Array<{ index: number; ok: number }> = [];
+  for (let i = 0; i < n; i++) {
+    const t = tallies.get(tallyKey(model, i));
+    if ((t?.rateLimited ?? 0) > 0) continue; // spent for this model today
+    usable.push({ index: i, ok: t?.ok ?? 0 });
+  }
+
+  return usable
+    .sort((a, b) => {
+      if (a.ok !== b.ok) return a.ok - b.ok;
+      // Stable tie-break that still rotates across cold starts.
+      const ra = (a.index - cursor + n) % n;
+      const rb = (b.index - cursor + n) % n;
+      return ra - rb;
+    })
+    .map((k) => k.index);
+}
+
+/** The key order to attempt for this model, honouring a pin if set. */
+function keyOrderFor(model: string): number[] {
+  const total = apiKeys().length;
+
+  const pinned = pinnedKeyIndex();
+  if (pinned !== null) {
+    if (pinned >= total) {
+      throw new LLMError(
+        "config",
+        `GEMINI_KEY_INDEX=${pinned} but only ${total} key(s) are configured (valid: 0-${total - 1})`
+      );
+    }
+    return [pinned];
+  }
+
+  const order = orderKeysByQuota({
+    keyCount: total,
+    model,
+    tallies: todayTallies(),
+    cursor,
+  });
+
+  if (order.length === 0) throw new QuotaExhaustedError(model, total);
+  return order;
 }
 
 const clients = new Map<number, GoogleGenAI>();
@@ -247,12 +342,18 @@ export async function callLLM<T = unknown>(
   let lastError: unknown = null;
   let softRetried = false;
 
+  // Throws QuotaExhaustedError immediately if every key is spent for this
+  // model, rather than cycling the pool to collect six more 429s.
+  let order = keyOrderFor(cfg.model);
+  console.log(
+    `[llm] ${role} model=${cfg.model} key order: ${order.map((i) => `#${i}`).join(" -> ")}`
+  );
+
   for (let round = 0; round < MAX_ROUNDS; round++) {
     let rateLimitedThisRound = 0;
 
-    for (let attempt = 0; attempt < total; attempt++) {
-      const keyIndex = cursor % total;
-      cursor = (cursor + 1) % total;
+    for (const keyIndex of order) {
+      cursor = (keyIndex + 1) % total;
 
       const started = Date.now();
       try {
@@ -349,7 +450,21 @@ export async function callLLM<T = unknown>(
       }
     }
 
-    // Every key in the pool was rate limited — back off and try again.
+    // Keys that 429'd this round are now spent; recompute before retrying.
+    if (rateLimitedThisRound > 0 && pinnedKeyIndex() === null) {
+      const refreshed = orderKeysByQuota({
+        keyCount: total,
+        model: cfg.model,
+        tallies: todayTallies(),
+        cursor,
+      });
+      if (refreshed.length === 0) {
+        throw new QuotaExhaustedError(cfg.model, total);
+      }
+      order = refreshed;
+    }
+
+    // Every usable key was rate limited — back off and try again.
     if (rateLimitedThisRound > 0 && round < MAX_ROUNDS - 1) {
       const asked = retryAfterMs(lastError);
       const wait = Math.min(asked ?? BACKOFF_MS[round] ?? 4000, maxWait);

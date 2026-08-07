@@ -12,7 +12,7 @@
     "test:db": "tsx --env-file=.env.local scripts/test-db.ts",
     "plan": "tsx --env-file=.env.local scripts/plan.ts",
     "probe:quota": "tsx --env-file=.env.local scripts/probe-quota.ts",
-    "quota:report": "tsx scripts/quota-report.ts",
+    "quota:report": "tsx --env-file=.env.local scripts/quota-report.ts",
     "compare:turn": "tsx --env-file=.env.local scripts/compare-turn.ts",
     "typecheck": "tsc --noEmit"
   },

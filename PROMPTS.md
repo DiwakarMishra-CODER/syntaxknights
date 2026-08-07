@@ -631,3 +631,54 @@ exists for. The floors were enforced in name only until this was fixed.
   20/day budget**, leaving 15.
 - b) Re-run the A/B once to verify the claim-fidelity fix — **3 calls on
   gemini-3.5-flash-lite** (2 for path A, 1 for path B), none on 3.6-flash.
+
+---
+
+## Entry 11 — Quota-aware key selection and pinning
+
+**Prompt:** make `llm.ts` consult `.quota-log.json` before picking a key —
+skip any key that has already 429'd today for the requested model, prefer
+the key with fewest successes, and throw a clear
+`LLMError[quota_exhausted]` naming the model and reset time rather than
+cycling the pool for more 429s. Add `GEMINI_KEY_INDEX=n` pinning for
+scripts. Extend `quota-report.ts` with per-key per-model AVAILABLE /
+EXHAUSTED verdicts. No API calls; test with mocked log data.
+
+**Outcome:** 63 tests pass, typecheck clean, no API calls made.
+
+- `orderKeysByQuota()` is a pure function over mocked tallies, so the
+  selection policy is unit-testable without touching the network. Keys
+  that 429'd today for that model are dropped; the rest sort by fewest
+  successes with a rotating tie-break so load does not pile onto key 0.
+- Exhaustion is per model per key. A key spent on gemini-3.6-flash is
+  still AVAILABLE for flash-lite, and the tests assert exactly that.
+- `GEMINI_KEY_INDEX` pins a key for scripts and bypasses selection
+  entirely. It validates rather than silently falling back to key 0, and
+  errors if the index exceeds the configured pool.
+- The retry loop now recomputes the key order after any round that saw a
+  429, so a key that dies mid-call drops out of subsequent attempts.
+
+**Pacific-day accounting:** RPD resets at midnight Pacific, so events are
+grouped by their Pacific calendar date via `Intl` rather than by a UTC
+offset — DST would break a hardcoded offset twice a year. Tested at the
+boundary: 06:59Z on 8 Aug counts as 7 Aug Pacific, 07:00Z as 8 Aug.
+
+**On Vercel this degrades to plain round-robin.** The filesystem is
+read-only outside /tmp, so there is no log to read and the tally map is
+empty — which `orderKeysByQuota` treats as "all keys unused". A test
+covers that case. Quota-aware selection is a local development
+instrument; production still relies on rotation plus honouring 429s.
+
+**Current availability:**
+
+```
+gemini-3.5-flash-lite      #0     3 ok     0 429  AVAILABLE
+gemini-3.6-flash           #0     0 ok    15 429  EXHAUSTED (limit 20)
+```
+
+**Only ONE key is configured.** There is no key #1 to pin to yet.
+
+**Note:** a `str.replace` patch to quota-report.ts silently no-opped
+because it was applied without an assert, unlike the earlier patches in
+this session. Caught by the missing section in the output. Guard every
+scripted edit with an assertion.
