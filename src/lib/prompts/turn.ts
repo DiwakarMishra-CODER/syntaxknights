@@ -1,6 +1,7 @@
 import { getObjectives } from "../curriculum";
 import { callLLM } from "../llm";
 import type { Blueprint, Claim, Turn } from "../types";
+import { ANTI_INVENTION, filterInventedClaims } from "./shared";
 
 /**
  * The Evaluator and Interviewer merged into ONE call per turn.
@@ -64,12 +65,12 @@ HOW THE SCORES DRIVE THE NEXT QUESTION.
 - specificity <= 2 — they are speaking in generalities. Ask for one concrete example from their own build. "Walk me through a specific case where..."
 - A claim that contradicts an earlier claim in the ledger — this outranks everything else. Ask about the discrepancy directly, without accusation. "Earlier you said X, just now Y — help me square those."
 
-CLAIMS — EXTRACT, NEVER INVENT.
-Extract every factual assertion they made about their system, in their own words or a close paraphrase. A claim must be something they actually said. If they hand-waved — "we handled it", "it was set up properly" — then the claim is the hand-wave itself, marked unjustified. Do NOT name a mechanism they did not name. Writing "configured a termination grace period" when they only said "we set it up properly" is fabrication, and it poisons every later turn that probes against the ledger.
+CLAIMS.
+Extract every factual assertion they made about their system, in their own words or a close paraphrase. If they hand-waved — "we handled it", "it was set up properly" — then the claim IS the hand-wave, marked unjustified.
 
 Mark unjustified: true when they asserted something with no supporting detail — those are the ones later turns should probe.
 
-Your question must not presuppose a mechanism they never mentioned. Ask what they did, not how well they did the thing you assumed.
+${ANTI_INVENTION}
 
 ACTION.
 follow_up — stay on this day, go deeper on what they just said.
@@ -194,6 +195,19 @@ export function buildTurnInput(ctx: TurnContext): string {
     .join("\n");
 }
 
+/** Everything the candidate has actually said in the visible window. */
+export function candidateWords(ctx: TurnContext): string {
+  return ctx.recentTurns
+    .filter((t) => t.role === "candidate")
+    .map((t) => t.content)
+    .join("\n");
+}
+
+export interface TurnResult extends TurnDecision {
+  /** Claims dropped for naming a term the candidate never used. */
+  rejectedClaims: Claim[];
+}
+
 export async function runTurn(
   ctx: TurnContext,
   opts: {
@@ -201,8 +215,8 @@ export async function runTurn(
     model?: string;
     maxWaitMs?: number;
   } = {}
-): Promise<TurnDecision> {
-  return callLLM<TurnDecision>({
+): Promise<TurnResult> {
+  const decision = await callLLM<TurnDecision>({
     role: "turn",
     system: TURN_SYSTEM,
     input: buildTurnInput(ctx),
@@ -211,4 +225,19 @@ export async function runTurn(
     model: opts.model,
     maxWaitMs: opts.maxWaitMs,
   });
+
+  // A prompt rule is a request; this is the guarantee. An invented claim
+  // must never reach the ledger, because every later turn probes against it.
+  const { kept, rejected } = filterInventedClaims(
+    decision.claims ?? [],
+    candidateWords(ctx)
+  );
+
+  for (const r of rejected) {
+    console.warn(
+      `[turn] dropped invented claim (${r.unsupportedTerms.join(", ")}): ${r.claim.text}`
+    );
+  }
+
+  return { ...decision, claims: kept, rejectedClaims: rejected.map((r) => r.claim) };
 }

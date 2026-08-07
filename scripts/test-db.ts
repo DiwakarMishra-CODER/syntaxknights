@@ -76,12 +76,22 @@ async function main() {
 
   console.log("\nsaveSessionState");
   await saveSessionState(SESSION_ID, {
-    turnNumber: 2,
+    questionCount: 2,
+    daysCovered: [7, 12],
     currentDay: 12,
-    depth: 1,
+    currentDepth: 1,
+    followUpCount: 1,
+    abilityEstimate: 3.4,
+    mode: "recovery",
+    consecutiveWeak: 2,
   });
   const restated = await loadSession(SESSION_ID);
-  check("state persisted", restated?.state?.currentDay === 12);
+  check(
+    "state persisted",
+    restated?.state?.currentDay === 12 &&
+      restated?.state?.mode === "recovery" &&
+      JSON.stringify(restated?.state?.daysCovered) === "[7,12]"
+  );
 
   console.log("\nappendTurn x3 (turn_number auto-derived)");
   await appendTurn(SESSION_ID, {

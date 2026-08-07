@@ -568,3 +568,66 @@ TURN_SYSTEM gained an EXTRACT-NEVER-INVENT rule using this exact failure
 as the worked example, plus a bar on questions presupposing unmentioned
 mechanisms. **That fix is unverified** — re-running would have exceeded
 the one-run budget.
+
+---
+
+## Entry 10 — Generalise anti-invention; build the orchestrator
+
+**Prompt:** treat the two invention failures as one systemic risk — extract
+the rule into `src/lib/prompts/shared.ts`, apply it to every prompt that
+converts input into a structured record, and back it with code-level
+validation the way `validateBlueprint` already backs focus days. Then
+build `src/lib/orchestrator.ts` as a pure state machine enforcing the
+graded hard requirements, with thorough mocked tests. No API calls.
+
+**1 — Anti-invention generalised.** `ANTI_INVENTION` is now a single
+constant carrying both real failures as worked examples (Harold's day 25,
+and "termination grace period" from "we set it up properly"), interpolated
+into `PLANNER_SYSTEM` and `TURN_SYSTEM`. A test asserts both prompts
+contain it, so a future prompt cannot quietly drop it.
+
+The code-level half is `verifyClaims` / `filterInventedClaims`. A claim may
+paraphrase freely in ordinary English, but if it names a term from a
+technical glossary, the candidate must have used that term. The glossary is
+seeded from the curriculum's own `tools` arrays so it tracks the real
+syllabus, plus ~70 curated infra and ML terms. `runTurn` now filters claims
+against the candidate's own words before returning, so an invented claim
+can never enter the ledger — which matters because every later turn probes
+against that ledger.
+
+Deliberately narrow: policing only glossary terms keeps "they ship a new
+build and swap it in gradually" legal while rejecting "configured
+termination grace period". Precision over recall, because a false positive
+silently drops a real claim.
+
+A test caught a genuine bug in `normalise`: it preserved `.` so version
+numbers like `3.5` survive, which meant a sentence-final period glued
+itself to the word and `"health checks."` never matched the term
+`"health check"`. Dots now survive only between digits.
+
+**2 — Orchestrator.** Pure state machine, no I/O, no clock, no randomness.
+The model proposes; this decides what is allowed. Every rule is
+deterministic because "covered at least 4 days" is graded and must not
+depend on an LLM remembering to count.
+
+`SessionState` was rewritten to the orchestrator's shape and is entirely
+JSON-serialisable — `daysCovered` is an array, not a Set, precisely because
+it round-trips through a jsonb column on every request. `db.ts` and
+`scripts/test-db.ts` were updated to match.
+
+49 tests pass. The adversarial suite runs a full interview against four
+pathological models — one that always concludes, one that never leaves day
+28, one always weak, one always strong — and asserts all four still reach
+8 questions and 4 days.
+
+**A real bug the adversarial tests caught:** `daysCovered` was crediting
+the day the model *proposed*, not the day an override actually redirected
+to. So a forced topic switch never counted toward coverage, and the 4-day
+floor was unreachable by override — exactly the scenario the override
+exists for. The floors were enforced in name only until this was fixed.
+
+**3 — Queued for quota reset (~12:30pm IST), not run:**
+- a) Regenerate five blueprints on gemini-3.6-flash — **5 calls of the
+  20/day budget**, leaving 15.
+- b) Re-run the A/B once to verify the claim-fidelity fix — **3 calls on
+  gemini-3.5-flash-lite** (2 for path A, 1 for path B), none on 3.6-flash.

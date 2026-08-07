@@ -187,12 +187,25 @@ export interface Blueprint {
   focusDays: FocusDay[];
 }
 
-/** Mutable per-session state. Lives in Supabase only — never in memory. */
+export type InterviewMode = "normal" | "recovery" | "pressure";
+
+/**
+ * Mutable per-session state. Lives in Supabase only — never in memory.
+ *
+ * Every field is JSON-serialisable: `daysCovered` is an array rather than
+ * a Set precisely because this round-trips through a jsonb column on every
+ * single request.
+ */
 export interface SessionState {
-  turnNumber: number;
-  currentDay: number | null;
-  depth: number;
-  [key: string]: unknown;
+  questionCount: number;
+  daysCovered: number[];
+  currentDay: number;
+  currentDepth: number;
+  followUpCount: number;
+  /** Weighted running average of knowledge scores, recent weighted higher. */
+  abilityEstimate: number;
+  mode: InterviewMode;
+  consecutiveWeak: number;
 }
 
 export type SessionStatus = "active" | "done";

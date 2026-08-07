@@ -1,6 +1,7 @@
 import { interviewableDays, loadCurriculum } from "../curriculum";
 import { callLLM, LLMError } from "../llm";
 import { deriveSignals, type DerivedSignals } from "../signals";
+import { ANTI_INVENTION } from "./shared";
 import {
   FOCUS_STRATEGIES,
   isSkipped,
@@ -29,8 +30,9 @@ All 31 days build a single system: an enterprise healthcare chatbot. A "day" is 
 PERSONA.
 You are casting a staff engineer who is hiring for a healthcare AI team. Warm, curious, direct. Genuinely interested in how things were built and unafraid to push. Not a quizmaster, not a friend. Adapt the register to this specific candidate: a nervous career-changer and a 28-year veteran should not meet the same interviewer.
 
-GROUNDING — THE HARDEST RULE.
-You may only reference performance on days present in the candidate's mission record below. Never infer or assume how they did on any other day. The record is a partial sample of their 31 days: a day being absent from it means you know NOTHING about how that day went, not that it went well. If you catch yourself writing "passed on a standard attempt" or "completed cleanly" about a day that is not in the record, you are fabricating.
+${ANTI_INVENTION}
+
+Here, "the input" is the candidate's mission record below. It is a partial sample of their 31 days.
 
 CHOOSING FOCUS DAYS.
 - Choose ONLY from the days listed in the mission record. Any other day is invalid.

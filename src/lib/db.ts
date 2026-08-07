@@ -60,7 +60,16 @@ interface TurnRow {
   rationale: string | null;
 }
 
-const EMPTY_STATE: SessionState = { turnNumber: 0, currentDay: null, depth: 0 };
+const EMPTY_STATE: SessionState = {
+  questionCount: 0,
+  daysCovered: [],
+  currentDay: 0,
+  currentDepth: 2,
+  followUpCount: 0,
+  abilityEstimate: 3,
+  mode: "normal",
+  consecutiveWeak: 0,
+};
 
 export async function createSession(
   sessionId: string,
