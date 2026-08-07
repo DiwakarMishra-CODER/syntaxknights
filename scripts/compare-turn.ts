@@ -7,9 +7,10 @@
  * Runs once. Does not loop. Budget: 3 calls.
  */
 import type { CallUsage } from "../src/lib/llm";
-import { evaluate } from "../src/lib/prompts/evaluator";
+import { evaluate, type Evaluation } from "../src/lib/prompts/evaluator";
 import { ask } from "../src/lib/prompts/interviewer";
-import { runTurn, type TurnContext } from "../src/lib/prompts/turn";
+import { filterInventedClaims } from "../src/lib/prompts/shared";
+import { candidateWords, runTurn, type TurnContext, type TurnResult } from "../src/lib/prompts/turn";
 import type { Blueprint, Claim, Turn } from "../src/lib/types";
 
 const MODEL = "gemini-3.5-flash-lite";
@@ -121,7 +122,7 @@ interface Measured<T> {
   usages: CallUsage[];
 }
 
-async function pathA(): Promise<Measured<{ evaluation: unknown; move: unknown }>> {
+async function pathA(): Promise<Measured<{ evaluation: Evaluation; move: unknown }>> {
   const usages: CallUsage[] = [];
   const started = Date.now();
   const evaluation = await evaluate(ctx, {
@@ -135,7 +136,7 @@ async function pathA(): Promise<Measured<{ evaluation: unknown; move: unknown }>
   return { result: { evaluation, move }, latencyMs: Date.now() - started, usages };
 }
 
-async function pathB(): Promise<Measured<unknown>> {
+async function pathB(): Promise<Measured<TurnResult>> {
   const usages: CallUsage[] = [];
   const started = Date.now();
   const result = await runTurn(ctx, {
@@ -158,16 +159,40 @@ function totals(usages: CallUsage[]) {
   );
 }
 
+/**
+ * Reports claim fidelity for both paths against the candidate's own words.
+ * Path A does not filter, so its claims are raw; path B filters inside
+ * runTurn, so we print what it kept AND what it dropped. Without both, a
+ * clean B is ambiguous — it could mean the prompt rule worked, or merely
+ * that the filter caught a fabrication the prompt still produced.
+ */
+function reportClaimFidelity(label: string, raw: Claim[], said: string) {
+  const { kept, rejected } = filterInventedClaims(raw, said);
+  console.log(`\n  claim fidelity [${label}]: ${raw.length} raw, ${kept.length} grounded, ${rejected.length} invented`);
+  for (const r of rejected) {
+    console.log(`    INVENTED (${r.unsupportedTerms.join(", ")}): ${r.claim.text}`);
+  }
+  for (const k of kept) console.log(`    grounded: ${k.text}`);
+}
+
 async function main() {
   console.log(`Both paths on ${MODEL}. The merge is the only variable.\n`);
+
+  const said = candidateWords(ctx);
 
   console.log("--- A: separate evaluator + interviewer (2 calls) ---");
   const a = await pathA();
   console.log(JSON.stringify(a.result, null, 2));
+  reportClaimFidelity("A, unfiltered", a.result.evaluation.claims, said);
 
   console.log("\n--- B: merged turn (1 call) ---");
   const b = await pathB();
   console.log(JSON.stringify(b.result, null, 2));
+  reportClaimFidelity(
+    "B, pre-filter",
+    [...b.result.claims, ...b.result.rejectedClaims],
+    said
+  );
 
   const ta = totals(a.usages);
   const tb = totals(b.usages);
@@ -188,11 +213,17 @@ async function main() {
       `${String(tb.thought).padStart(8)} ${String(tb.total).padStart(7)}`
   );
 
-  const pct = (x: number, y: number) => `${Math.round(((x - y) / x) * 100)}%`;
+  // Signed, and labelled by direction — B is not always cheaper on tokens,
+  // and printing "-41% fewer" would read as a saving when it is a cost.
+  const delta = (from: number, to: number) => {
+    const p = Math.round(((from - to) / from) * 100);
+    return p >= 0 ? `${p}% fewer` : `${-p}% MORE`;
+  };
+  const pct = delta;
   console.log(
     `\nB uses ${tb.calls}/${ta.calls} of the requests, ` +
-      `${pct(ta.total, tb.total)} fewer tokens, ` +
-      `${pct(a.latencyMs, b.latencyMs)} less wall clock.`
+      `${pct(ta.total, tb.total)} tokens, ` +
+      `${pct(a.latencyMs, b.latencyMs)} wall clock.`
   );
   console.log(
     `Per 10-turn interview: A = ${ta.calls * 10} requests, B = ${tb.calls * 10} requests.`

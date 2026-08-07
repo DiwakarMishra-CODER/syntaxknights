@@ -682,3 +682,73 @@ gemini-3.6-flash           #0     0 ok    15 429  EXHAUSTED (limit 20)
 because it was applied without an assert, unlike the earlier patches in
 this session. Caught by the missing section in the output. Guard every
 scripted edit with an assertion.
+
+---
+
+## Entry 12 — Queued runs executed: blueprints and A/B re-run
+
+**Prompt:** proceed with 3(a) and 3(b). Use automatic key selection for
+3(a) rather than pinning, since that is the production code path. Confirm
+the planner runs at thinking_level "high" per config.
+
+**Step 0 result (previous turn):** one call on key #1 against
+gemini-3.6-flash succeeded while key #0 was 429ing on the same model in
+the same minute. **Free-tier quota is per key, not per project** — the
+shared `AQ.Ab8RN6...` prefix does not mean a shared budget. CLAUDE.md's
+60-interviews/day figure stands.
+
+**Config confirmed before running:** `ROLE_CONFIG.planner` is
+gemini-3.6-flash / thinking "high"; `planInterview` passes no thinking
+override and `PLAN_MODEL` was unset. Every log line in the run reads
+`thinking=high`.
+
+**3(a) — 5/5 blueprints on gemini-3.6-flash, exactly 5 requests.**
+Automatic selection alternated keys #2 and #1 by the fewest-successes
+rule, which is the production path working as designed. Latency
+17.6-34.1s, ~2000-2900 thought tokens each.
+
+**The fabrication is gone.** All 24 focus-day reasons across the five
+candidates were cross-checked against the real mission records: every
+attempt count, skip and failure matches. Harold's five:
+
+| day | reason claims | record |
+|---|---|---|
+| 28 | passed on his first attempt | passed first try |
+| 27 | passed on his first try | passed first try |
+| 21 | required 5 attempts | passed after 5 attempts |
+| 15 | skipped Day 14 and Day 15 entirely | both SKIPPED |
+| 31 | completed the capstone in 2 attempts | passed after 2 attempts |
+
+Strategy rules also held against the real records: Tyler (3% first-try)
+got rebuild_confidence at depth 1-2 throughout; Diane (100%) got
+pressure_test at depth 3-4; Gerald's genuine failures got
+rebuild_confidence at depth 1 while his skip got probe_gap.
+
+**3(b) — A/B re-run, 3 calls, both paths on flash-lite.**
+
+| path | calls | latency | in | out | thought | total |
+|---|---|---|---|---|---|---|
+| A separate | 2 | 11792ms | 1207 | 242 | 457 | 1906 |
+| B merged | 1 | 7427ms | 1509 | 216 | 963 | 2688 |
+
+**The claim-fidelity fix held, and the prompt did the work — not the
+filter.** B's claims came back as direct quotes ("we set it up properly
+so sessions keep working", "Kubernetes takes care of most of it"), both
+marked unjustified, with `rejectedClaims: []`. Logging pre-filter claims
+on both paths is what makes that readable: a clean B would otherwise be
+ambiguous between "the prompt worked" and "the filter caught it". The
+filter never had to fire.
+
+B's question also stopped presupposing: "Where is the active conversation
+state stored when those pods roll?" versus the previous run's "what
+termination grace period did you configure", which assumed a mechanism the
+candidate never mentioned. B chose `clarify` and dropped depth 4 -> 3,
+which is the correct scaffolding response to a vague answer.
+
+**Correction to the earlier A/B read: B is not token-neutral.** This run B
+used 2688 tokens against A's 1906 — 41% MORE, driven by a larger merged
+prompt and more thought tokens. The first run happened to come out level.
+The merge still wins because requests, not tokens, are the scarce resource
+on a per-day quota: 10 requests per interview instead of 20. The script
+printed "-41% fewer tokens", which reads as a saving; the label now says
+"41% MORE" so a future run cannot be misread.
