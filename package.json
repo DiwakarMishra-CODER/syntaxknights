@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:llm": "tsx --env-file=.env.local scripts/test-llm.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",
@@ -20,6 +24,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.11",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

@@ -66,3 +66,74 @@ unparseable or non-object body.
   `.env.local` line plus `!.env.local.example`.
 - `/data` is intentionally empty — `curriculum.json` and
   `candidates.json` are supplied by hand.
+
+---
+
+## Entry 2 — Data layer
+
+**Prompt:**
+
+```
+Read CLAUDE.md first.
+
+Build the data layer only. No LLM calls, no network, no API routes.
+
+1. Read /data/curriculum.json and /data/candidates.json and inspect their
+   ACTUAL structure. Do not assume — these files have several traps:
+   [curriculum: { cohort, modules, days }; modules[].days is a [start, end]
+   PAIR; days[] has 31 entries { day, title, type, tools[], objectives[] };
+   type is SETUP|BUILD|LEARN|AI_CORE|SHIP_IT|OPTIMIZE|CAPSTONE; 15 of the 31
+   days reference one enterprise healthcare chatbot — the cohort is ONE
+   continuous build, which matters for question framing.]
+   [candidates: { candidates: [...] }, 20 entries, each { member, missions[],
+   signals }; member.status is always "COMPLETED" and is useless; missions[]
+   is a SUBSET (~10), NOT all 31 — signals.missionsCompleted is the real
+   total; skipped missions are { day, title, skipped: true } with NO attempts
+   and NO passed key; passed: false is a genuine failure, different from
+   skipped and modelled separately.]
+
+2. Write src/lib/types.ts — model the mission variants as a discriminated
+   union so skipped vs attempted is type-safe.
+3. Write src/lib/curriculum.ts — loadCurriculum, getDay, getObjectives,
+   interviewableDays (all days except SETUP).
+4. Write src/lib/signals.ts — deriveSignals(candidate) returning
+   firstTryRate, engagement, coverage, skippedDays, failedDays,
+   struggledDays, cleanDays, profileNote.
+5. Write vitest tests against CAND-018, CAND-017, CAND-011, CAND-010,
+   CAND-008 and print the output for each.
+6. Write supabase/schema.sql — sessions, turns, reports, index on
+   turns(session_id, turn_number).
+7. Write src/lib/db.ts — typed helpers, every one taking sessionId.
+
+Run the tests and show me the deriveSignals output for all five
+candidates. Then commit.
+```
+
+**Outcome:** All seven files written and typechecking clean. The mission
+union uses `skipped: true` vs `skipped?: false` as the discriminant, so
+reading `.attempts` on a possibly-skipped mission is a compile error;
+`isSkipped()` / `isAttempted()` guards are exported.
+
+**BLOCKED — `data/curriculum.json` and `data/candidates.json` do not
+exist yet.** Only `.gitkeep` is in `/data`. The structure above was taken
+from the prompt's own description rather than from the files, and the
+five candidate assertions could not be run. All 10 tests currently fail
+with `Could not read .../candidates.json. Drop candidates.json into
+/data.` The `deriveSignals` arithmetic was instead proved against
+synthetic fixtures built to the described shapes.
+
+**Notes:**
+- Loaders validate on read and throw named errors (day count ≠ 31,
+  unknown `type`, `module.days` not a 2-element pair) so a shape mismatch
+  surfaces loudly instead of silently producing wrong signals.
+- `member`'s internal key names are not specified, so `candidateId()`,
+  `candidateName()` and `candidateExperience()` probe a few likely keys.
+  One place to fix once the real file lands.
+- Data files are read with `fs` at runtime, so `next.config.ts` sets
+  `outputFileTracingIncludes` — without it Vercel omits `/data` from the
+  bundle and it works locally but 404s in production.
+- Static curriculum/candidate JSON is cached at module scope. That is
+  immutable reference data, not session state — the CLAUDE.md ban is on
+  per-session data, which only ever round-trips through Supabase.
+- `appendTurn` derives the next `turn_number` from the table when the
+  caller omits it, so nothing has to hold a counter in memory.
