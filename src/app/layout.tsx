@@ -1,40 +1,54 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Newsreader } from "next/font/google";
-
+import { Plus_Jakarta_Sans, Newsreader, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-/**
- * Two voices, and the contrast between them is the design.
- * Newsreader: low-contrast serif built for screens — warm, slightly
- * informal, a person speaking. Not the high-contrast display serif of the
- * editorial look.
- * IBM Plex Mono: designed for technical readouts — the machine measuring.
- */
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
 const newsreader = Newsreader({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
   variable: "--font-newsreader",
   display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex-mono",
+  weight: ["400", "500", "600"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Practice interview — Tyler Brooks",
-  description: "An adaptive practice technical interview for cohort graduates.",
+  title: "MockMate — Technical Interviews That Actually Think",
+  description:
+    "MockMate is a next-generation technical interview platform that conducts realistic, adaptive mock interviews. It listens, understands reasoning, adapts follow-ups in real time, and evaluates technical depth.",
+  keywords: [
+    "Mock Interview",
+    "Technical Interview Prep",
+    "Adaptive Interview AI",
+    "System Design Interview",
+    "Coding Interview Practice",
+  ],
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${newsreader.variable} ${plexMono.variable}`}>
-      <body>{children}</body>
+    <html
+      lang="en"
+      className={`${plusJakarta.variable} ${newsreader.variable} ${jetbrainsMono.variable} dark`}
+    >
+      <body className="antialiased bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen selection:bg-[var(--accent-emerald-glow)] selection:text-[var(--accent-emerald)]">
+        {children}
+      </body>
     </html>
   );
 }
+

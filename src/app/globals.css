@@ -1,66 +1,249 @@
 @import "tailwindcss";
 
-/**
- * Instrument palette. Cool clinical paper — deliberately NOT cream — one
- * deep ink, and exactly one saturated signal reserved for the depth trace
- * and contradiction flags. Everything else is grey. That restraint is what
- * keeps this from reading as a dashboard.
- */
-@theme {
-  --color-paper: #f4f7f8;
-  --color-paper-raised: #eef2f4;
-  --color-rule: #c2ccd1;
-  --color-rule-strong: #808e95;
-  --color-rule-soft: #e6ebed;
-  --color-graphite: #161c1f;
-  --color-graphite-60: #586268;
-  /* Was #8b979d — 2.78:1, which fails AA and disappears on compressed
-     video. Darkened to 4.64:1 on the panel ground while keeping the cool
-     cast. Every apparatus label depends on this value. */
-  --color-graphite-35: #646e73;
-  --color-trace: #c4005c;
+:root {
+  /* Color Palette - Deep Midnight Navy Base with VisionOS Glass System */
+  --bg-primary: #0B1220;
+  --bg-secondary: #0F172A;
+  --bg-elevated: #162032;
 
-  --font-question: var(--font-newsreader), Georgia, serif;
-  --font-apparatus: var(--font-plex-mono), ui-monospace, monospace;
+  /* Brand Accents */
+  --accent-emerald: #4ADEB5;
+  --accent-emerald-glow: rgba(74, 222, 181, 0.12);
+  --accent-emerald-border: rgba(74, 222, 181, 0.25);
+  
+  --accent-ice-blue: #8FDFFF;
+  --accent-ice-blue-glow: rgba(143, 223, 255, 0.12);
+  --accent-ice-blue-border: rgba(143, 223, 255, 0.25);
+
+  --accent-champagne: #F4E8C1;
+  --accent-champagne-glow: rgba(244, 232, 193, 0.12);
+  --accent-champagne-border: rgba(244, 232, 193, 0.25);
+
+  /* Typography Colors */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  /* Motion Standardized Timing System */
+  --motion-fast: 150ms;
+  --motion-medium: 300ms;
+  --motion-slow: 600ms;
+  --ease-out-cubic: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Glass Material System */
+  --glass-bg: rgba(15, 23, 42, 0.55);
+  --glass-bg-hover: rgba(21, 32, 53, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --glass-border-hover: rgba(74, 222, 181, 0.3);
+  --glass-blur: 24px;
+  --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+
+  /* 8px Baseline Grid System */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+  --space-12: 96px;
+  --space-16: 128px;
+
+  /* Fonts */
+  --font-sans: var(--font-plus-jakarta), system-ui, -apple-system, sans-serif;
+  --font-editorial: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
-html,
 body {
-  background: var(--color-paper);
-  color: var(--color-graphite);
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  position: relative;
+  letter-spacing: -0.01em;
 }
 
-/* Instrument paper: a faint printed grid, not a flat fill. */
-.paper-grid {
-  background-image:
-    linear-gradient(to right, var(--color-rule-soft) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--color-rule-soft) 1px, transparent 1px);
-  background-size: 32px 32px;
+.font-editorial {
+  font-family: var(--font-editorial);
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-graphite);
-  outline-offset: 2px;
+.font-mono-code {
+  font-family: var(--font-mono);
 }
 
-/* The pen hovers while a measurement settles. The only motion on the page. */
-@keyframes pen-drift {
-  0%, 100% { transform: translateY(-5px); }
-  50% { transform: translateY(5px); }
-}
-.pen-drift { animation: pen-drift 2.4s ease-in-out infinite; }
-
-@keyframes trace-draw {
-  from { stroke-dashoffset: var(--dash); }
-  to { stroke-dashoffset: 0; }
-}
-.trace-draw {
-  stroke-dasharray: var(--dash);
-  animation: trace-draw 600ms ease-out forwards;
+/* Corner Aurora Ambient Lights - Subtle Edge Lighting Only */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
 }
 
+.aurora-top-left {
+  position: absolute;
+  top: -220px;
+  left: -220px;
+  width: 650px;
+  height: 650px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(74, 222, 181, 0.08) 0%, rgba(74, 222, 181, 0) 70%);
+  filter: blur(110px);
+  animation: floatSlow 24s ease-in-out infinite alternate;
+}
+
+.aurora-top-right {
+  position: absolute;
+  top: -220px;
+  right: -220px;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(143, 223, 255, 0.08) 0%, rgba(143, 223, 255, 0) 70%);
+  filter: blur(120px);
+  animation: floatSlow 28s ease-in-out infinite alternate-reverse;
+}
+
+.aurora-bottom-left {
+  position: absolute;
+  bottom: -250px;
+  left: -220px;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 232, 193, 0.05) 0%, rgba(244, 232, 193, 0) 70%);
+  filter: blur(120px);
+  animation: floatSlow 30s ease-in-out infinite alternate;
+}
+
+.aurora-bottom-right {
+  position: absolute;
+  bottom: -250px;
+  right: -220px;
+  width: 750px;
+  height: 750px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(74, 222, 181, 0.07) 0%, rgba(74, 222, 181, 0) 70%);
+  filter: blur(120px);
+  animation: floatSlow 26s ease-in-out infinite alternate-reverse;
+}
+
+/* Glass Surface Styling (Material Motion) */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  transition: border-color var(--motion-medium) var(--ease-out-cubic), transform var(--motion-medium) var(--ease-out-cubic), box-shadow var(--motion-medium) var(--ease-out-cubic);
+}
+
+.glass-panel:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.glass-nav {
+  background: rgba(11, 18, 32, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Subtly Glowing Pill Badge */
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pill-badge-emerald {
+  border-color: rgba(74, 222, 181, 0.25);
+  color: var(--accent-emerald);
+  background: rgba(74, 222, 181, 0.05);
+}
+
+.pill-badge-ice {
+  border-color: rgba(143, 223, 255, 0.25);
+  color: var(--accent-ice-blue);
+  background: rgba(143, 223, 255, 0.05);
+}
+
+/* Action Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 36px;
+  border-radius: 9999px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0B1220;
+  background: linear-gradient(135deg, #4ADEB5 0%, #34D399 100%);
+  box-shadow: 0 4px 24px rgba(74, 222, 181, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all var(--motion-medium) var(--ease-out-cubic);
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(74, 222, 181, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #52E8BF 0%, #3DE0A5 100%);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 32px;
+  border-radius: 9999px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  transition: all var(--motion-medium) var(--ease-out-cubic);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+@keyframes floatSlow {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -25px) scale(1.04); }
+  100% { transform: translate(-20px, 20px) scale(0.97); }
+}
+
+/* Accessibility: Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
-  .pen-drift { animation: none; }
-  .trace-draw { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
+  .aurora-top-left,
+  .aurora-top-right,
+  .aurora-bottom-left,
+  .aurora-bottom-right {
+    animation: none !important;
+  }
+
+  .glass-panel,
+  .btn-primary,
+  .btn-secondary {
+    transition: none !important;
+  }
 }
