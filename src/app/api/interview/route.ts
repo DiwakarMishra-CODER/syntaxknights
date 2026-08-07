@@ -10,6 +10,7 @@ import {
   saveReport,
   saveSessionState,
 } from "@/lib/db";
+import { plan, report, turn as runTurnCall } from "@/lib/engine";
 import { LLMError } from "@/lib/llm";
 import {
   initState,
@@ -17,9 +18,7 @@ import {
   recordTurn,
   shouldEnd,
 } from "@/lib/orchestrator";
-import { planInterview } from "@/lib/prompts/planner";
-import { degradeReport, writeReport } from "@/lib/prompts/reporter";
-import { runTurn, type TurnResult } from "@/lib/prompts/turn";
+import type { TurnResult } from "@/lib/prompts/turn";
 import { getCandidate } from "@/lib/signals";
 import type { Candidate, Feedback, InterviewResponse, Turn } from "@/lib/types";
 
@@ -115,7 +114,7 @@ async function startSession(sessionId: string, rawCandidate: unknown) {
     return reply(existing.blueprint.openingLine, false);
   }
 
-  const blueprint = await planInterview(candidate);
+  const blueprint = await plan(candidate);
   const state = initState(blueprint);
 
   await createSession(sessionId, candidate, blueprint);
@@ -170,17 +169,20 @@ async function continueSession(sessionId: string, rawMessage: unknown) {
 
   const directive = nextDirective(state, blueprint, state.consecutiveReactions);
 
-  let decision: TurnResult;
+  let decision: TurnResult | null;
   try {
-    decision = await runTurn({
-      blueprint,
-      recentTurns,
-      claimLedger,
-      targetDay: directive.targetDay,
-      depth: directive.depth,
-      questionsAsked: state.questionCount,
-      directive,
-    });
+    decision = await runTurnCall(
+      {
+        blueprint,
+        recentTurns,
+        claimLedger,
+        targetDay: directive.targetDay,
+        depth: directive.depth,
+        questionsAsked: state.questionCount,
+        directive,
+      },
+      state.questionCount
+    );
   } catch (err) {
     // One retry already happened inside callLLM. Rather than 500, ask a
     // safe, honest question and let the interview continue — the state is
@@ -192,6 +194,19 @@ async function continueSession(sessionId: string, rawMessage: unknown) {
         ? "I need a moment — send that again in a few seconds and we'll continue."
         : "Sorry, I lost my train of thought. Tell me more about the part of the system you just described.",
       false
+    );
+  }
+
+  if (!decision) {
+    // A replay ran past the end of its recording. Close cleanly with a
+    // report rather than pretending there is another question.
+    const feedback = await buildReport(sessionId, session.candidate, blueprint, state);
+    await saveReport(sessionId, feedback);
+    await markDone(sessionId);
+    return reply(
+      "That's everything I wanted to cover — thank you for walking me through it.",
+      true,
+      feedback
     );
   }
 
@@ -259,10 +274,5 @@ async function buildReport(
     questionCount: state.questionCount,
   };
 
-  try {
-    return await writeReport(ctx);
-  } catch (err) {
-    console.error(`[route] reporter failed hard on ${sessionId}:`, err);
-    return degradeReport(null, ctx).feedback;
-  }
+  return report(ctx);
 }

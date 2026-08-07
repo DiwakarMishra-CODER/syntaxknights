@@ -1135,3 +1135,60 @@ turned out wrong, and the rules learned by breaking things:
 "~300 lines" rule — `llm.ts` at 578, `reporter.ts` at 400, `turn.ts` at
 319, `interview.ts` at 315. The rule was left as written rather than
 relaxed to match the code.
+
+---
+
+## Entry 20 — The interview screen
+
+**Prompt:** build the interview screen with zero API calls — server-side
+fixture replay first, a separate state endpoint, then an "instrument"
+visual direction with a depth trace as the signature element. Write a
+design plan and self-critique it before building.
+
+**Design plan and revision** (full text in the conversation). The
+self-critique caught four defaults in my own first plan: chat-left /
+panel-right is the universal AI layout; my panel was a card grid with the
+shadows removed; I had put the element I was told to spend all boldness on
+into 15% of a sidebar; and serif-human / mono-machine is a well-worn AI
+trope. Revisions: the panel became one continuous ruled strip with an
+annotation gutter and no boxes at all, the trace moved to the top of the
+panel full-bleed, transcript turns and trace segments cross-highlight on
+hover, and trace opacity encodes recency so "live" is literal.
+
+**Architecture.** `FIXTURE=1` replays a recorded session through the real
+route. `engine.ts` is the only seam — `plan`, `turn`, `report` — so the
+orchestrator, state machine, Supabase persistence and response builder all
+still run for real and only the model calls are substituted. Verified by
+curl that a replayed response carries exactly `reply` + `done`, identical
+to live. `FIXTURE_SPEED` scales the simulated latency.
+
+The frozen contract was not touched. Panel data comes from a new
+`GET /api/session/[sessionId]/state`.
+
+**A fixture bug caught while wiring it:** the recording is run 1 (days 3,
+10, 22, 28, 31) but `blueprint-CAND-017.json` had been overwritten with
+the regenerated plan (10, 20, 28, 31), so the coverage panel showed days
+the recording never visits. Fixed by pairing each recording with its own
+blueprint file.
+
+**Contrast, measured rather than eyeballed.** The first palette put every
+apparatus label at `#8b979d` — **2.78:1**, which fails AA and is exactly
+the "small grey text disappears on compressed video" failure the brief
+warned about. Darkened to `#646e73` (4.64:1 on the panel ground) keeping
+the cool cast. Structural rules went from 1.19:1 to 1.52:1, and the
+textarea border — a real UI component needing 3:1 — to `#808e95` at
+3.14:1. All pairs now pass.
+
+**Trace geometry extracted to `traceGeometry.ts`** and tested directly:
+14 tests covering a synthetic climb to 5 and drop to 1, the flat fixture,
+out-of-range clamping, the empty and single-point cases, and the pen
+parking a step ahead while thinking. Vitest 4's bundler will not compile
+JSX under Next's `jsx: "preserve"`, and extracting the maths was a better
+answer than adding a plugin — the test now exercises logic rather than
+markup strings. 111 tests pass.
+
+**NOT verified: how it actually looks.** The Chrome extension was
+declined, so no screenshot was taken and the self-critique in step 4 of
+the brief is unfinished. Everything measurable was checked — contrast
+ratios, geometry, build, both routes, replay shape — but nobody has
+looked at it yet.

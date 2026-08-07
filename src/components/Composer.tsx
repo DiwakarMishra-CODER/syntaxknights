@@ -1,0 +1,67 @@
+"use client";
+
+import { useState } from "react";
+
+/**
+ * Multi-line input with an explicit submit and a visible character count.
+ * Enter inserts a newline; the answer is sent deliberately, not by reflex.
+ */
+export function Composer({
+  onSubmit,
+  disabled,
+  status,
+}: {
+  onSubmit: (text: string) => void;
+  disabled: boolean;
+  status: string | null;
+}) {
+  const [value, setValue] = useState("");
+
+  function submit() {
+    const text = value.trim();
+    if (!text || disabled) return;
+    onSubmit(text);
+    setValue("");
+  }
+
+  return (
+    <div className="border-t border-rule bg-paper-raised">
+      <div className="mx-auto max-w-[46rem] px-10 py-5">
+        <label htmlFor="answer" className="sr-only">
+          Your answer
+        </label>
+        <textarea
+          id="answer"
+          value={value}
+          disabled={disabled}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          rows={3}
+          spellCheck
+          placeholder={disabled ? "" : "Answer in your own words…"}
+          className="w-full resize-none border border-rule-strong bg-paper px-4 py-3 font-apparatus text-[13px] leading-[1.7] text-graphite placeholder:text-graphite-35 focus:border-graphite-35 focus:outline-none disabled:opacity-55"
+        />
+
+        <div className="mt-2 flex items-center justify-between">
+          <span className="font-apparatus text-[10.5px] tabular-nums text-graphite-35">
+            {status ?? `${value.length} characters`}
+          </span>
+
+          <button
+            type="button"
+            onClick={submit}
+            disabled={disabled || value.trim().length === 0}
+            className="font-apparatus border border-graphite px-4 py-[7px] text-[10.5px] uppercase tracking-[0.12em] text-graphite transition-colors hover:bg-graphite hover:text-paper disabled:cursor-not-allowed disabled:border-rule disabled:text-graphite-35 disabled:hover:bg-transparent disabled:hover:text-graphite-35"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

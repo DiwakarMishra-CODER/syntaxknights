@@ -1,26 +1,66 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/**
+ * Instrument palette. Cool clinical paper — deliberately NOT cream — one
+ * deep ink, and exactly one saturated signal reserved for the depth trace
+ * and contradiction flags. Everything else is grey. That restraint is what
+ * keeps this from reading as a dashboard.
+ */
+@theme {
+  --color-paper: #f4f7f8;
+  --color-paper-raised: #eef2f4;
+  --color-rule: #c2ccd1;
+  --color-rule-strong: #808e95;
+  --color-rule-soft: #e6ebed;
+  --color-graphite: #161c1f;
+  --color-graphite-60: #586268;
+  /* Was #8b979d — 2.78:1, which fails AA and disappears on compressed
+     video. Darkened to 4.64:1 on the panel ground while keeping the cool
+     cast. Every apparatus label depends on this value. */
+  --color-graphite-35: #646e73;
+  --color-trace: #c4005c;
+
+  --font-question: var(--font-newsreader), Georgia, serif;
+  --font-apparatus: var(--font-plex-mono), ui-monospace, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-graphite);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Instrument paper: a faint printed grid, not a flat fill. */
+.paper-grid {
+  background-image:
+    linear-gradient(to right, var(--color-rule-soft) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-rule-soft) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-graphite);
+  outline-offset: 2px;
+}
+
+/* The pen hovers while a measurement settles. The only motion on the page. */
+@keyframes pen-drift {
+  0%, 100% { transform: translateY(-5px); }
+  50% { transform: translateY(5px); }
+}
+.pen-drift { animation: pen-drift 2.4s ease-in-out infinite; }
+
+@keyframes trace-draw {
+  from { stroke-dashoffset: var(--dash); }
+  to { stroke-dashoffset: 0; }
+}
+.trace-draw {
+  stroke-dasharray: var(--dash);
+  animation: trace-draw 600ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pen-drift { animation: none; }
+  .trace-draw { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
 }
