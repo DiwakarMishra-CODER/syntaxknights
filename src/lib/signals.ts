@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import candidatesData from "@/data/candidates.json";
 
 import {
   COHORT_DAYS,
@@ -9,74 +8,19 @@ import {
   type CandidatesFile,
 } from "./types";
 
-const CANDIDATES_PATH = join(process.cwd(), "data", "candidates.json");
-
-/** Immutable static data — see the note in curriculum.ts. */
-let cached: Candidate[] | null = null;
+/**
+ * Statically imported so the data is bundled rather than read from disk —
+ * no filesystem access at runtime, so nothing to trace into the Vercel
+ * bundle. Immutable reference data, not session state.
+ */
+const candidates = (candidatesData as unknown as CandidatesFile).candidates;
 
 export function loadCandidates(): Candidate[] {
-  if (cached) return cached;
-
-  let raw: string;
-  try {
-    raw = readFileSync(CANDIDATES_PATH, "utf8");
-  } catch {
-    throw new Error(
-      `Could not read ${CANDIDATES_PATH}. Drop candidates.json into /data.`
-    );
-  }
-
-  const parsed = JSON.parse(raw) as CandidatesFile;
-  if (!Array.isArray(parsed?.candidates)) {
-    throw new Error("candidates.json: expected { candidates: [...] }");
-  }
-
-  cached = parsed.candidates;
-  return cached;
-}
-
-/**
- * The exact key holding the candidate code ("CAND-018") is read defensively:
- * the id may live on `member.id`, `member.memberId`, or `member.code`
- * depending on the export. One place to fix if the real file differs.
- */
-export function candidateId(c: Candidate): string {
-  const m = c.member as unknown as Record<string, unknown>;
-  for (const key of ["id", "memberId", "member_id", "code", "candidateId"]) {
-    const v = m?.[key];
-    if (typeof v === "string" && v.length > 0) return v;
-  }
-  return "";
-}
-
-export function candidateName(c: Candidate): string {
-  const m = c.member as unknown as Record<string, unknown>;
-  for (const key of ["name", "fullName", "full_name"]) {
-    const v = m?.[key];
-    if (typeof v === "string" && v.length > 0) return v;
-  }
-  return "";
-}
-
-/** Prior experience, if the file records it in any of the usual shapes. */
-export function candidateExperience(c: Candidate): string | null {
-  const m = c.member as unknown as Record<string, unknown>;
-  for (const key of [
-    "experience",
-    "experienceLevel",
-    "background",
-    "yearsExperience",
-    "seniority",
-  ]) {
-    const v = m?.[key];
-    if (typeof v === "string" && v.length > 0) return v;
-    if (typeof v === "number") return `${v}`;
-  }
-  return null;
+  return candidates;
 }
 
 export function getCandidate(id: string): Candidate | undefined {
-  return loadCandidates().find((c) => candidateId(c) === id);
+  return candidates.find((c) => c.member.id === id);
 }
 
 export interface DerivedSignals {
@@ -136,7 +80,7 @@ function buildProfileNote(
   d: Omit<DerivedSignals, "profileNote">
 ): string {
   const pct = (n: number) => `${Math.round(n * 100)}%`;
-  const experience = candidateExperience(candidate);
+  const { jobRole, yearsExperience } = candidate.member;
 
   let note: string;
 
@@ -166,18 +110,17 @@ function buildProfileNote(
     )} first-try rate, commits on ${pct(d.engagement)} of days — an even profile.`;
   }
 
-  if (experience) {
-    const strong = d.firstTryRate >= 0.7;
-    const looksSenior = /senior|lead|\b([5-9]|\d{2})\+?\s*(y|year)/i.test(
-      experience
-    );
-    if (looksSenior && !strong) {
-      note += ` Note the mismatch: stated experience "${experience}" vs a ${pct(
-        d.firstTryRate
-      )} first-try rate.`;
-    } else if (!looksSenior && strong) {
-      note += ` Outperforming their stated experience ("${experience}").`;
-    }
+  // yearsExperience is prior career experience, not cohort performance —
+  // a large gap in either direction is worth flagging to the planner.
+  const experienced = yearsExperience >= 5;
+  const strong = d.firstTryRate >= 0.7;
+
+  if (experienced && !strong) {
+    note += ` Mismatch worth noting: ${yearsExperience}y as a ${jobRole}, but only ${pct(
+      d.firstTryRate
+    )} first try — likely new to this stack rather than new to engineering.`;
+  } else if (!experienced && strong) {
+    note += ` Outperforming their background (${yearsExperience}y as a ${jobRole}).`;
   }
 
   return note;

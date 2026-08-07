@@ -255,3 +255,53 @@ smoke tests now pass against live services:
 - Tables are created with RLS off. The only access path is the
   server-side service_role key, which bypasses RLS anyway, and the
   project has no auth or anon access by design.
+
+---
+
+## Entry 5 — Reconcile types against the real data; static imports
+
+**Prompt:** commit the (synthetic) data files; then reconcile the types
+against the real structure, delete the defensive `candidateId()` /
+`candidateName()` / `candidateExperience()` probes in favour of direct
+typed access to `member`, switch from `fs` reads to static JSON imports
+via `@/data/...`, drop `outputFileTracingIncludes`, and replace the
+synthetic test fixtures with the five real candidates asserted to 3dp.
+
+**Outcome:** Three mismatches found between the types built from the
+written description and the real files. All five 3dp assertions passed
+on the first run with no adjustment. 11 tests green, typecheck clean,
+`next build` succeeds.
+
+**Mismatches found:**
+- `curriculum.cohort` is a plain string
+  (`"AI Cohort · 31 days · 8 modules"`), not an unknown/object. Typed as
+  `string`.
+- `CurriculumModule` is `{ n, title, days }`. The description only
+  mentioned `days`, so the guessed `name?` field did not exist and the
+  module number `n` was missing. Both corrected.
+- `member` is
+  `{ id, name, jobRole, yearsExperience, education, status }`. The
+  guessed optional `experience?: string` did not exist.
+
+**Consequence of that last one:** the probing `candidateExperience()`
+matched `yearsExperience` and stringified it, so `profileNote` was
+comparing a *number of years* against a regex written for phrases like
+"senior" or "8 years". `"4"` and `"20"` both failed that regex, so Diane
+read as junior and Gerald's 20 years never registered. This is the
+source of the odd `stated experience ("4")` line flagged in the previous
+session. With `yearsExperience: number` typed directly the clause now
+uses a numeric threshold, and Gerald (20y, 4% first try) and Harold
+(28y, 56%) both surface the mismatch correctly.
+
+**Notes:**
+- `@/*` maps to `./src/*`, so `@/data/curriculum.json` would have
+  resolved to `src/data/`. Added a more specific `"@/data/*":
+  ["./data/*"]` mapping ahead of it, mirrored in `vitest.config.ts`
+  since Vitest does not read tsconfig paths.
+- TypeScript widens the imported JSON's `type` field to `string`, so the
+  `DayType` union cannot be enforced statically on a JSON import. The
+  existing runtime `validateCurriculum()` still enforces it on first
+  access, which is where a bad value would matter anyway.
+- Static imports mean no filesystem access at runtime, so
+  `outputFileTracingIncludes` is no longer needed and was removed.
+  Confirmed with a real `next build`.

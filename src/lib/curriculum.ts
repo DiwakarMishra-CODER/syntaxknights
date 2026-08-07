@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import curriculumData from "@/data/curriculum.json";
 
 import {
   COHORT_DAYS,
@@ -10,28 +9,20 @@ import {
   type DayType,
 } from "./types";
 
-const CURRICULUM_PATH = join(process.cwd(), "data", "curriculum.json");
-
 /**
- * Immutable static data, read once per process. This is NOT session state —
- * the CLAUDE.md ban on module globals is about per-session data, which must
- * always round-trip through Supabase.
+ * Statically imported so the data is bundled rather than read from disk —
+ * no filesystem access at runtime, so nothing to trace into the Vercel
+ * bundle. Immutable reference data, not session state: the CLAUDE.md ban
+ * on module globals is about per-session data, which must always
+ * round-trip through Supabase.
+ *
+ * Validated once on first access — TypeScript widens the JSON's `type`
+ * field to `string`, so the DayType union is only enforced at runtime.
  */
 let cached: Curriculum | null = null;
 
 export function loadCurriculum(): Curriculum {
-  if (cached) return cached;
-
-  let raw: string;
-  try {
-    raw = readFileSync(CURRICULUM_PATH, "utf8");
-  } catch {
-    throw new Error(
-      `Could not read ${CURRICULUM_PATH}. Drop curriculum.json into /data.`
-    );
-  }
-
-  cached = validateCurriculum(JSON.parse(raw));
+  if (!cached) cached = validateCurriculum(curriculumData);
   return cached;
 }
 

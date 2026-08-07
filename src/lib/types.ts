@@ -35,16 +35,15 @@ export interface CurriculumDay {
  * in the module. Expand it with moduleDayNumbers() — never iterate it.
  */
 export interface CurriculumModule {
-  name?: string;
-  title?: string;
+  /** Module number, 1-8. */
+  n: number;
+  title: string;
   days: [number, number];
 }
 
-/** Nothing in the app reads this. Left unknown rather than guessed at. */
-export type CohortMeta = unknown;
-
 export interface Curriculum {
-  cohort: CohortMeta;
+  /** A display string, e.g. "AI Cohort · 31 days · 8 modules". */
+  cohort: string;
   modules: CurriculumModule[];
   days: CurriculumDay[];
 }
@@ -89,8 +88,10 @@ export function isAttempted(m: Mission): m is AttemptedMission {
 export interface CandidateMember {
   id: string;
   name: string;
-  status: string;
-  experience?: string;
+  jobRole: string;
+  yearsExperience: number;
+  education: string;
+  status: "COMPLETED";
 }
 
 /**
