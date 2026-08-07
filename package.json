@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:llm": "tsx --env-file=.env.local scripts/test-llm.ts",
+    "test:db": "tsx --env-file=.env.local scripts/test-db.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -16,13 +17,15 @@
     "@supabase/supabase-js": "^2.109.0",
     "next": "15.5.23",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.11",
     "typescript": "^5",

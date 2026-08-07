@@ -221,3 +221,37 @@ call shape is structurally accepted by the SDK.
 - One `GoogleGenAI` client is memoised per key index.
 - `callLLM` is overloaded: with `schema` it returns parsed `T`, without
   it returns `string`.
+
+---
+
+## Entry 4 — Wiring up real credentials
+
+**Prompt:** (paraphrased) supplied one Gemini API key and the Supabase
+project URL / service role key, applied `supabase/schema.sql`, and asked
+where to paste it in the dashboard.
+
+**Outcome:** `.env.local` created (gitignored, never committed). Both
+smoke tests now pass against live services:
+
+- `npm run test:llm` — `gemini-3.6-flash` 5576ms (in 29 / out 1 /
+  thought 89) and `gemini-3.5-flash-lite` 3668ms (in 58 / out 55 /
+  thought 0). The thought-token split confirms `thinking_level` is
+  actually being applied per role. Schema-enforced JSON returned a
+  correctly shaped object with no parse fallback.
+- `npm run test:db` — new `scripts/test-db.ts` round-trips every helper
+  in `db.ts` against the real tables (15 checks), then deletes the test
+  session so `turns` and `reports` cascade. All pass; all three tables
+  verified back at 0 rows afterwards.
+
+**Notes:**
+- `NEXT_PUBLIC_SUPABASE_URL` was first set to the REST endpoint
+  (`.../rest/v1/`). `supabase-js` appends `/rest/v1/` itself, so that
+  doubles the path and 404s every query. It must be the bare project URL.
+- `supabase-js` constructs a Realtime client eagerly, and Node 20 has no
+  global `WebSocket` (it landed in Node 22), so `createClient` threw
+  before any query ran. Fixed by passing `ws` as the realtime transport
+  in both `db.ts` and the script. We never use realtime — the
+  constructor just has to not throw.
+- Tables are created with RLS off. The only access path is the
+  server-side service_role key, which bypasses RLS anyway, and the
+  project has no auth or anon access by design.

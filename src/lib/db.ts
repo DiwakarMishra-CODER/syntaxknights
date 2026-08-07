@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 import type {
   Blueprint,
@@ -30,6 +31,10 @@ function db(): SupabaseClient {
 
   client = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    // supabase-js builds a Realtime client eagerly and Node < 22 has no
+    // global WebSocket. We never use realtime, but the constructor still
+    // runs, so give it a transport rather than let it throw.
+    realtime: { transport: ws as unknown as never },
   });
   return client;
 }
