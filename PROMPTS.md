@@ -1096,3 +1096,42 @@ response, because days are deliberately not observable through the API.
 
 **Not run:** the full interview path. It costs ~11 LLM calls and the user
 should decide when to spend them.
+
+---
+
+## Entry 19 — CLAUDE.md brought up to date
+
+**Prompt:** confirm everything is pushed, then update CLAUDE.md.
+
+**State:** local and remote both at `cc805bd`, working tree clean —
+everything was already pushed.
+
+**Updated CLAUDE.md** to match what we measured rather than what we
+assumed at the start. The spec's intent is untouched; only the facts that
+turned out wrong, and the rules learned by breaking things:
+
+- **Quota shape corrected.** "Free tier is ~5-15 RPM per project" was
+  wrong in both directions: the binding limit on gemini-3.6-flash is 20
+  requests per DAY, and it is per key AND per model, not per project.
+  Pooling keys therefore does multiply capacity — ~10 interviews/day per
+  key, ~60 across six.
+- **maxOutputTokens is a THOUGHT + OUTPUT budget.** Documented under the
+  Gemini section with the incident that taught it: the reporter had 482
+  tokens left for JSON after thinking, truncated mid-object, and looked
+  like schema non-compliance. Re-check the ceiling whenever input grows
+  or thinking rises.
+- **Vercel duration.** 300s on every plan with fluid compute; the old 10s
+  Hobby ceiling is gone. The ~30s final request fits with 10x margin.
+- **Architecture rules** that must not be undone: constraints go INTO the
+  prompt and are never applied on top of the output; the model is never
+  trusted to count; anti-invention is a shared prompt rule PLUS code
+  enforcement; and the interviewer voice rules (no day numbers,
+  objectives are context, chase the more severe weakness, never reveal
+  correctness even inside a question).
+- **Scripts table** with the LLM cost of each, so it is obvious which
+  commands are free.
+
+**Flagged, not silently fixed:** four files now exceed the doc's own
+"~300 lines" rule — `llm.ts` at 578, `reporter.ts` at 400, `turn.ts` at
+319, `interview.ts` at 315. The rule was left as written rather than
+relaxed to match the code.
