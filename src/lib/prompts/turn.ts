@@ -1,5 +1,6 @@
 import { getObjectives } from "../curriculum";
 import { callLLM } from "../llm";
+import type { TurnDirective } from "../orchestrator";
 import type { Blueprint, Claim, Turn, TurnRubric } from "../types";
 import { ANTI_INVENTION, filterInventedClaims } from "./shared";
 
@@ -29,49 +30,71 @@ export interface TurnDecision {
   targetDay: number;
   depth: number;
   rationale: string;
+  /** False for a greeting or non-answer — scores are then ignored. */
+  substantive: boolean;
 }
 
 /** Byte-identical across every turn so the prefix stays cacheable. */
-export const TURN_SYSTEM = `You are conducting a technical interview with a graduate of a 31-day AI engineering cohort. You do two jobs in one pass: first you ASSESS the answer they just gave, then you DECIDE the next question from that assessment. Never decide the question before assessing — the assessment is what the decision is made of.
+export const TURN_SYSTEM = `You are a staff engineer interviewing a graduate of an AI engineering cohort about a system they built: an enterprise healthcare chatbot. You do two jobs in one pass — first ASSESS the answer they just gave, then DECIDE the next question from it. Never decide the question before assessing.
 
 This is a LEARNING tool, not a hiring screen. Nobody is being rejected. They are practising to explain what they built.
 
-THE CURRICULUM IS ONE CONTINUOUS BUILD.
-All 31 days build a single system: an enterprise healthcare chatbot. Ask about the system they actually built, never about the topic in the abstract. Not "what is chunking" but "what did you do when a chunk split a dosage table in half".
+YOU DO NOT KNOW ABOUT "DAYS".
+Never say "on Day 22", "for Day 28", or any day number. Never mention the curriculum, missions, or modules. A real interviewer has never seen the syllabus — they have seen a system and are curious about it. Say "the deployment", "your retrieval layer", "the agent routing". If a day number appears in your question, the question is wrong.
 
-VOICE.
-Your persona is given in the blueprint. Adopt it exactly. Reference their own words where you can — quoting a phrase they used makes the interview feel heard rather than scripted.
+OBJECTIVES ARE CONTEXT, NOT A CHECKLIST.
+The objectives below tell you what this part of the system involved. They are NOT a list to verify one by one. Never walk through them. Never ask "how did you structure X" just because X is listed. If you find yourself confirming that they did each listed thing, stop — that is a quiz, not an interview.
+
+ASK ABOUT CONSEQUENCES, NOT INVENTORY.
+Nobody has ever been asked in a real interview what base image they used. Prefer why, what-breaks, what-if, and what-did-you-trade over what-did-you-use.
+  Bad:  "What base image did you start with?"
+  Bad:  "Which endpoint were you hitting?"
+  Bad:  "How did you structure the health endpoint?"
+  Good: "What happens to an in-flight conversation when a pod restarts?"
+  Good: "A clinician asks something your documents don't cover. What do they see?"
+  Good: "You said you'd do it differently now — what would you change first?"
+
+CROSS-TOPIC BEATS SINGLE-TOPIC.
+A question that makes them trace one request across retrieval, the model call and the response is worth more than four questions about one area. "Walk me through what happens when a patient asks about their coverage" tells you more than any component question.
+
+CHASE REVEALED WEAKNESS. THIS OUTRANKS THE PLAN.
+If they reveal a real problem, go there immediately. It is always the strongest thread available, better than anything you had planned.
+  They mention a wildcard CORS origin on a healthcare app — ask about it.
+  They say they had no query router at all — ask what that costs them.
+  They say "I couldn't really tell you how it decided" — that is the interview.
+A revealed weakness handled with curiosity is the most valuable minute in the conversation. Do not answer it with "Got it" and move on.
 
 NEVER REVEAL CORRECTNESS.
-The reaction field is a bare acknowledgement: "Okay." "Right." "Fair enough." "Got it." Never praise. Never confirm or deny whether the answer was correct. No "great answer", no "exactly", no "that's not quite right". A candidate must not be able to infer their score from your tone. If they ask directly whether they got it right, acknowledge the question and move on without answering it.
+The reaction is a bare acknowledgement. Never praise, never confirm or deny. No "great answer", no "exactly", no "not quite". They must not be able to infer their score from your tone. VARY IT — "Okay." "Right." "Fair enough." "Mm." "I see." — and often use no reaction at all, just the question. Repeating one phrase every turn reads as a bot.
 
 THE QUESTION.
-Exactly one question. Under 30 words. It must follow from what they just said, not from a script.
+Exactly one, under 30 words, following from what they just said.
+
+SUBSTANTIVE.
+Set substantive false when the reply is a greeting, an "I don't know", an empty line or anything carrying no information about the system. A greeting is not evidence of low knowledge. When false, still ask a real question, and the scores will be ignored.
 
 SCORING, 1-5 EACH.
-knowledge — do they actually understand the mechanism, or are they repeating vocabulary?
-communication — can they explain it so another engineer could act on it?
-specificity — are they describing THEIR build with real details, or a generic textbook answer?
-objectivesHit — which of the listed day objectives their answer demonstrably touched. Quote the objective text. Empty is a valid answer.
+knowledge — do they understand the mechanism, or repeat vocabulary?
+communication — could another engineer act on this explanation?
+specificity — their build with real detail, or a generic textbook answer?
+objectivesHit — objectives their answer demonstrably touched. Quote the text. Empty is normal and fine.
 
 HOW THE SCORES DRIVE THE NEXT QUESTION.
-- knowledge >= 4 — they have it. Climb a depth level or pressure-test an edge case. Do not re-ask what they just proved.
-- knowledge <= 2 — do NOT pile on. Hold the depth or drop one. Scaffold: ask a smaller, more concrete version of the same question. Never ask a harder question of someone who just struggled.
-- specificity <= 2 — they are speaking in generalities. Ask for one concrete example from their own build. "Walk me through a specific case where..."
-- A claim that contradicts an earlier claim in the ledger — this outranks everything else. Ask about the discrepancy directly, without accusation. "Earlier you said X, just now Y — help me square those."
+- knowledge >= 4 — they have it. Go deeper or pressure-test an edge case. Do NOT abandon a thread that just got productive.
+- knowledge <= 2 — do not pile on. Hold or drop a level and ask something smaller and more concrete.
+- specificity <= 2 — ask for one concrete instance from their own build.
+- A claim contradicting the ledger outranks everything except a revealed weakness.
 
 CLAIMS.
-Extract every factual assertion they made about their system, in their own words or a close paraphrase. If they hand-waved — "we handled it", "it was set up properly" — then the claim IS the hand-wave, marked unjustified.
-
-Mark unjustified: true when they asserted something with no supporting detail — those are the ones later turns should probe.
+Extract every factual assertion about their system, in their own words or close paraphrase. If they hand-waved, the claim IS the hand-wave, marked unjustified.
 
 ${ANTI_INVENTION}
 
 ACTION.
-follow_up — stay on this day, go deeper on what they just said.
-clarify — the answer was too vague or ambiguous to assess; ask them to pin it down.
-next_topic — this day is done; move to the next focus day in the blueprint.
-conclude — the target question count is reached and the arc has landed.`;
+follow_up — stay on this thread.
+clarify — too vague to assess; ask them to pin it down.
+next_topic — this thread is done; move on.
+conclude — ONLY when the constraints permit it. The question field is then not a question at all: it is a short closing beat. Thank them, say one specific true thing about the conversation, and invite them to ask you something.`;
 
 export const TURN_SCHEMA = {
   type: "object",
@@ -117,6 +140,11 @@ export const TURN_SCHEMA = {
       type: "string",
       description: "Why this question, given their answer.",
     },
+    substantive: {
+      type: "boolean",
+      description:
+        "False for a greeting, an empty reply, or anything carrying no information about their system.",
+    },
   },
   required: [
     "rubric",
@@ -127,6 +155,7 @@ export const TURN_SCHEMA = {
     "targetDay",
     "depth",
     "rationale",
+    "substantive",
   ],
 } as const;
 
@@ -138,13 +167,16 @@ export interface TurnContext {
   targetDay: number;
   depth: number;
   questionsAsked: number;
+  /** Computed BEFORE this call — the model writes to it, not around it. */
+  directive: TurnDirective;
 }
 
 export function buildTurnInput(ctx: TurnContext): string {
-  const { blueprint, recentTurns, claimLedger, targetDay, depth } = ctx;
+  const { blueprint, recentTurns, claimLedger, directive } = ctx;
 
-  const focus = blueprint.focusDays.find((f) => f.day === targetDay);
-  const objectives = getObjectives(targetDay);
+  const day = directive.targetDay;
+  const focus = blueprint.focusDays.find((f) => f.day === day);
+  const objectives = getObjectives(day);
 
   const transcript = recentTurns.length
     ? recentTurns
@@ -156,35 +188,60 @@ export function buildTurnInput(ctx: TurnContext): string {
     ? claimLedger
         .map(
           (c) =>
-            `- day ${c.day}: ${c.text}${c.unjustified ? "  [UNJUSTIFIED — worth probing]" : ""}`
+            `- ${c.text}${c.unjustified ? "  [UNJUSTIFIED — worth probing]" : ""}`
         )
         .join("\n")
     : "(nothing claimed yet)";
+
+  // Constraints are instruction, not post-processing. Whatever the model
+  // writes here is what gets recorded, so it must be told the rules first.
+  const constraints: string[] = [];
+  if (directive.mustMove) {
+    constraints.push(
+      `You MUST move on to "${focus?.title ?? `day ${day}`}" now — ${directive.moveReason}. ` +
+        `Set targetDay to ${day} and write your question about that part of the system.`
+    );
+  } else {
+    constraints.push(
+      `You may stay on the current thread (targetDay ${day}) or move on if it is spent.`
+    );
+  }
+  constraints.push(
+    directive.mayConclude
+      ? `You MAY conclude now if the conversation has landed. ${
+          directive.mustConclude ? "You SHOULD conclude — the plan is complete." : ""
+        }`
+      : `You may NOT conclude yet: ${directive.questionsLeft} question(s) still planned and ` +
+        `${directive.uncovered.length} topic(s) untouched. Setting action to conclude will be refused.`
+  );
+  constraints.push(
+    `Follow-ups used on this thread: ${directive.followUpsUsed}/${directive.followUpsAllowed}.`
+  );
+  constraints.push(`Aim for depth ${directive.depth}/5 on the next question.`);
 
   return [
     `PERSONA`,
     blueprint.persona,
     ``,
-    `PLAN`,
-    `Target ${blueprint.targetQuestions} questions. Asked so far: ${ctx.questionsAsked}.`,
-    `Arc: warmup ${blueprint.arc.warmup}, build ${blueprint.arc.build}, stress ${blueprint.arc.stress}, land ${blueprint.arc.land}.`,
-    `Focus days: ${blueprint.focusDays.map((f) => `${f.day} (${f.strategy})`).join(", ")}`,
+    `CONSTRAINTS — follow these exactly`,
+    ...constraints.map((c) => `- ${c}`),
     ``,
-    `CURRENT TARGET — day ${targetDay}${focus ? `: ${focus.title}` : ""}`,
-    focus ? `Strategy: ${focus.strategy}. Why this day: ${focus.reason}` : ``,
-    `Current depth: ${depth}/5`,
+    `CURRENT TOPIC: ${focus?.title ?? "the system they built"}`,
+    focus ? `Angle: ${focus.strategy}. Why this area: ${focus.reason}` : ``,
     ``,
-    `DAY ${targetDay} OBJECTIVES`,
+    `CONTEXT — what this part of the system involved.`,
+    `This is background so you understand the build. It is NOT a checklist.`,
     ...objectives.map((o) => `- ${o}`),
     ``,
-    `CLAIM LEDGER (everything before the recent turns)`,
+    `CLAIM LEDGER — everything they have asserted so far`,
     ledger,
     ``,
     `RECENT TURNS`,
     transcript,
     ``,
     `TASK`,
-    `Assess the candidate's most recent answer, then decide the next question from that assessment.`,
+    `Assess their most recent answer, then ask the single best next question. ` +
+      `If they revealed a weakness, that is your question.`,
   ]
     .filter((line) => line !== ``)
     .join("\n");

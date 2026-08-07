@@ -35,12 +35,14 @@ ${ANTI_INVENTION}
 Here, "the input" is the candidate's mission record below. It is a partial sample of their 31 days.
 
 CHOOSING FOCUS DAYS.
-- Choose ONLY from the days listed in the mission record. Any other day is invalid.
+- You may pick ANY day from the curriculum. The mission record is a partial sample; a day missing from it is still a fine thing to interview on.
+- BUT: you may only make a claim about how they PERFORMED on a day that appears in the mission record. For any other day, say why the area matters for this candidate without asserting how it went. "Worth seeing how they reason about retrieval failures" is fine; "they passed this cleanly" is fabrication.
 - Pick 4-6 days. Fewer than 4 is a failure.
-- Prefer SHIP_IT and CAPSTONE days. Those are real deliverables with decisions attached.
-- Never pick SETUP days. There is nothing worth interviewing on there.
+- Strongly prefer SHIP_IT and CAPSTONE days, and mid-to-late days generally. Those are real deliverables with decisions attached.
+- Avoid early setup-and-scaffolding days. There is very little to interview on in "wire the frontend to the backend" — it produces questions about which endpoint and which base image, which is trivia, not engineering judgement.
+- Never pick SETUP days.
 - Spread across the arc of the build. Do not pick five adjacent days.
-- Every reason must cite this candidate's specific record — attempts, skips, failures, first-try rate. A reason that would apply to anyone is a bad reason.
+- USE AT LEAST TWO DIFFERENT STRATEGIES. A plan where every day is rebuild_confidence is a failed plan: it never checks whether the understanding is real, which is the whole question for a candidate who needed many attempts. Even for a candidate who struggled everywhere, at least one day should be verify_depth.
 
 STRATEGY, KEYED TO THE RECORD.
 - firstTryRate >= 0.8 — they found it easy. startDepth 3-4, lean pressure_test. Find the edge of what they know.
@@ -168,16 +170,27 @@ export function buildPlannerInput(
     ``,
     `Shape: ${signals.profileNote}`,
     ``,
-    `MISSION RECORD — the ONLY days you know anything about.`,
-    `You may not reference performance on any day absent from this list.`,
+    `CURRICULUM — any of these days may be a focus day (SETUP excluded)`,
+    compactCurriculum(),
+    ``,
+    `MISSION RECORD — the ONLY days you know how they PERFORMED on.`,
+    `For any day NOT in this list you may still choose it, but you must not`,
+    `claim how it went.`,
     missionRecord(candidate),
     ``,
-    `SELECTABLE FOCUS DAYS: ${selectableDays(candidate).join(", ")}`,
+    `ON RECORD: ${selectableDays(candidate).join(", ")}`,
     ``,
     `TASK`,
-    `Plan this candidate's interview. Pick 4-6 focus days from the selectable list above and justify each one against the mission record.`,
+    `Plan this candidate's interview. Pick 4-6 focus days, use at least two different strategies, and justify each choice.`,
   ].join("\n");
 }
+
+/**
+ * Words that assert an outcome. A reason for an off-record day may explain
+ * why the area matters, but not how the candidate did on it.
+ */
+const PERFORMANCE_CLAIM =
+  /\b(passed|failed|skipped|attempts?|first try|first attempt|struggled|nailed|breezed|completed it)\b/i;
 
 /** Thrown when the model returns a plan that breaks a hard requirement. */
 export class BlueprintError extends Error {
@@ -204,18 +217,26 @@ export function validateBlueprint(b: Blueprint, candidate: Candidate): Blueprint
     if (day.type === "SETUP") {
       throw new BlueprintError(`focus day ${f.day} is a SETUP day`);
     }
-    // The mission array is a sample; a day outside it is a day we have no
-    // record for, so any claim about it would be fabricated.
-    if (!allowed.has(f.day)) {
+    // Any curriculum day may be a focus day. What is NOT allowed is
+    // asserting how they performed on a day we have no record for.
+    if (!allowed.has(f.day) && PERFORMANCE_CLAIM.test(f.reason)) {
       throw new BlueprintError(
-        `focus day ${f.day} is not in this candidate's mission record ` +
-          `(selectable: ${[...allowed].join(", ")})`
+        `focus day ${f.day} is not in this candidate's mission record, but its ` +
+          `reason claims how they performed: "${f.reason}"`
       );
     }
     if (seen.has(f.day)) continue;
     seen.add(f.day);
     // Trust the curriculum's title over whatever the model echoed back.
     focusDays.push({ ...f, title: day.title });
+  }
+
+  const strategies = new Set(focusDays.map((f) => f.strategy));
+  if (strategies.size < 2) {
+    throw new BlueprintError(
+      `all ${focusDays.length} focus days use strategy "${[...strategies][0]}" — ` +
+        `at least two different strategies are required`
+    );
   }
 
   if (focusDays.length < 4) {

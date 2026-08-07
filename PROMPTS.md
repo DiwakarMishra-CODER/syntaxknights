@@ -895,3 +895,70 @@ and `degradeReport` preserves unquoted gaps untouched.
 That is a different failure from validation and the route will need its
 own fallback — `degradeReport` is exported so the route can build a
 grounded report from state without a model call.
+
+---
+
+## Entry 16 — Seven fixes from the first live run
+
+**Prompt:** fix the six issues diagnosed from the CAND-017 log plus the
+dangling end, in order, no API calls. Fix the off-by-one architecturally
+rather than by relabelling; fix multi-line input; never end on an
+unanswered question; make the follow-up cap quality-aware; fix depth and
+non-substantive scoring; fix question quality in TURN_SYSTEM; loosen the
+planner. Then the user re-runs the session.
+
+**Outcome:** 92 tests pass, typecheck clean, no API calls.
+
+**1. Off-by-one removed at the root.** `applyTurn` is gone. The
+orchestrator now computes a `TurnDirective` BEFORE the call —
+`nextDirective(state, blueprint)` — which is rendered into the prompt as
+explicit instruction ("You MUST move on to X now — 3 follow-ups already
+used"). The model writes its question for the correct topic, and
+`recordTurn` files it under the model's own `targetDay`. Nothing is
+rewritten after generation, so there is nothing to be off by one.
+
+Coverage now credits the day a question was ACTUALLY about. A test proves
+a directed-but-not-yet-asked day is not credited, and a replay asserts
+all ten interviewer stamps match their question text. A model that
+ignores the directive is recorded honestly and flagged as a violation
+rather than silently relabelled.
+
+**2. Multi-line input.** `readAnswer` accumulates lines until a lone "."
+or `/send`, then echoes the captured text with a character count so
+truncation is visible immediately. The last run lost a Docker answer at
+the first newline and scored it as a non-answer.
+
+**3. No dangling end.** When the floors are met the model's `question`
+field becomes a closing beat rather than a probe, and the CLI then reads
+one final "last word" from the candidate before the report.
+
+**4. Quality-aware follow-up cap.** `followUpAllowance` starts at 3 and
+rises to 5 after an answer scoring knowledge >= 4 on the same thread,
+resetting on a topic change. In the last run the cap fired on turn [10],
+the best answer of the interview.
+
+**5. Depth and scoring.** New topics take their depth from the current
+ability estimate rather than the blueprint's `startDepth`, which is why
+depth never exceeded 3 last time. `substantive: false` on the turn output
+skips the rubric entirely, leaving ability untouched — "hello" no longer
+seeds the estimate at 2.20.
+
+**6. Question quality.** TURN_SYSTEM rewritten: day numbers are banned
+outright ("a real interviewer has never seen the syllabus"), objectives
+are explicitly context and not a checklist, consequence questions are
+preferred over inventory ones with the previous run's own bad questions
+as worked examples, cross-topic questions are preferred, acknowledgments
+must vary and may be omitted, and **chasing a revealed weakness outranks
+the plan** — with the wildcard CORS and the missing query router from the
+last run named as the examples that were missed.
+
+**7. Planner loosened.** Focus days may now be ANY curriculum day; only
+performance CLAIMS are restricted to days in `missions[]`, enforced by a
+regex guard that rejects an off-record reason containing passed/failed/
+attempts/skipped. At least two distinct strategies are required — the
+last plan was five identical `rebuild_confidence` days with no
+`verify_depth` anywhere. Mid-to-late and SHIP_IT/CAPSTONE days are
+preferred, and early scaffolding days discouraged: day 3 consumed 4 of 9
+questions and produced the trivia.
+
+**Not yet verified live** — step 8 is the user's run.

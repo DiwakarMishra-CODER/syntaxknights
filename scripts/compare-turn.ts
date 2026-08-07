@@ -7,6 +7,7 @@
  * Runs once. Does not loop. Budget: 3 calls.
  */
 import type { CallUsage } from "../src/lib/llm";
+import { initState, nextDirective } from "../src/lib/orchestrator";
 import { evaluate, type Evaluation } from "../src/lib/prompts/evaluator";
 import { ask } from "../src/lib/prompts/interviewer";
 import { filterInventedClaims } from "../src/lib/prompts/shared";
@@ -114,6 +115,10 @@ const ctx: TurnContext = {
   targetDay: 28,
   depth: 4,
   questionsAsked: 2,
+  directive: nextDirective(
+    { ...initState(blueprint), questionCount: 2, daysCovered: [28], currentDay: 28, currentDepth: 4 },
+    blueprint
+  ),
 };
 
 interface Measured<T> {

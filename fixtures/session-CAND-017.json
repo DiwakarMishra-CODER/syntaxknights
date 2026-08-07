@@ -1,0 +1,279 @@
+{
+  "candidateId": "CAND-017",
+  "turns": [
+    {
+      "answer": "hello",
+      "decision": {
+        "rubric": {
+          "knowledge": 1,
+          "communication": 2,
+          "specificity": 1,
+          "objectivesHit": []
+        },
+        "claims": [],
+        "reaction": "Got it.",
+        "question": "To kick things off, walk me through how you connected your React and Vite frontend to your FastAPI backend on day 3.",
+        "action": "clarify",
+        "targetDay": 3,
+        "depth": 1,
+        "rationale": "The candidate gave a minimal greeting. Need to prompt them to start discussing the Day 3 objectives regarding the React/FastAPI setup.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "We just used fetch from React to hit the FastAPI endpoints. Had to add CORS middleware because it kept erroring at first.",
+      "decision": {
+        "rubric": {
+          "knowledge": 3,
+          "communication": 3,
+          "specificity": 2,
+          "objectivesHit": [
+            "Connect the React frontend with the FastAPI backend"
+          ]
+        },
+        "claims": [
+          {
+            "text": "We just used fetch from React to hit the FastAPI endpoints",
+            "day": 3,
+            "unjustified": false
+          },
+          {
+            "text": "Had to add CORS middleware because it kept erroring at first",
+            "day": 3,
+            "unjustified": false
+          }
+        ],
+        "reaction": "Got it.",
+        "question": "Which specific FastAPI endpoint were you hitting with fetch, and how did you configure the CORS middleware?",
+        "action": "follow_up",
+        "targetDay": 3,
+        "depth": 2,
+        "rationale": "The candidate mentioned using fetch and adding CORS, but left out specifics on the route or configuration. Asking for the endpoint and CORS setup tests specificity.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "It was /api/chat I think. For CORS I just copied the middleware setup from the docs and used allow_origins with a wildcard.",
+      "decision": {
+        "rubric": {
+          "knowledge": 3,
+          "communication": 4,
+          "specificity": 3,
+          "objectivesHit": [
+            "Connect the React frontend with the FastAPI backend"
+          ]
+        },
+        "claims": [
+          {
+            "text": "Hit the /api/chat endpoint from React",
+            "day": 3,
+            "unjustified": false
+          },
+          {
+            "text": "Used allow_origins with a wildcard for CORS setup",
+            "day": 3,
+            "unjustified": false
+          }
+        ],
+        "reaction": "Okay.",
+        "question": "Before wiring up the frontend, how did you test your prompt loop directly against the local Ollama model in the CLI?",
+        "action": "follow_up",
+        "targetDay": 3,
+        "depth": 3,
+        "rationale": "Candidate answered on endpoints and CORS. Moving to probe the command-line chatbot and Ollama aspect of Day 3.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "I just ran the python script in the terminal and typed questions to see what came back. Ollama was running locally so it was pretty quick.",
+      "decision": {
+        "rubric": {
+          "knowledge": 3,
+          "communication": 4,
+          "specificity": 2,
+          "objectivesHit": [
+            "Build a command-line chatbot powered by your local Ollama model"
+          ]
+        },
+        "claims": [
+          {
+            "text": "ran the python script in the terminal and typed questions",
+            "day": 3,
+            "unjustified": false
+          },
+          {
+            "text": "Ollama was running locally",
+            "day": 3,
+            "unjustified": false
+          }
+        ],
+        "reaction": "Okay.",
+        "question": "When you set up the FastAPI backend, how did you structure the health endpoint to check if the service was up?",
+        "action": "follow_up",
+        "targetDay": 3,
+        "depth": 3,
+        "rationale": "Candidate gave a general description of running the CLI script. Specificity is low, and we need to cover the remaining Day 3 objectives like the FastAPI health endpoint.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "Standard /health returning a 200 with a JSON status. But the useful thing was making it check the Ollama connection too, not just that FastAPI was alive — a liveness check that only proves the web server is up will happily report healthy while the model backend is down, so the container never gets restarted.",
+      "decision": {
+        "rubric": {
+          "knowledge": 4,
+          "communication": 4,
+          "specificity": 4,
+          "objectivesHit": [
+            "Scaffold a FastAPI backend with a health endpoint"
+          ]
+        },
+        "claims": [
+          {
+            "text": "Standard /health returning a 200 with a JSON status",
+            "day": 3,
+            "unjustified": false
+          },
+          {
+            "text": "making it check the Ollama connection too",
+            "day": 3,
+            "unjustified": false
+          },
+          {
+            "text": "liveness check that only proves the web server is up will happily report healthy while the model backend is down",
+            "day": 3,
+            "unjustified": false
+          }
+        ],
+        "reaction": "Right.",
+        "question": "How did you actually code that Ollama check inside the health endpoint?",
+        "action": "follow_up",
+        "targetDay": 3,
+        "depth": 4,
+        "rationale": "The candidate correctly distinguished liveness from dependency health checks. Pushing deeper to see the implementation detail of how they queried Ollama within the health route.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "Just a try/except around a request to the Ollama endpoint. If it came back, healthy, if not, 503.",
+      "decision": {
+        "rubric": {
+          "knowledge": 3,
+          "communication": 4,
+          "specificity": 3,
+          "objectivesHit": []
+        },
+        "claims": [
+          {
+            "text": "Just a try/except around a request to the Ollama endpoint",
+            "day": 3,
+            "unjustified": false
+          },
+          {
+            "text": "If it came back, healthy, if not, 503",
+            "day": 3,
+            "unjustified": false
+          }
+        ],
+        "reaction": "Got it.",
+        "question": "On Day 10, how did your query router decide between SQL search and vector search?",
+        "action": "next_topic",
+        "targetDay": 10,
+        "depth": 2,
+        "rationale": "Finished probing the Day 3 health endpoint check; now moving to Day 10 to discuss the query router implementation.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "I don't think we really had a router. It just always did the vector search and if nothing came back we'd say we couldn't find it.",
+      "decision": {
+        "rubric": {
+          "knowledge": 2,
+          "communication": 3,
+          "specificity": 2,
+          "objectivesHit": []
+        },
+        "claims": [
+          {
+            "text": "I don't think we really had a router",
+            "day": 10,
+            "unjustified": false
+          },
+          {
+            "text": "It just always did the vector search and if nothing came back we'd say we couldn't find it",
+            "day": 10,
+            "unjustified": false
+          }
+        ],
+        "reaction": "Got it.",
+        "question": "Moving to Day 22 — how did your router agent decide which healthcare specialist agent to send a request to?",
+        "action": "next_topic",
+        "targetDay": 22,
+        "depth": 2,
+        "rationale": "The candidate lacked a router on Day 10. Transitioning to Day 22 to examine how they implemented the router agent for multi-agent orchestration.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "That was mostly LangChain's agent stuff. We gave it the tools and it picked. I couldn't really tell you how it decided.",
+      "decision": {
+        "rubric": {
+          "knowledge": 2,
+          "communication": 3,
+          "specificity": 1,
+          "objectivesHit": []
+        },
+        "claims": [
+          {
+            "text": "LangChain's agent stuff picked the tools",
+            "day": 22,
+            "unjustified": true
+          }
+        ],
+        "reaction": "Right.",
+        "question": "When you containerized the backend for Day 28, what base image did you start with in your Dockerfile?",
+        "action": "next_topic",
+        "targetDay": 28,
+        "depth": 1,
+        "rationale": "The candidate struggled to explain the Day 22 agent routing, so moving to the target Day 28 with a low-depth, concrete foundational question about Docker to rebuild confidence.",
+        "rejectedClaims": []
+      }
+    },
+    {
+      "answer": "Answer:",
+      "decision": {
+        "rubric": {
+          "knowledge": 1,
+          "communication": 1,
+          "specificity": 1,
+          "objectivesHit": []
+        },
+        "claims": [],
+        "reaction": "Okay.",
+        "question": "For your capstone demo, how did you showcase the complete chatbot with your RAG and agents working together?",
+        "action": "next_topic",
+        "targetDay": 31,
+        "depth": 2,
+        "rationale": "The candidate did not provide an answer regarding Day 28 containerization, so we are moving directly to the Day 31 capstone project to examine the integrated system.",
+        "rejectedClaims": []
+      }
+    }
+  ],
+  "feedback": {
+    "summary": "You walked through key architectural details of your enterprise healthcare chatbot, showing particular clarity around API integration and backend health monitoring. Your explanation of dependency health checks was a highlight of the conversation. When the discussion moved toward query routing mechanisms, agent orchestration under the hood, and Docker base configuration, your explanations thinned out.",
+    "strengths": [
+      "You articulated a clear architectural reason for probing model dependencies in your health endpoint, noting that \"a liveness check that only proves the web server is up will happily report healthy while the model backend is down, so the container never gets restarted.\"",
+      "You described the practical HTTP error handling logic for that check plainly: \"Just a try/except around a request to the Ollama endpoint. If it came back, healthy, if not, 503.\"",
+      "You clearly described how you wired up the initial communication between your frontend and API: \"We just used fetch from React to hit the FastAPI endpoints. Had to add CORS middleware because it kept erroring at first.\""
+    ],
+    "gaps": [
+      "When asked about query routing between SQL and vector engines, you explained that the system relied solely on a basic fallback path: \"I don't think we really had a router. It just always did the vector search and if nothing came back we'd say we couldn't find it.\"",
+      "When explaining how multi-agent choices were made, the underlying selection logic wasn't fully unpacked: \"That was mostly LangChain's agent stuff. We gave it the tools and it picked. I couldn't really tell you how it decided.\"",
+      "The question regarding your Dockerfile base image configuration was left unanswered: \"Answer:\""
+    ],
+    "next": [
+      "Open your Day 22 agent code and inspect the tool descriptions and system prompts you passed into LangChain to see exactly how the model selects which tool to execute.",
+      "Check your Day 28 Dockerfile in your repository to confirm the exact base image name and tag you built your backend container on.",
+      "Look at your Day 10 retrieval code and draft a simple conditional check or classification step before the vector lookup to see how you would route incoming requests based on content."
+    ]
+  }
+}

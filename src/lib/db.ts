@@ -67,6 +67,7 @@ const EMPTY_STATE: SessionState = {
   currentDay: 0,
   currentDepth: 2,
   followUpCount: 0,
+  followUpAllowance: 3,
   abilityEstimate: 3,
   mode: "normal",
   consecutiveWeak: 0,

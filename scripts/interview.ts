@@ -18,7 +18,13 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 
 import { LLMError, type CallUsage } from "../src/lib/llm";
-import { applyTurn, initState, mayConclude } from "../src/lib/orchestrator";
+import {
+  initState,
+  mayConclude,
+  nextDirective,
+  recordTurn,
+  shouldEnd,
+} from "../src/lib/orchestrator";
 import { writeReport } from "../src/lib/prompts/reporter";
 import { runTurn, type TurnContext, type TurnResult } from "../src/lib/prompts/turn";
 import { getCandidate } from "../src/lib/signals";
@@ -41,7 +47,46 @@ function loadBlueprint(id: string): Blueprint {
   }
 }
 
-function statePanel(state: SessionState, rationale: string, overrides: string[]) {
+/**
+ * Reads a multi-line answer. A single readline call truncated a pasted
+ * answer at the first newline in the last run, and the lost text was
+ * scored as a non-answer. Submit with a lone "." or /send.
+ */
+async function readAnswer(
+  rl: ReturnType<typeof createInterface>,
+  prompt: string
+): Promise<string> {
+  console.log(`${prompt} (finish with a single "." on its own line, or /quit)`);
+  const lines: string[] = [];
+
+  for (;;) {
+    const line = await rl.question(lines.length === 0 ? "> " : "| ");
+    const t = line.trim();
+
+    if (t === "/quit") return "/quit";
+    if (t === "." || t === "/send") break;
+    lines.push(line);
+
+    // A one-line answer with no continuation is the common case: allow a
+    // blank line to submit it, but only when nothing is pending.
+    if (t === "" && lines.length === 1) {
+      lines.pop();
+      continue;
+    }
+  }
+
+  const answer = lines.join("\n").trim();
+  // Echo so truncation is visible immediately, not three turns later.
+  console.log(`\n  [captured ${answer.length} chars]\n  ${answer.replace(/\n/g, "\n  ")}\n`);
+  return answer;
+}
+
+function statePanel(
+  state: SessionState,
+  rationale: string,
+  violations: string[],
+  substantive = true
+) {
   const line = (k: string, v: string) => `  ${k.padEnd(16)} ${v}`;
   console.log(`\n  ${"-".repeat(62)}`);
   console.log(line("question", String(state.questionCount)));
@@ -50,11 +95,12 @@ function statePanel(state: SessionState, rationale: string, overrides: string[])
   console.log(line("days covered", `[${state.daysCovered.join(", ")}]`));
   console.log(line("ability est.", state.abilityEstimate.toFixed(2)));
   console.log(line("mode", state.mode));
-  console.log(line("follow-ups", String(state.followUpCount)));
+  console.log(
+    line("follow-ups", `${state.followUpCount}/${state.followUpAllowance}`)
+  );
+  if (!substantive) console.log(line("scored", "no — non-substantive reply"));
   console.log(line("rationale", rationale));
-  if (overrides.length) {
-    for (const o of overrides) console.log(line("OVERRIDE", o));
-  }
+  for (const v of violations) console.log(line("VIOLATION", v));
   console.log(`  ${"-".repeat(62)}\n`);
 }
 
@@ -104,7 +150,7 @@ async function main() {
   for (let i = 0; i < HARD_CAP && !concluded; i++) {
     const answer = replay
       ? replay.turns[i]?.answer
-      : await rl!.question("YOU: ");
+      : await readAnswer(rl!, "YOU:");
 
     if (answer === undefined) break;
     if (!replay && answer.trim().toLowerCase() === "/quit") break;
@@ -121,13 +167,18 @@ async function main() {
       rationale: null,
     });
 
+    // Constraints computed BEFORE the call, so the model writes its
+    // question for the right topic and nothing is rewritten afterwards.
+    const directive = nextDirective(state, blueprint);
+
     const ctx: TurnContext = {
       blueprint,
       recentTurns: transcript.slice(-4), // token discipline: last 4 only
       claimLedger: ledger,
-      targetDay: state.currentDay,
-      depth: state.currentDepth,
+      targetDay: directive.targetDay,
+      depth: directive.depth,
       questionsAsked: state.questionCount,
+      directive,
     };
 
     const decision = replay
@@ -136,29 +187,60 @@ async function main() {
 
     record.turns.push({ answer, decision });
 
-    const applied = applyTurn(state, decision, blueprint);
-    state = applied.state;
+    const ending = shouldEnd(state, decision);
+    const recorded = recordTurn(state, decision, blueprint, directive);
+    state = recorded.state;
 
     ledger.push(...decision.claims);
-    rubrics.push({ day: decision.targetDay, depth: decision.depth, rubric: decision.rubric });
+    if (decision.substantive !== false) {
+      rubrics.push({
+        day: decision.targetDay,
+        depth: decision.depth,
+        rubric: decision.rubric,
+      });
+    }
 
-    console.log(
-      `\nINTERVIEWER: ${applied.decision.reaction} ${applied.decision.question}`
-    );
-    statePanel(state, applied.decision.rationale, applied.overrides);
+    const said = [decision.reaction, decision.question].filter(Boolean).join(" ").trim();
+    console.log(`\nINTERVIEWER: ${said}`);
+    statePanel(state, decision.rationale, recorded.violations, decision.substantive);
 
     transcript.push({
       turnNumber: transcript.length + 1,
       role: "interviewer",
-      content: `${applied.decision.reaction} ${applied.decision.question}`,
-      targetDay: applied.decision.targetDay,
-      depth: applied.decision.depth,
-      rubric: applied.decision.rubric,
-      claims: applied.decision.claims,
-      rationale: applied.decision.rationale,
+      content: said,
+      // The day the question is ACTUALLY about — the model wrote it for
+      // this day because the directive told it to before generation.
+      targetDay: decision.targetDay,
+      depth: decision.depth,
+      rubric: decision.substantive === false ? null : decision.rubric,
+      claims: decision.claims,
+      rationale: decision.rationale,
     });
 
-    if (applied.decision.action === "conclude") concluded = true;
+    if (recorded.concludeBlocked) {
+      console.warn(`  [orchestrator] refused to end early — continuing\n`);
+    }
+
+    // The closing beat is printed above; give them the last word rather
+    // than exiting on an unanswered line.
+    if (ending) {
+      concluded = true;
+      if (!replay) {
+        const parting = await readAnswer(rl!, "YOU (last word, or just \".\"):");
+        if (parting && parting !== "/quit") {
+          transcript.push({
+            turnNumber: transcript.length + 1,
+            role: "candidate",
+            content: parting,
+            targetDay: state.currentDay,
+            depth: state.currentDepth,
+            rubric: null,
+            claims: [],
+            rationale: null,
+          });
+        }
+      }
+    }
   }
 
   rl?.close();

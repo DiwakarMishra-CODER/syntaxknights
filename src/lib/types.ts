@@ -207,6 +207,8 @@ export interface SessionState {
   currentDay: number;
   currentDepth: number;
   followUpCount: number;
+  /** Follow-ups permitted on the current thread; rises after a strong answer. */
+  followUpAllowance: number;
   /** Weighted running average of knowledge scores, recent weighted higher. */
   abilityEstimate: number;
   mode: InterviewMode;

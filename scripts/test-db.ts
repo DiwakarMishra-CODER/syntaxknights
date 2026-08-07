@@ -81,6 +81,7 @@ async function main() {
     currentDay: 12,
     currentDepth: 1,
     followUpCount: 1,
+    followUpAllowance: 3,
     abilityEstimate: 3.4,
     mode: "recovery",
     consecutiveWeak: 2,

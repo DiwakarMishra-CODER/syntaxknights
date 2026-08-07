@@ -12,12 +12,15 @@ function blueprintWithDays(days: number[]): Blueprint {
     openingLine: "o",
     targetQuestions: 10,
     arc: { warmup: 2, build: 3, stress: 3, land: 2 },
-    focusDays: days.map((day) => ({
+    // Strategies must vary — a plan that is all one strategy is rejected.
+    focusDays: days.map((day, i) => ({
       day,
       title: "t",
       reason: "r",
       startDepth: 3,
-      strategy: "verify_depth" as const,
+      strategy: (i % 2 === 0 ? "verify_depth" : "probe_gap") as
+        | "verify_depth"
+        | "probe_gap",
     })),
   };
 }
@@ -58,12 +61,30 @@ describe("missionRecord", () => {
 });
 
 describe("validateBlueprint", () => {
-  it("rejects a day absent from the candidate's record", () => {
-    // Day 25 is the exact day the planner previously fabricated for Harold.
+  it("ALLOWS a day absent from the record when the reason claims no performance", () => {
+    // Step 7: questions may cover any curriculum day. Only performance
+    // claims are restricted to days we actually have a record for.
     expect(selectableDays(harold)).not.toContain(25);
-    expect(() =>
-      validateBlueprint(blueprintWithDays([28, 15, 23, 25]), harold)
-    ).toThrow(/day 25 is not in this candidate's mission record/);
+    const b = blueprintWithDays([28, 15, 23, 25]);
+    b.focusDays[3].reason =
+      "Worth seeing how they reason about evaluating a clinical assistant.";
+    expect(() => validateBlueprint(b, harold)).not.toThrow();
+  });
+
+  it("REJECTS an off-record day whose reason asserts how they did", () => {
+    const b = blueprintWithDays([28, 15, 23, 25]);
+    b.focusDays[3].reason = "Harold passed this one on a standard attempt.";
+    expect(() => validateBlueprint(b, harold)).toThrow(
+      /reason claims how they performed/
+    );
+  });
+
+  it("rejects a plan that uses only one strategy", () => {
+    const b = blueprintWithDays([28, 15, 23, 31]);
+    for (const f of b.focusDays) f.strategy = "rebuild_confidence";
+    expect(() => validateBlueprint(b, harold)).toThrow(
+      /at least two different strategies/
+    );
   });
 
   it("rejects SETUP days", () => {
