@@ -19,7 +19,7 @@ export const WhyDifferent: React.FC = () => {
         {/* One Premium Comparison Box */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch text-left">
           {/* Traditional */}
-          <div className="glass-panel rounded-3xl p-8 border-rose-500/20 bg-slate-950/40 flex flex-col justify-between space-y-6">
+          <div className="glass-panel glass-shine-card rounded-3xl p-8 border-rose-500/20 bg-slate-950/40 flex flex-col justify-between space-y-6">
             <div className="space-y-3">
               <div className="text-xs font-mono text-rose-400 uppercase tracking-widest font-semibold">
                 TRADITIONAL PREP
@@ -40,7 +40,7 @@ export const WhyDifferent: React.FC = () => {
           </div>
 
           {/* MockMate */}
-          <div className="glass-panel rounded-3xl p-8 border-[var(--accent-emerald-border)] bg-slate-900/80 shadow-2xl flex flex-col justify-between space-y-6 relative overflow-hidden">
+          <div className="glass-panel glass-shine-card rounded-3xl p-8 border-[var(--accent-emerald-border)] bg-slate-900/80 shadow-2xl flex flex-col justify-between space-y-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 px-3 py-1 bg-[var(--accent-emerald-glow)] text-[var(--accent-emerald)] text-[10px] font-mono rounded-bl-xl border-l border-b border-[var(--accent-emerald-border)]">
               MOCKMATE
             </div>

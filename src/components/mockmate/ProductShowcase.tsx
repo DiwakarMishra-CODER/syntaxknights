@@ -67,28 +67,47 @@ export const ProductShowcase: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("System Architecture");
   const [stepIndex, setStepIndex] = useState(0);
   const [isThinking, setIsThinking] = useState(false);
+  const [displayedFollowUp, setDisplayedFollowUp] = useState("");
 
   const scenarioSteps = SHOWCASE_SCENARIOS[activeTab];
   const currentStep = scenarioSteps[stepIndex] || scenarioSteps[0];
 
+  // Animated text reveal for follow-up
   useEffect(() => {
     setIsThinking(true);
-    const timer = setTimeout(() => setIsThinking(false), 800);
+    setDisplayedFollowUp("");
+
+    const timer = setTimeout(() => {
+      setIsThinking(false);
+      let charIdx = 0;
+      const text = currentStep.followUp;
+      const interval = setInterval(() => {
+        if (charIdx <= text.length) {
+          setDisplayedFollowUp(text.slice(0, charIdx));
+          charIdx += 3;
+        } else {
+          clearInterval(interval);
+        }
+      }, 20);
+      return () => clearInterval(interval);
+    }, 600);
+
     return () => clearTimeout(timer);
-  }, [activeTab, stepIndex]);
+  }, [activeTab, stepIndex, currentStep]);
 
   return (
     <section id="showcase" className="py-20 relative z-10">
       <div className="max-w-5xl mx-auto px-4 md:px-8">
         {/* Full-width Glass Conversation Showcase */}
-        <div className="glass-panel rounded-[32px] p-6 sm:p-12 border border-[var(--glass-border)] bg-slate-900/70 shadow-2xl relative overflow-hidden text-left">
-          {/* Ambient Edge Glow */}
-          <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-[var(--accent-emerald)] opacity-15 blur-3xl pointer-events-none"></div>
+        <div className="glass-panel glass-shine-card rounded-[32px] p-6 sm:p-12 border border-[var(--glass-border)] bg-slate-900/70 shadow-2xl relative overflow-hidden text-left transition-transform duration-500 hover:scale-[1.01]">
+          {/* Ambient Edge Auroras */}
+          <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-[var(--accent-emerald)] opacity-20 blur-3xl pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-[var(--accent-ice-blue)] opacity-20 blur-3xl pointer-events-none"></div>
 
           {/* Top Bar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-800/80 relative z-10">
             <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-[var(--accent-emerald)] animate-pulse"></span>
+              <span className="w-3 h-3 rounded-full bg-[var(--accent-emerald)] pulse-ring"></span>
               <span className="text-xs font-mono text-slate-300 uppercase tracking-widest font-semibold">
                 THE INTERVIEW • {currentStep.topicTag}
               </span>
@@ -103,9 +122,9 @@ export const ProductShowcase: React.FC = () => {
                     setActiveTab(topic);
                     setStepIndex(0);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                     activeTab === topic
-                      ? "bg-[var(--accent-emerald-glow)] text-[var(--accent-emerald)] border border-[var(--accent-emerald-border)] font-bold"
+                      ? "bg-[var(--accent-emerald-glow)] text-[var(--accent-emerald)] border border-[var(--accent-emerald-border)] font-bold shadow-md"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -118,9 +137,10 @@ export const ProductShowcase: React.FC = () => {
           {/* Conversation Stream */}
           <div className="space-y-6 relative z-10">
             {/* Interviewer Question */}
-            <div className="flex items-start gap-4 max-w-3xl">
-              <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sm text-[var(--accent-emerald)] shrink-0">
+            <div className="flex items-start gap-4 max-w-3xl animate-in fade-in slide-in-from-left-3 duration-500">
+              <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sm text-[var(--accent-emerald)] shrink-0 shadow-md relative">
                 M
+                <span className="absolute inset-0 rounded-2xl bg-[var(--accent-emerald)] opacity-40 pulse-ring"></span>
               </div>
               <div className="bg-slate-950/80 border border-slate-800 rounded-3xl p-6 text-base sm:text-lg text-slate-100 leading-relaxed shadow-sm font-light">
                 <div className="text-[11px] font-mono text-[var(--accent-emerald)] mb-1 font-semibold uppercase tracking-wider">
@@ -131,7 +151,7 @@ export const ProductShowcase: React.FC = () => {
             </div>
 
             {/* Candidate Response */}
-            <div className="flex items-start gap-4 justify-end pl-8">
+            <div className="flex items-start gap-4 justify-end pl-8 animate-in fade-in slide-in-from-right-3 duration-600">
               <div className="bg-[var(--accent-emerald-glow)] border border-[var(--accent-emerald-border)] rounded-3xl p-6 text-base sm:text-lg text-slate-100 leading-relaxed shadow-sm font-light max-w-3xl">
                 <div className="text-[11px] font-mono text-[var(--accent-emerald)] mb-1 font-semibold uppercase tracking-wider text-right">
                   Candidate
@@ -146,30 +166,34 @@ export const ProductShowcase: React.FC = () => {
             {/* Thinking Indicator */}
             <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-950/90 border border-slate-800 text-xs font-mono text-slate-300">
               <span
-                className={`w-2 h-2 rounded-full bg-[var(--accent-ice-blue)] ${
+                className={`w-2.5 h-2.5 rounded-full bg-[var(--accent-ice-blue)] ${
                   isThinking ? "animate-ping" : "animate-pulse"
                 }`}
               ></span>
               <span className="text-[var(--accent-ice-blue)]">
                 {isThinking
-                  ? "Evaluating reasoning depth..."
+                  ? "Evaluating reasoning depth & trade-offs..."
                   : currentStep.thinking}
               </span>
             </div>
 
-            {/* Adaptive Follow-up */}
-            <div className="flex items-start gap-4 max-w-3xl">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--accent-emerald)] to-emerald-600 flex items-center justify-center font-bold text-[#0B1220] text-sm shrink-0 shadow-lg">
+            {/* Adaptive Follow-up with Animated Typing */}
+            <div className="flex items-start gap-4 max-w-3xl animate-in fade-in slide-in-from-bottom-3 duration-700">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--accent-emerald)] to-emerald-600 flex items-center justify-center font-bold text-[#0B1220] text-sm shrink-0 shadow-lg relative">
                 M
+                <span className="absolute inset-0 rounded-2xl bg-[var(--accent-emerald)] opacity-30 pulse-ring"></span>
               </div>
               <div className="bg-slate-950/90 border border-[var(--accent-ice-blue-border)] rounded-3xl p-6 text-base sm:text-lg text-white leading-relaxed shadow-xl relative overflow-hidden">
                 <div className="text-[11px] font-mono text-[var(--accent-ice-blue)] mb-1 font-semibold uppercase tracking-wider flex items-center justify-between">
                   <span>MockMate • Adaptive Follow-up</span>
-                  <span className="text-[10px] bg-[var(--accent-ice-blue-glow)] px-2 py-0.5 rounded text-[var(--accent-ice-blue)]">
+                  <span className="text-[10px] bg-[var(--accent-ice-blue-glow)] px-2 py-0.5 rounded text-[var(--accent-ice-blue)] border border-[var(--accent-ice-blue-border)]">
                     REASONING PROBE
                   </span>
                 </div>
-                {currentStep.followUp}
+                {displayedFollowUp}
+                {displayedFollowUp.length < currentStep.followUp.length && (
+                  <span className="inline-block w-2 h-4 bg-[var(--accent-ice-blue)] animate-pulse ml-1"></span>
+                )}
               </div>
             </div>
           </div>
@@ -194,7 +218,7 @@ export const ProductShowcase: React.FC = () => {
                     Math.min(scenarioSteps.length - 1, prev + 1)
                   )
                 }
-                className="px-4 py-2 rounded-xl bg-[var(--accent-emerald-glow)] text-[var(--accent-emerald)] hover:bg-[var(--accent-emerald-border)] transition-colors border border-[var(--accent-emerald-border)] font-bold"
+                className="px-4 py-2 rounded-xl bg-[var(--accent-emerald-glow)] text-[var(--accent-emerald)] hover:bg-[var(--accent-emerald-border)] transition-colors border border-[var(--accent-emerald-border)] font-bold shadow-md hover:scale-105"
               >
                 Next Sequence →
               </button>

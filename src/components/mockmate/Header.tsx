@@ -12,11 +12,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
   return (
     <header className="fixed top-0 left-0 right-0 z-40 px-4 py-5 md:px-8 transition-all duration-300">
       <div className="max-w-6xl mx-auto">
-        <nav className="glass-nav rounded-full px-6 py-3 flex items-center justify-between border border-[var(--glass-border)] shadow-2xl">
-          {/* Logo */}
+        <nav className="glass-nav rounded-full px-6 py-3 flex items-center justify-between border border-[var(--glass-border)] shadow-2xl relative overflow-hidden">
+          {/* Logo with Pulsing Emerald Ring */}
           <a href="#" className="flex items-center gap-2.5 text-left group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent-emerald)] to-[#10B981] flex items-center justify-center shadow-lg shadow-[var(--accent-emerald-glow)] group-hover:scale-105 transition-transform">
-              <span className="text-[#0B1220] font-bold text-sm font-sans">M</span>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent-emerald)] to-[#10B981] flex items-center justify-center shadow-lg shadow-[var(--accent-emerald-glow)] group-hover:scale-105 transition-transform relative">
+              <span className="text-[#0B1220] font-bold text-sm font-sans z-10">M</span>
+              <span className="absolute inset-0 rounded-xl bg-[var(--accent-emerald)] opacity-40 pulse-ring"></span>
             </div>
             <span className="text-lg font-semibold tracking-tight text-white font-sans">
               Mock<span className="text-[var(--accent-emerald)] font-light">Mate</span>

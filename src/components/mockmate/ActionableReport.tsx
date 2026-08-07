@@ -26,7 +26,7 @@ export const ActionableReport: React.FC<ActionableReportProps> = ({
         </div>
 
         {/* One Elegant Report Panel */}
-        <div className="glass-panel rounded-[32px] p-8 sm:p-12 border border-[var(--glass-border)] bg-slate-900/80 shadow-2xl relative overflow-hidden text-left">
+        <div className="glass-panel glass-shine-card rounded-[32px] p-8 sm:p-12 border border-[var(--glass-border)] bg-slate-900/80 shadow-2xl relative overflow-hidden text-left">
           {/* Top Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-800">
             <div>
@@ -53,7 +53,7 @@ export const ActionableReport: React.FC<ActionableReportProps> = ({
               <div className="p-6 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between text-xs font-mono text-slate-400">
                   <span>CONVERSATION TIMELINE</span>
-                  <span className="text-[var(--accent-emerald)]">45 MIN</span>
+                  <span className="text-[var(--accent-emerald)] font-bold">45 MIN</span>
                 </div>
                 <div className="space-y-2.5 font-mono text-xs">
                   <div className="flex items-center justify-between">

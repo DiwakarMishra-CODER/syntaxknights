@@ -53,7 +53,7 @@ export const ProductMoments: React.FC = () => {
           {MOMENTS.map((m, i) => (
             <div
               key={i}
-              className="glass-panel rounded-3xl p-8 border border-[var(--glass-border)] bg-slate-900/60 flex flex-col justify-between space-y-6 hover:bg-slate-900/90 transition-all"
+              className="glass-panel glass-shine-card rounded-3xl p-8 border border-[var(--glass-border)] bg-slate-900/60 flex flex-col justify-between space-y-6 hover:bg-slate-900/90 transition-all hover:scale-[1.02]"
             >
               <div className="space-y-3">
                 <div
