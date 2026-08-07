@@ -482,3 +482,89 @@ For Diane (100% coverage, 100% first-try) the inference is sound; for
 Harold (56% first-try) the day-25 claim that he "passed this on a
 standard attempt" is not supported by his record. Worth constraining in
 the prompt, or restricting focus days to those present in `missions[]`.
+
+---
+
+## Entry 9 — Invert the routing, ground the Planner, merge the turn
+
+**Prompt:** (0) invert role→model routing on the hypothesis that
+gemini-3.6-flash's 20 RPD is a new-model restriction while GA models are
+far more generous, and add passive quota telemetry instead of spending
+quota to probe; (1) fix the Planner fabricating Harold's day-25 record by
+restricting focusDays to the candidate's own missions[] and adding a
+grounding rule; (2) merge Evaluator + Interviewer into one call; (3) A/B
+both paths on the same model.
+
+A `scripts/probe-quota.ts` run was started and then cancelled to stop it
+spending quota. It salvaged two facts before being killed:
+gemini-3.6-flash returned 429 at 0 successes with `limit: 20`, and
+gemini-3.5-flash-lite reached 17 consecutive successes with no 429 on a
+key that had already served many calls that day.
+
+**0 — Routing inverted.** `turn` → flash-lite "medium"; `planner` and
+`reporter` → 3.6-flash "high". `interviewer` and `evaluator` kept, both
+moved to flash-lite so an A/B against `turn` varies only the merge.
+Marked in llm.ts and CLAUDE.md as a hypothesis pending telemetry.
+
+Telemetry lands in `.quota-log.json` (gitignored, JSON Lines despite the
+name so appends are O(1)) via `src/lib/quota-log.ts`, with
+`npm run quota:report` for per-model per-day totals. It is
+fire-and-forget: on Vercel the filesystem is read-only outside /tmp, so
+the first failed write disables it permanently rather than throwing.
+
+**Interviews per day, 6-key pool:** the binding constraint is
+gemini-3.6-flash at 20 RPD/key. Planner + Reporter = 2 calls per
+interview, so 10 interviews per key per day, **60 across 6 keys**. Under
+the old routing the turn loop also sat on 3.6-flash — 12 calls per
+interview, 1.6 interviews per key per day, 10 across 6 keys. The
+inversion is a 6x improvement. flash-lite at 10 calls per interview is
+not binding at any plausible GA ceiling.
+
+**1 — Hallucination fixed, but regeneration is BLOCKED.** The root cause
+was that the prompt listed all 29 non-SETUP days while the record covers
+only ~10, so the model filled the gaps. `buildPlannerInput` now sends a
+MISSION RECORD of only the candidate's own missions with real outcomes,
+plus an explicit selectable-days list, and the system prompt forbids
+referencing any absent day. `validateBlueprint` now hard-rejects
+out-of-record days in code, so a fabrication cannot survive even if the
+model attempts one.
+
+Regenerating on gemini-3.6-flash returned 0/5 — that model's daily quota
+was already spent. `src/lib/prompts/planner.test.ts` proves the fix
+without API calls: Harold's selectable days are 4, 5, 14, 15, 21, 22, 23,
+27, 28, 31 — day 25, the exact day previously fabricated, is absent and
+is now rejected with `focus day 25 is not in this candidate's mission
+record`. 20 tests pass. **The five blueprints still need regenerating on
+gemini-3.6-flash once quota resets.**
+
+**2 — Turn merged.** `src/lib/prompts/turn.ts`, one flash-lite call
+returning rubric + claims + reaction + question + action + targetDay +
+depth + rationale. `evaluator.ts` and `interviewer.ts` written as the
+separate path and kept for reversion.
+
+**3 — A/B, one run, 3 calls, both paths on flash-lite:**
+
+| path | calls | latency | in | out | thought | total |
+|---|---|---|---|---|---|---|
+| A separate | 2 | 11521ms | 1184 | 200 | 605 | 1989 |
+| B merged | 1 | 6973ms | 1154 | 209 | 632 | 1995 |
+
+B halves the requests and is 39% faster. Tokens are a wash — the merged
+prompt is bigger, so the saving is in REQUESTS, which is exactly the
+scarce resource.
+
+**Honest read: B is better on economics and rubric, worse on claim
+fidelity.** B's rubric (2/2/1) is better calibrated than A's flat 1/1/1
+for an answer that was vague rather than absent. But B extracted the
+claim "configured termination grace period to handle active streaming
+sessions" when the candidate only said "we set it up properly so sessions
+keep working" — a fabricated mechanism, the same failure class as the
+Planner's day 25. A's claim quoted the hand-wave faithfully. B's question
+then presupposed that invented mechanism. A's question was honest but a
+weak yes/no.
+
+The fabrication is a prompt problem, not an argument against merging, so
+TURN_SYSTEM gained an EXTRACT-NEVER-INVENT rule using this exact failure
+as the worked example, plus a bar on questions presupposing unmentioned
+mechanisms. **That fix is unverified** — re-running would have exceeded
+the one-run budget.

@@ -3,6 +3,7 @@ import { callLLM, LLMError } from "../llm";
 import { deriveSignals, type DerivedSignals } from "../signals";
 import {
   FOCUS_STRATEGIES,
+  isSkipped,
   type Blueprint,
   type Candidate,
   type FocusDay,
@@ -28,7 +29,11 @@ All 31 days build a single system: an enterprise healthcare chatbot. A "day" is 
 PERSONA.
 You are casting a staff engineer who is hiring for a healthcare AI team. Warm, curious, direct. Genuinely interested in how things were built and unafraid to push. Not a quizmaster, not a friend. Adapt the register to this specific candidate: a nervous career-changer and a 28-year veteran should not meet the same interviewer.
 
+GROUNDING — THE HARDEST RULE.
+You may only reference performance on days present in the candidate's mission record below. Never infer or assume how they did on any other day. The record is a partial sample of their 31 days: a day being absent from it means you know NOTHING about how that day went, not that it went well. If you catch yourself writing "passed on a standard attempt" or "completed cleanly" about a day that is not in the record, you are fabricating.
+
 CHOOSING FOCUS DAYS.
+- Choose ONLY from the days listed in the mission record. Any other day is invalid.
 - Pick 4-6 days. Fewer than 4 is a failure.
 - Prefer SHIP_IT and CAPSTONE days. Those are real deliverables with decisions attached.
 - Never pick SETUP days. There is nothing worth interviewing on there.
@@ -102,6 +107,41 @@ export function compactCurriculum(): string {
     .join("\n");
 }
 
+/**
+ * The days this candidate is actually on record for, excluding SETUP.
+ * Focus days must come from here — the mission array is a ~10-day sample,
+ * so anything outside it is a day we know nothing about.
+ */
+export function selectableDays(candidate: Candidate): number[] {
+  const byDay = new Map(loadCurriculum().days.map((d) => [d.day, d]));
+  return candidate.missions
+    .filter((m) => byDay.get(m.day)?.type !== "SETUP")
+    .map((m) => m.day)
+    .sort((a, b) => a - b);
+}
+
+/** Every mission on record, with its real outcome spelled out. */
+export function missionRecord(candidate: Candidate): string {
+  const byDay = new Map(loadCurriculum().days.map((d) => [d.day, d]));
+
+  return candidate.missions
+    .slice()
+    .sort((a, b) => a.day - b.day)
+    .map((m) => {
+      const day = byDay.get(m.day);
+      const head = `Day ${m.day} — ${day?.title ?? m.title} [${day?.type ?? "?"}]`;
+
+      if (isSkipped(m)) return `${head} — SKIPPED, never attempted`;
+      if (!m.passed) {
+        return `${head} — FAILED after ${m.attempts} attempt${m.attempts === 1 ? "" : "s"}`;
+      }
+      return m.attempts === 1
+        ? `${head} — passed first try`
+        : `${head} — passed after ${m.attempts} attempts`;
+    })
+    .join("\n");
+}
+
 export function buildPlannerInput(
   candidate: Candidate,
   signals: DerivedSignals
@@ -126,11 +166,14 @@ export function buildPlannerInput(
     ``,
     `Shape: ${signals.profileNote}`,
     ``,
-    `CURRICULUM (day, title, type — SETUP days already excluded)`,
-    compactCurriculum(),
+    `MISSION RECORD — the ONLY days you know anything about.`,
+    `You may not reference performance on any day absent from this list.`,
+    missionRecord(candidate),
+    ``,
+    `SELECTABLE FOCUS DAYS: ${selectableDays(candidate).join(", ")}`,
     ``,
     `TASK`,
-    `Plan this candidate's interview. Pick 4-6 focus days and justify each one against their record above.`,
+    `Plan this candidate's interview. Pick 4-6 focus days from the selectable list above and justify each one against the mission record.`,
   ].join("\n");
 }
 
@@ -146,8 +189,9 @@ export class BlueprintError extends Error {
  * Schema enforcement covers types and enums, but not the rules that depend
  * on the curriculum (no SETUP days, real day numbers). Those are checked here.
  */
-export function validateBlueprint(b: Blueprint): Blueprint {
+export function validateBlueprint(b: Blueprint, candidate: Candidate): Blueprint {
   const byDay = new Map(loadCurriculum().days.map((d) => [d.day, d]));
+  const allowed = new Set(selectableDays(candidate));
 
   const seen = new Set<number>();
   const focusDays: FocusDay[] = [];
@@ -157,6 +201,14 @@ export function validateBlueprint(b: Blueprint): Blueprint {
     if (!day) throw new BlueprintError(`focus day ${f.day} is not in the curriculum`);
     if (day.type === "SETUP") {
       throw new BlueprintError(`focus day ${f.day} is a SETUP day`);
+    }
+    // The mission array is a sample; a day outside it is a day we have no
+    // record for, so any claim about it would be fabricated.
+    if (!allowed.has(f.day)) {
+      throw new BlueprintError(
+        `focus day ${f.day} is not in this candidate's mission record ` +
+          `(selectable: ${[...allowed].join(", ")})`
+      );
     }
     if (seen.has(f.day)) continue;
     seen.add(f.day);
@@ -202,7 +254,7 @@ export async function planInterview(
   });
 
   try {
-    return validateBlueprint(raw);
+    return validateBlueprint(raw, candidate);
   } catch (err) {
     if (err instanceof BlueprintError) throw err;
     throw new LLMError("malformed_output", `planner: ${String(err)}`, "planner", err);

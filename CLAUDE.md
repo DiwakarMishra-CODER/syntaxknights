@@ -11,10 +11,32 @@ Next.js 15 (App Router, TypeScript, Tailwind) · Supabase Postgres ·
 Gemini API via @google/genai · deployed on Vercel
 
 ## Models (use exactly these IDs)
+- Turn        → gemini-3.5-flash-lite   thinking_level "medium"   (every turn, ~10x)
 - Planner     → gemini-3.6-flash        thinking_level "high"     (1x per session)
-- Interviewer → gemini-3.6-flash        thinking_level "medium"   (every turn)
-- Evaluator   → gemini-3.5-flash-lite   thinking_level "minimal"  (every turn)
 - Reporter    → gemini-3.6-flash        thinking_level "high"     (1x at end)
+
+Interviewer and Evaluator are merged into a single Turn call. Both roles
+remain in ROLE_CONFIG (on flash-lite) so the merge can be reverted.
+
+### Why the high-volume role is on the WEAKER model
+gemini-3.6-flash is capped at **20 requests per DAY per key** on the free
+tier. Measured, not guessed: the 429 body reports
+`metric: generativelanguage.googleapis.com/generate_content_free_tier_requests,
+limit: 20`, waiting out its stated retry delay still 429s, and
+flash-lite succeeds at the same moment — so the quota is per model and
+daily. We believe this is because 3.6-flash is brand new; GA models like
+flash-lite appear far more generous.
+
+**This is a hypothesis pending real data.** Every call now writes to
+`.quota-log.json` (gitignored); run `npm run quota:report` to see actual
+per-model per-day counts and any limits Gemini has reported. Re-route if
+the numbers say otherwise.
+
+At 20 RPD, putting the turn loop on 3.6-flash would allow ~1.5 interviews
+per key per day. On flash-lite the turn loop is limited by whatever that
+model's real ceiling is, while planner + reporter consume only 2 of the
+20 daily 3.6-flash calls — roughly 10 interviews per key per day from
+that side.
 
 ## Gemini 3.x API — DO NOT WRITE FROM MEMORY
 Your training data likely predates these breaking changes:

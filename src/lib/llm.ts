@@ -1,5 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
+import { parseQuotaError, recordQuotaEvent } from "./quota-log";
+
 /**
  * The single place any model is ever called.
  *
@@ -11,7 +13,12 @@ import { GoogleGenAI } from "@google/genai";
  *    responseSchema / responseMimeType fields.
  */
 
-export type Role = "planner" | "interviewer" | "evaluator" | "reporter";
+export type Role =
+  | "planner"
+  | "turn"
+  | "interviewer"
+  | "evaluator"
+  | "reporter";
 
 export type ThinkingLevel = "minimal" | "low" | "medium" | "high";
 
@@ -21,15 +28,44 @@ interface RoleConfig {
   maxOutputTokens: number;
 }
 
-/** Role -> model mapping. Change models here and nowhere else. */
+/**
+ * Role -> model mapping. Change models here and nowhere else.
+ *
+ * ROUTING HYPOTHESIS (pending real data — see .quota-log.json):
+ * gemini-3.6-flash measured a hard 20 requests/day on the free tier,
+ * which we believe is because it is brand new (July 2026). GA models
+ * like flash-lite are typically hundreds-to-1000 RPD; a partial probe
+ * reached 17 consecutive flash-lite calls with no 429 on a key that had
+ * already served many that day.
+ *
+ * So the high-volume role goes on the generous model and the scarce new
+ * model is reserved for the two once-per-interview calls where quality
+ * matters most. Telemetry below will confirm or refute this from normal
+ * use rather than by spending quota to probe.
+ */
 export const ROLE_CONFIG: Record<Role, RoleConfig> = {
+  // ~10 calls per interview — must sit on the highest-RPD model.
+  turn: {
+    model: "gemini-3.5-flash-lite",
+    thinkingLevel: "medium",
+    maxOutputTokens: 2048,
+  },
+  // 1 call per interview.
   planner: {
     model: "gemini-3.6-flash",
     thinkingLevel: "high",
     maxOutputTokens: 4096,
   },
-  interviewer: {
+  // 1 call per interview.
+  reporter: {
     model: "gemini-3.6-flash",
+    thinkingLevel: "high",
+    maxOutputTokens: 4096,
+  },
+  // Kept so the merged turn can be un-merged; both on flash-lite so an
+  // A/B against `turn` varies only the merge, not the model.
+  interviewer: {
+    model: "gemini-3.5-flash-lite",
     thinkingLevel: "medium",
     maxOutputTokens: 2048,
   },
@@ -37,11 +73,6 @@ export const ROLE_CONFIG: Record<Role, RoleConfig> = {
     model: "gemini-3.5-flash-lite",
     thinkingLevel: "minimal",
     maxOutputTokens: 1024,
-  },
-  reporter: {
-    model: "gemini-3.6-flash",
-    thinkingLevel: "high",
-    maxOutputTokens: 4096,
   },
 };
 
@@ -131,9 +162,10 @@ function isRateLimited(err: unknown): boolean {
 
 /**
  * Gemini's 429 body states exactly how long to wait
- * ("Please retry in 58.730922968s"). Honour it rather than guessing —
- * the free tier limit is per MINUTE, so a 1s/2s/4s guess gives up about
- * eight times too early.
+ * ("Please retry in 58.730922968s"). Honour it rather than guessing.
+ *
+ * Note the stated delay is not always sufficient: when a DAILY budget is
+ * spent, waiting it out still returns 429. Treat it as a lower bound.
  */
 function retryAfterMs(err: unknown): number | null {
   const msg = String((err as { message?: string })?.message ?? err ?? "");
@@ -248,6 +280,15 @@ export async function callLLM<T = unknown>(
         const usage = toUsage(cfg, keyIndex, latency, interaction.usage);
         logCall(role, usage);
         onUsage?.(usage);
+        recordQuotaEvent({
+          ts: new Date().toISOString(),
+          outcome: "success",
+          role,
+          model: cfg.model,
+          keyIndex,
+          latencyMs: latency,
+          totalTokens: usage.total,
+        });
 
         if (!schema) return text;
 
@@ -272,12 +313,28 @@ export async function callLLM<T = unknown>(
 
         if (isRateLimited(err)) {
           rateLimitedThisRound++;
+          recordQuotaEvent({
+            ts: new Date().toISOString(),
+            outcome: "rate_limited",
+            role,
+            model: cfg.model,
+            keyIndex,
+            ...parseQuotaError(err),
+          });
           console.warn(
             `[llm] ${role} key#${keyIndex} rate limited (429), rotating`
           );
           continue;
         }
 
+        recordQuotaEvent({
+          ts: new Date().toISOString(),
+          outcome: "error",
+          role,
+          model: cfg.model,
+          keyIndex,
+          ...parseQuotaError(err),
+        });
         console.error(`[llm] ${role} key#${keyIndex} error:`, err);
         if (softRetried) {
           throw new LLMError(

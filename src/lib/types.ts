@@ -123,6 +123,8 @@ export interface CandidatesFile {
 export interface Claim {
   day: number;
   text: string;
+  /** True when they asserted it without supporting detail — worth probing. */
+  unjustified?: boolean;
   status?: "asserted" | "probed" | "verified" | "contradicted";
 }
 
