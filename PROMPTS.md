@@ -800,3 +800,55 @@ FIXTURE_RECORD=1 npm run interview CAND-017
 
 Budget when they run it: ~10 flash-lite turn calls + 1 reporter call on
 3.6-flash, against 34 remaining 3.6-flash calls across keys #1 and #2.
+
+---
+
+## Entry 14 — Reporter gets the transcript, guarded by verbatim validation
+
+**Prompt:** the Reporter never receives the transcript, which defeats its
+purpose — strengths and gaps are meant to quote the candidate's own words,
+and verbatim validation has nothing to validate against. Pass the full
+transcript in and keep every guard: ANTI_INVENTION, verbatim checking with
+one retry, claims from the filtered ledger. Add a test that a strength
+quoting words the candidate never said is rejected. Confirm the prompt
+requires at least one direct quote in each strength and each gap.
+
+**Outcome:** 78 tests pass, typecheck clean, no API calls.
+
+The reporter now receives the full transcript, clearly labelled so only
+CANDIDATE lines are quotable. `verifyReport()` extracts every quoted span
+(straight or curly) from summary, strengths, gaps and next, and requires
+each to appear in the concatenated candidate turns. Words must match in
+order; whitespace and case are normalised so a sentence-initial capital
+does not fail an otherwise exact quote, but no word may be added, dropped
+or changed — `"we build a docker image in CI"` is rejected against
+`"We build a container image in CI"`.
+
+On failure the report is rejected and retried ONCE, with the offending
+strings named in the input — not the system prompt, which stays
+byte-identical for caching. A second failure throws `ReportError`.
+
+**Prompt requirement confirmed**, and asserted by a test:
+`Every strength MUST contain at least one direct quote of the candidate's
+own words, in double quotes, copied EXACTLY as they said it. Every gap
+MUST do the same wherever they actually spoke to the topic.`
+
+**One deviation, argued rather than assumed.** Requiring a quote in every
+gap can force invention: a gap is often that a topic never came up, and
+silence cannot be quoted. Under a hard rule the model's only way to
+satisfy it is to manufacture a quote — the exact failure the guard exists
+to prevent. So the prompt requires quotes in gaps *wherever they spoke to
+the topic* and gives an explicit escape valve ("evaluation never came up
+in this conversation"), and the code warns on an unquoted gap instead of
+rejecting. Unquoted STRENGTHS are still a hard rejection, because a
+strength is by definition something they showed, so a quote always exists.
+
+A test also covers a subtle failure: quoting the INTERVIEWER's words back
+as though the candidate said them. Only candidate turns are quotable.
+
+CLAUDE.md's "never send the full transcript" rule now carries this as a
+documented exception rather than being silently contradicted by the code.
+
+**Risk worth flagging:** a report that fails validation twice throws, so a
+live session could end after ten answered turns with no feedback at all.
+Not yet mitigated.

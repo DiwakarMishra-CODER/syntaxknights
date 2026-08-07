@@ -178,6 +178,7 @@ async function main() {
         {
           candidate,
           blueprint,
+          transcript,
           claimLedger: ledger,
           rubrics,
           daysCovered: state.daysCovered,

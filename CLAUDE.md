@@ -56,9 +56,28 @@ NEVER commit .env.local. The repo is public.
 ## Token discipline (we are on free tiers)
 - Never send the full 31-day curriculum in a turn prompt. Send only the
   target day's objectives.
-- Never send the full transcript. Send the last 4 turns plus the claim
-  ledger, which already summarises everything earlier.
+- Never send the full transcript **in a per-turn prompt**. Send the last 4
+  turns plus the claim ledger, which already summarises everything earlier.
 - Keep the system prompt byte-identical across turns so it can be cached.
+
+### Documented exception: the Reporter gets the full transcript
+Feedback has to quote the candidate back to themselves to be worth
+reading, and the verbatim check has nothing to validate against without
+the source text. Withholding the transcript never made the reporter safe;
+ANTI_INVENTION plus verbatim validation does. This is one call per
+session, so the cost is paid once, not per turn.
+
+Guards on that call, all enforced in code:
+- every quoted span must appear verbatim in a CANDIDATE turn
+- every strength must carry at least one quote
+- a failing report is rejected and retried once with the offending
+  strings named, then throws `ReportError`
+- claims come from the already-filtered ledger
+
+A gap may legitimately carry no quote — it can describe something that
+never came up, and silence cannot be quoted. That is warned, not
+rejected: forcing a quote there would manufacture the invention the
+guard exists to prevent.
 
 ## Non-negotiable API contract
 POST /api/interview  (single endpoint, no auth)
