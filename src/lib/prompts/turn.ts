@@ -1,6 +1,6 @@
 import { getObjectives } from "../curriculum";
 import { callLLM } from "../llm";
-import type { Blueprint, Claim, Turn } from "../types";
+import type { Blueprint, Claim, Turn, TurnRubric } from "../types";
 import { ANTI_INVENTION, filterInventedClaims } from "./shared";
 
 /**
@@ -16,12 +16,7 @@ import { ANTI_INVENTION, filterInventedClaims } from "./shared";
 
 export type TurnAction = "follow_up" | "next_topic" | "clarify" | "conclude";
 
-export interface TurnRubric {
-  knowledge: number;
-  communication: number;
-  specificity: number;
-  objectivesHit: string[];
-}
+export type { TurnRubric };
 
 export interface TurnDecision {
   rubric: TurnRubric;

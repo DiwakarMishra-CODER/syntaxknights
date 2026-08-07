@@ -128,8 +128,13 @@ export interface Claim {
   status?: "asserted" | "probed" | "verified" | "contradicted";
 }
 
-export interface RubricScore {
-  [dimension: string]: number;
+/** Scores for one answer. Stored as jsonb on the turn row. */
+export interface TurnRubric {
+  knowledge: number;
+  communication: number;
+  specificity: number;
+  /** Objective texts the answer demonstrably touched. May be empty. */
+  objectivesHit: string[];
 }
 
 export type TurnRole = "interviewer" | "candidate";
@@ -140,7 +145,7 @@ export interface Turn {
   content: string;
   targetDay: number | null;
   depth: number | null;
-  rubric: RubricScore | null;
+  rubric: TurnRubric | null;
   claims: Claim[];
   rationale: string | null;
 }

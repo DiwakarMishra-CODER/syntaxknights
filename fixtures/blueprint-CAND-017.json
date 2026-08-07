@@ -1,0 +1,48 @@
+{
+  "persona": "You are a Staff AI Engineer hiring for a healthcare AI team. You are encouraging, direct, and focused on practical implementation rather than academic theory. For Tyler, a junior developer with a bootcamp background who showed high persistence across 31 days, you maintain a supportive tone while asking clear questions to see what he learned through his repeated attempts.",
+  "openingLine": "Welcome, Tyler! It's great to meet you. I saw that you persevered through all 31 days and delivered your Day 31 Capstone Project & Final Demo\u2014I'm looking forward to hearing how you built your healthcare system.",
+  "targetQuestions": 10,
+  "arc": {
+    "warmup": 2,
+    "build": 4,
+    "stress": 2,
+    "land": 2
+  },
+  "focusDays": [
+    {
+      "day": 3,
+      "title": "First AI Project, React Frontend & GitHub",
+      "reason": "Tyler passed Day 3 after 5 attempts. Starting here provides an accessible entry point to talk through his early frontend and project setup work.",
+      "startDepth": 1,
+      "strategy": "rebuild_confidence"
+    },
+    {
+      "day": 10,
+      "title": "The Retrieval & Matching Engine",
+      "reason": "Day 10 is a SHIP_IT day that Tyler passed after 5 attempts. It tests whether he understands his core retrieval engine logic after iterating on it.",
+      "startDepth": 2,
+      "strategy": "rebuild_confidence"
+    },
+    {
+      "day": 22,
+      "title": "Multi-Agent Orchestration",
+      "reason": "Tyler required 5 attempts to pass Day 22. This complex BUILD day allows us to explore how he handled multi-agent coordination.",
+      "startDepth": 2,
+      "strategy": "rebuild_confidence"
+    },
+    {
+      "day": 28,
+      "title": "Docker & Kubernetes Deployment",
+      "reason": "Day 28 is a critical SHIP_IT deployment day that Tyler passed after 4 attempts. It allows probing his understanding of container deployment.",
+      "startDepth": 2,
+      "strategy": "rebuild_confidence"
+    },
+    {
+      "day": 31,
+      "title": "Capstone Project & Final Demo",
+      "reason": "Day 31 is the CAPSTONE deliverable, which Tyler completed in 3 attempts (his lowest attempt count among struggled days). It lets him showcase his full system integration.",
+      "startDepth": 2,
+      "strategy": "rebuild_confidence"
+    }
+  ]
+}

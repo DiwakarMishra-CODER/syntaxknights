@@ -108,7 +108,7 @@ async function main() {
     content: "I used pgvector with a 768-dim embedding.",
     targetDay: 12,
     depth: 1,
-    rubric: { specificity: 3 },
+    rubric: { knowledge: 4, communication: 3, specificity: 3, objectivesHit: [] },
     claims: [{ day: 12, text: "used pgvector", status: "asserted" }],
     rationale: null,
   });

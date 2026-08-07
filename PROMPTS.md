@@ -752,3 +752,51 @@ The merge still wins because requests, not tokens, are the scarce resource
 on a per-day quota: 10 requests per interview instead of 20. The script
 printed "-41% fewer tokens", which reads as a saving; the label now says
 "41% MORE" so a future run cannot be misread.
+
+---
+
+## Entry 13 — Full interview loop CLI
+
+**Prompt:** build `scripts/interview.ts` wiring orchestrator + turn +
+reporter, loading Tyler's saved blueprint from `/fixtures` rather than
+re-planning; print a state panel after each turn; print the full
+transcript and final report at the end. Run it for CAND-017 with
+FIXTURE_RECORD=1.
+
+**Built:**
+- `fixtures/blueprint-CAND-017.json` — Tyler's blueprint saved from the
+  3.6-flash run, so a session costs 0 planner calls.
+- `src/lib/prompts/reporter.ts` — the fourth role, which had never been
+  built. Sends the claim ledger and per-answer rubric scores, never the
+  transcript. Carries `ANTI_INVENTION`, so it cannot invent a strength
+  the candidate did not show.
+- `scripts/interview.ts` — the loop, with `FIXTURE_RECORD=1` to save a
+  replay and `FIXTURE_REPLAY=<path>` to re-run a saved session with
+  **zero API calls**.
+
+**A type mismatch this surfaced:** `Turn.rubric` was typed
+`Record<string, number>` while the real rubric carries
+`objectivesHit: string[]`. The rubric is a stored jsonb shape, so
+`TurnRubric` moved into `types.ts` and `turn.ts` re-exports it —
+prompts should not own a persistence type.
+
+**Verified end to end with zero API calls** by replaying a synthetic
+fixture whose model always says `conclude` from question 3 and never
+leaves day 3. The real loop overrode it four times in a row —
+`conclude blocked at question 3 with 1/4 days covered`, then 2/4, 3/4,
+4/4 — walking coverage to `[3, 10, 22, 28, 31]` and finishing with
+`questions 8 · floors met: YES`. The orchestrator's guarantees hold in
+the assembled system, not just in unit tests.
+
+**NOT RUN — the live session needs a human at the keyboard.** The script
+reads the candidate's answers from stdin. I cannot type Tyler's answers:
+inventing them would spend the budget on a transcript that is not the
+user's, and fabricated input is precisely the failure this project has
+spent two sessions eliminating. Handed over as:
+
+```
+FIXTURE_RECORD=1 npm run interview CAND-017
+```
+
+Budget when they run it: ~10 flash-lite turn calls + 1 reporter call on
+3.6-flash, against 34 remaining 3.6-flash calls across keys #1 and #2.

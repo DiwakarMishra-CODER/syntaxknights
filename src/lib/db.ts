@@ -9,6 +9,7 @@ import type {
   Session,
   SessionState,
   Turn,
+  TurnRubric,
 } from "./types";
 
 /**
@@ -55,7 +56,7 @@ interface TurnRow {
   content: string;
   target_day: number | null;
   depth: number | null;
-  rubric: Record<string, number> | null;
+  rubric: TurnRubric | null;
   claims: Claim[] | null;
   rationale: string | null;
 }

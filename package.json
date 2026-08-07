@@ -14,6 +14,7 @@
     "probe:quota": "tsx --env-file=.env.local scripts/probe-quota.ts",
     "quota:report": "tsx --env-file=.env.local scripts/quota-report.ts",
     "compare:turn": "tsx --env-file=.env.local scripts/compare-turn.ts",
+    "interview": "tsx --env-file=.env.local scripts/interview.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
