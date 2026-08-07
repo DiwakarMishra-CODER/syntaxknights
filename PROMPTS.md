@@ -137,3 +137,87 @@ synthetic fixtures built to the described shapes.
   per-session data, which only ever round-trips through Supabase.
 - `appendTurn` derives the next `turn_number` from the table when the
   caller omits it, so nothing has to hold a counter in memory.
+
+---
+
+## Entry 3 — LLM wrapper
+
+**Prompt:**
+
+```
+Read CLAUDE.md first, especially the Gemini 3.x section.
+
+Build the LLM wrapper only. No interview logic yet.
+
+STEP 1 — Fetch the docs before writing any code. Do not write Gemini API
+code from memory. Fetch and read latest-model, structured-output, and
+rate-limits. Tell me what you find about: the current SDK call shape,
+thinking_level, which sampling parameters are removed, and how
+schema-enforced JSON output is specified. Then write the code to match.
+
+STEP 2 — Build src/lib/llm.ts, the single place any model is ever called:
+  type Role = 'planner' | 'interviewer' | 'evaluator' | 'reporter'
+  callLLM<T>({ role, system, input, schema }): Promise<T>
+  Role -> model + thinking_level mapping in one config object at the top.
+  `schema` uses Gemini's native schema enforcement; return parsed + typed.
+  Keep `system` byte-identical across calls so it can be cached.
+
+STEP 3 — Key rotation and resilience: comma-separated GEMINI_API_KEYS,
+round-robin, 429 -> next key immediately, all keys limited -> exponential
+backoff max 3 rounds, malformed output or other error -> retry once then
+throw a typed LLMError. Never crash on a rate limit. Log role, model, key
+index, token counts, latency.
+
+STEP 4 — scripts/test-llm.ts: one text call, one schema-enforced JSON
+call with shape validation, printing model, latency and token usage.
+Run it against my real keys and show me the output.
+
+Then commit.
+```
+
+**STEP 1 findings** (docs cross-checked against the installed
+`@google/genai@2.16.0` type definitions, which are authoritative for the
+pinned version):
+
+- **Call shape** is `ai.interactions.create()`, not `generateContent`,
+  and its parameters are **snake_case**: `model`, `input`,
+  `system_instruction`, `generation_config`, `response_format`. The
+  reply is `interaction.output_text`; usage is `interaction.usage`.
+- **`thinking_level`** lives *inside* `generation_config`, not at top
+  level. The SDK type is `"minimal" | "low" | "medium" | "high"`, so all
+  four levels CLAUDE.md specifies are valid, including `"minimal"` for
+  the evaluator. It replaced `thinking_budget`, which errors on 3.5+.
+- **Removed sampling params** — `temperature`, `top_p` and `top_k` are
+  absent from the `GenerationConfig` type entirely; there is no field to
+  set. Docs: "In future model generations, supplying these parameters
+  returns an HTTP 400 error. Remove these parameters from all requests."
+- **Schema-enforced JSON** — `response_format: { type: "text",
+  mime_type: "application/json", schema }` where `schema` is a JSON
+  Schema object. The older `responseSchema` / `responseMimeType` fields
+  still exist on the legacy surface but are marked deprecated in favour
+  of `response_format`.
+- **Rate limits** — the docs page no longer publishes free-tier numbers
+  (it points at AI Studio). It confirms `429 RESOURCE_EXHAUSTED` and
+  advises wait-and-retry, so the rotation policy is ours to design.
+
+**Outcome:** `src/lib/llm.ts` written to match, with `ROLE_CONFIG` at the
+top as the only place models or thinking levels are named. Round-robin
+rotation, 429 → immediate next key, all-keys-limited → 1s/2s/4s backoff
+across max 3 rounds, one soft retry for malformed JSON or transient API
+errors, then a typed `LLMError` carrying
+`kind: config | rate_limited | malformed_output | api_error`.
+
+**BLOCKED — `.env.local` does not exist, so `npm run test:llm` could not
+be run against real keys.** Verified without them: pool parsing (1 key
+and 6 keys, tolerating whitespace and a trailing comma), the `config`
+error path, and that two bad keys rotate and terminate in a typed
+`LLMError[api_error]` rather than a crash — the request does reach
+`https://generativelanguage.googleapis.com/v1beta/interactions`, so the
+call shape is structurally accepted by the SDK.
+
+**Notes:**
+- The round-robin cursor is a module-level integer. That is not session
+  state — a cold start simply restarts the rotation at key 0.
+- One `GoogleGenAI` client is memoised per key index.
+- `callLLM` is overloaded: with `schema` it returns parsed `T`, without
+  it returns `string`.
