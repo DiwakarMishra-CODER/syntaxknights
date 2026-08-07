@@ -71,7 +71,13 @@ Guards on that call, all enforced in code:
 - every quoted span must appear verbatim in a CANDIDATE turn
 - every strength must carry at least one quote
 - a failing report is rejected and retried once with the offending
-  strings named, then throws `ReportError`
+  strings named; on a second failure it DEGRADES rather than throwing —
+  offending strengths/gaps/next items are dropped, a fabricated summary is
+  replaced with a factual line, and if nothing survives, one honest
+  unquoted line is emitted. The degradation is logged.
+- **the reporter never throws on validation.** The contract requires a
+  feedback object, and a candidate who answered ten questions has earned
+  a response. A thinner honest report beats an error.
 - claims come from the already-filtered ledger
 
 A gap may legitimately carry no quote — it can describe something that

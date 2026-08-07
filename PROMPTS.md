@@ -852,3 +852,46 @@ documented exception rather than being silently contradicted by the code.
 **Risk worth flagging:** a report that fails validation twice throws, so a
 live session could end after ten answered turns with no feedback at all.
 Not yet mitigated.
+
+---
+
+## Entry 15 — Reporter degrades instead of throwing
+
+**Prompt:** never return no feedback. On a second validation failure, drop
+the offending strengths and gaps, keep what validated, and return the
+report; if that leaves strengths empty, emit one honest unquoted line.
+Log the degradation. Never throw on the request path. Add a test that a
+report where 2 of 3 strengths fail returns the surviving one. Keep the
+gaps rule as a warning.
+
+**Outcome:** 84 tests pass, typecheck clean, no API calls. `ReportError`
+is gone — `writeReport` no longer throws on validation.
+
+`degradeReport()` is pure and keeps everything that validated:
+- strengths with fabricated quotes, or with no quote at all, are dropped
+- gaps are dropped ONLY for fabricated quotes; unquoted gaps survive
+- next items with fabricated quotes are dropped
+- a summary containing a fabricated quote is replaced with a factual line
+  built from state alone (`answered N questions across days X, Y, Z`),
+  which invents nothing
+- if no strength survives, one honest unquoted line is emitted; if no next
+  item survives, one grounded suggestion is
+
+**A design tension the tests exposed.** My first attempt asserted the
+degraded report satisfies `verifyReport().ok`. It does not, and should
+not: the backfilled strength is deliberately unquoted, which that gate
+rejects by design. The correct invariant for degraded output is narrower
+— **no fabricated quote survives** — and the test now asserts exactly
+that, plus a direct check that none of the invented phrases appear
+anywhere in the returned object. Writing the loose assertion first is
+what made the distinction visible.
+
+**Item 2 confirmed:** the gaps rule stays a warning.
+`verifyReport().unquotedGaps` is reported and logged, never a rejection,
+and `degradeReport` preserves unquoted gaps untouched.
+
+**Remaining hole, not closed:** `writeReport` can still throw an
+`LLMError` if the reporter's API call itself fails (rate limit, network).
+That is a different failure from validation and the route will need its
+own fallback — `degradeReport` is exported so the route can build a
+grounded report from state without a model call.

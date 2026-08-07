@@ -4,6 +4,7 @@ import type { Feedback, Turn } from "../types";
 import {
   buildReporterInput,
   candidateTranscriptText,
+  degradeReport,
   extractQuotes,
   REPORTER_SYSTEM,
   verifyReport,
@@ -210,5 +211,132 @@ describe("reporter prompt", () => {
 
   it("gives an explicit escape valve rather than forcing an invented quote", () => {
     expect(REPORTER_SYSTEM).toMatch(/you cannot quote silence/);
+  });
+});
+
+describe("degradeReport — never return nothing", () => {
+  const ctx = {
+    candidate: getCandidate("CAND-017")!,
+    blueprint: {
+      persona: "p",
+      openingLine: "o",
+      targetQuestions: 10,
+      arc: { warmup: 2, build: 4, stress: 2, land: 2 },
+      focusDays: [],
+    },
+    transcript,
+    claimLedger: [],
+    rubrics: [],
+    daysCovered: [3, 10, 22, 28],
+    questionCount: 9,
+  };
+
+  it("returns the surviving strength when 2 of 3 fail validation", () => {
+    const feedback: Feedback = {
+      summary: "A solid conversation.",
+      strengths: [
+        'Clear on the deploy path — "apply the updated manifest so Kubernetes rolls the pods".',
+        'Explained draining — "we drain connections before terminating the pod".', // fabricated
+        "Good communication throughout.", // no quote
+      ],
+      gaps: [],
+      next: ["Write down the rollout steps."],
+    };
+
+    const { feedback: out, degradation } = degradeReport(feedback, ctx);
+
+    expect(out.strengths).toHaveLength(1);
+    expect(out.strengths[0]).toContain("rolls the pods");
+    expect(degradation.droppedStrengths).toHaveLength(2);
+    expect(degradation.strengthsBackfilled).toBe(false);
+    // and it is a valid report, not an error
+    expect(verifyReport(out, transcript).ok).toBe(true);
+  });
+
+  it("emits one honest unquoted line when every strength fails", () => {
+    const feedback: Feedback = {
+      summary: "A solid conversation.",
+      strengths: ['Bad — "we drain connections before terminating the pod".'],
+      gaps: [],
+      next: ["Write down the rollout steps."],
+    };
+
+    const { feedback: out, degradation } = degradeReport(feedback, ctx);
+
+    expect(out.strengths).toHaveLength(1);
+    expect(out.strengths[0]).toContain("9 questions");
+    expect(out.strengths[0]).not.toContain('"');
+    expect(degradation.strengthsBackfilled).toBe(true);
+  });
+
+  it("keeps unquoted gaps but drops fabricated ones", () => {
+    const feedback: Feedback = {
+      summary: "A solid conversation.",
+      strengths: ['Clear on CI — "push it to the registry".'],
+      gaps: [
+        "Evaluation never came up in this conversation.",
+        'Vague — "we used a termination grace period of 30s".',
+      ],
+      next: ["Write down the rollout steps."],
+    };
+
+    const { feedback: out, degradation } = degradeReport(feedback, ctx);
+
+    expect(out.gaps).toEqual(["Evaluation never came up in this conversation."]);
+    expect(degradation.droppedGaps).toHaveLength(1);
+  });
+
+  it("replaces a summary containing a fabricated quote with a factual one", () => {
+    const feedback: Feedback = {
+      summary: 'You said "I benchmarked three vector stores" early on.',
+      strengths: ['Clear on CI — "push it to the registry".'],
+      gaps: [],
+      next: ["Write down the rollout steps."],
+    };
+
+    const { feedback: out, degradation } = degradeReport(feedback, ctx);
+
+    expect(degradation.summaryReplaced).toBe(true);
+    expect(out.summary).toContain("9 questions");
+    expect(out.summary).not.toContain("benchmarked");
+  });
+
+  it("always returns a contract-shaped object with non-empty strengths and next", () => {
+    const wreckage: Feedback = {
+      summary: 'All bad — "I benchmarked three vector stores".',
+      strengths: ['Bad — "we drain connections before terminating the pod".'],
+      gaps: ['Bad — "termination grace period of 30s".'],
+      next: ['Bad — "I benchmarked three vector stores".'],
+    };
+
+    const { feedback: out } = degradeReport(wreckage, ctx);
+
+    expect(typeof out.summary).toBe("string");
+    expect(out.summary.length).toBeGreaterThan(0);
+    expect(out.strengths.length).toBeGreaterThan(0);
+    expect(Array.isArray(out.gaps)).toBe(true);
+    expect(out.next.length).toBeGreaterThan(0);
+
+    // The invariant for degraded output is NOT verifyReport().ok — the
+    // backfilled strength is deliberately unquoted, which that gate
+    // rejects by design. What must hold is that no fabricated quote
+    // survives: everything invented has been removed.
+    expect(verifyReport(out, transcript).fabricated).toEqual([]);
+  });
+
+  it("leaves no fabricated quote anywhere, even when everything failed", () => {
+    const wreckage: Feedback = {
+      summary: 'All bad — "I benchmarked three vector stores".',
+      strengths: ['Bad — "we drain connections before terminating the pod".'],
+      gaps: ['Bad — "termination grace period of 30s".'],
+      next: ['Bad — "I benchmarked three vector stores".'],
+    };
+
+    const { feedback: out } = degradeReport(wreckage, ctx);
+    const all = [out.summary, ...out.strengths, ...out.gaps, ...out.next].join(" ");
+
+    expect(all).not.toContain("benchmarked");
+    expect(all).not.toContain("drain connections");
+    expect(all).not.toContain("grace period");
   });
 });

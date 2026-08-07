@@ -1,4 +1,4 @@
-import { callLLM, LLMError } from "../llm";
+import { callLLM } from "../llm";
 import type { Blueprint, Candidate, Claim, Feedback, Turn, TurnRubric } from "../types";
 import { ANTI_INVENTION } from "./shared";
 
@@ -210,13 +210,89 @@ export function verifyReport(feedback: Feedback, transcript: Turn[]): ReportChec
   };
 }
 
-export class ReportError extends Error {
-  readonly check: ReportCheck;
-  constructor(message: string, check: ReportCheck) {
-    super(message);
-    this.name = "ReportError";
-    this.check = check;
+/** Quoted spans in `text` that no candidate turn supports. */
+export function fabricatedQuotes(text: string, normalisedSaid: string): string[] {
+  return extractQuotes(text).filter((q) => !normalisedSaid.includes(normaliseQuote(q)));
+}
+
+export interface Degradation {
+  droppedStrengths: string[];
+  droppedGaps: string[];
+  summaryReplaced: boolean;
+  droppedNext: string[];
+  /** True when nothing survived and an honest unquoted line was emitted. */
+  strengthsBackfilled: boolean;
+}
+
+/** A grounded sentence built only from state — invents nothing. */
+function factualSummary(ctx: ReportContext): string {
+  const days = ctx.daysCovered.join(", ");
+  return (
+    `${ctx.candidate.member.name} answered ${ctx.questionCount} questions ` +
+    `across days ${days} of the cohort build.`
+  );
+}
+
+/**
+ * Last resort after two failed attempts: keep everything that validated,
+ * drop only what did not, and always return a usable report.
+ *
+ * Returning nothing is the worst outcome available — the API contract
+ * requires a feedback object, and a candidate who answered ten questions
+ * has earned a response. A thinner honest report beats an error.
+ */
+export function degradeReport(
+  feedback: Feedback,
+  ctx: ReportContext
+): { feedback: Feedback; degradation: Degradation } {
+  const said = normaliseQuote(candidateTranscriptText(ctx.transcript));
+
+  const strengths = (feedback.strengths ?? []).filter(
+    (s) => fabricatedQuotes(s, said).length === 0 && extractQuotes(s).length > 0
+  );
+  const droppedStrengths = (feedback.strengths ?? []).filter(
+    (s) => !strengths.includes(s)
+  );
+
+  // Unquoted gaps are legitimate; only fabricated ones go.
+  const gaps = (feedback.gaps ?? []).filter(
+    (g) => fabricatedQuotes(g, said).length === 0
+  );
+  const droppedGaps = (feedback.gaps ?? []).filter((g) => !gaps.includes(g));
+
+  const next = (feedback.next ?? []).filter(
+    (n) => fabricatedQuotes(n, said).length === 0
+  );
+  const droppedNext = (feedback.next ?? []).filter((n) => !next.includes(n));
+
+  const summaryBad = fabricatedQuotes(feedback.summary ?? "", said).length > 0;
+  const summary = summaryBad ? factualSummary(ctx) : feedback.summary;
+
+  const strengthsBackfilled = strengths.length === 0;
+  if (strengthsBackfilled) {
+    strengths.push(
+      `You worked through all ${ctx.questionCount} questions across days ` +
+        `${ctx.daysCovered.join(", ")} and stayed with each one.`
+    );
   }
+
+  if (next.length === 0) {
+    next.push(
+      `Re-read your own answers on days ${ctx.daysCovered.join(", ")} and write ` +
+        `down the one thing you wish you had been able to explain more precisely.`
+    );
+  }
+
+  return {
+    feedback: { summary, strengths, gaps, next },
+    degradation: {
+      droppedStrengths,
+      droppedGaps,
+      summaryReplaced: summaryBad,
+      droppedNext,
+      strengthsBackfilled,
+    },
+  };
 }
 
 function correctionFor(check: ReportCheck): string {
@@ -240,9 +316,11 @@ export async function writeReport(
     onUsage?: Parameters<typeof callLLM>[0]["onUsage"];
     model?: string;
     maxWaitMs?: number;
+    onDegrade?: (d: Degradation) => void;
   } = {}
 ): Promise<Feedback> {
   let correction = "";
+  let last: Feedback | null = null;
 
   // One retry: the first failure is usually a tidied-up quote, and being
   // shown the exact offending strings fixes it.
@@ -257,6 +335,7 @@ export async function writeReport(
       maxWaitMs: opts.maxWaitMs,
     });
 
+    last = feedback;
     const check = verifyReport(feedback, ctx.transcript);
 
     if (check.unquotedGaps.length) {
@@ -274,16 +353,26 @@ export async function writeReport(
           `${check.unquotedStrengths.length} unquoted strength(s). Retrying once.`
       );
       correction = correctionFor(check);
-      continue;
     }
-
-    throw new ReportError(
-      `Report failed verbatim validation twice. Fabricated quotes: ` +
-        `${check.fabricated.map((q) => `"${q}"`).join(", ") || "none"}. ` +
-        `Unquoted strengths: ${check.unquotedStrengths.length}.`,
-      check
-    );
   }
 
-  throw new LLMError("malformed_output", "reporter: unreachable", "reporter");
+  // Second failure: degrade rather than throw. Never leave a candidate who
+  // answered a full interview with nothing, and never break the contract's
+  // required feedback object.
+  const { feedback, degradation } = degradeReport(last as Feedback, ctx);
+
+  console.warn(
+    `[reporter] DEGRADED after 2 failed validations — ` +
+      `dropped ${degradation.droppedStrengths.length} strength(s), ` +
+      `${degradation.droppedGaps.length} gap(s), ` +
+      `${degradation.droppedNext.length} next item(s)` +
+      `${degradation.summaryReplaced ? ", summary replaced with a factual line" : ""}` +
+      `${degradation.strengthsBackfilled ? ", strengths backfilled" : ""}`
+  );
+  for (const s of degradation.droppedStrengths) {
+    console.warn(`[reporter]   dropped strength: ${s}`);
+  }
+  opts.onDegrade?.(degradation);
+
+  return feedback;
 }
