@@ -224,11 +224,42 @@ call shape is structurally accepted by the SDK.
 
 ---
 
-## Entry 4 — Wiring up real credentials
+## Entry 4 — Publish to GitHub
 
-**Prompt:** (paraphrased) supplied one Gemini API key and the Supabase
-project URL / service role key, applied `supabase/schema.sql`, and asked
-where to paste it in the dashboard.
+**Prompt:**
+
+```
+push to this repo https://github.com/DiwakarMishra-CODER/syntaxknights
+and dont credit yourself just me
+```
+
+**Outcome:** History rewritten to strip the `Co-Authored-By` trailer from
+all three commits, then pushed to a fresh `main`. Verified with
+`git log --format='%B' | grep -i claude` returning nothing.
+
+**Notes:**
+- The scaffold branch was `master`; renamed to `main` before pushing
+  since the remote was empty and GitHub defaults to `main`.
+- Checked before pushing that no key-shaped strings were in tracked
+  files and that only `.env.local.example` was tracked, never
+  `.env.local`.
+- `gh` is not installed on this machine; pushed over HTTPS using the
+  existing `osxkeychain` credential helper.
+- The data files landed in the working tree mid-push, which unblocked
+  the five candidate tests that Entry 2 recorded as blocked. They were
+  left untracked at this point pending a decision on publishing them —
+  resolved in Entry 6.
+
+---
+
+## Entry 5 — Wiring up real credentials
+
+**Prompt:** redacted — the message contained a live Gemini API key, and
+this repo is public. In substance: supplied one Gemini API key and asked
+what else the env needed, then asked where to paste `supabase/schema.sql`
+in the Supabase dashboard, then confirmed it ran with "Success. No rows
+returned". The Supabase project URL and service role key were pasted
+into `.env.local` directly.
 
 **Outcome:** `.env.local` created (gitignored, never committed). Both
 smoke tests now pass against live services:
@@ -258,14 +289,60 @@ smoke tests now pass against live services:
 
 ---
 
-## Entry 5 — Reconcile types against the real data; static imports
+## Entry 6 — Reconcile types against the real data; static imports
 
-**Prompt:** commit the (synthetic) data files; then reconcile the types
-against the real structure, delete the defensive `candidateId()` /
-`candidateName()` / `candidateExperience()` probes in favour of direct
-typed access to `member`, switch from `fs` reads to static JSON imports
-via `@/data/...`, drop `outputFileTracingIncludes`, and replace the
-synthetic test fixtures with the five real candidates asserted to 3dp.
+**Prompt:**
+
+```
+Steps 1-5 from earlier are still unverified — you only reported on step 6.
+Also two housekeeping items first.
+
+A. Commit data/curriculum.json and data/candidates.json. They are NOT
+   real people — the hackathon brief states all candidate and curriculum
+   data is synthetic and provided solely for this challenge. Judges need
+   these files to run the project; a repo missing its own inputs fails
+   eligibility. Keep docs/technical-spec.md committed too — that's the
+   hackathon's own spec document.
+
+B. Now do steps 1-5 and report each one SEPARATELY:
+
+1. Read data/curriculum.json and data/candidates.json. Reconcile my types
+   against the real structure. Report any mismatch with what you built
+   from my description.
+
+2. Remove the candidateId()/candidateName()/candidateExperience() probing
+   helpers. member is exactly:
+     { id: string, name: string, jobRole: string,
+       yearsExperience: number, education: string, status: "COMPLETED" }
+   Direct typed access. Delete the fallback key guessing.
+
+3. Switch from fs reads to static JSON imports:
+     import curriculumData from '@/data/curriculum.json'
+   Remove outputFileTracingIncludes from next.config.ts. Confirm it still
+   typechecks.
+
+4. Replace the synthetic fixtures in the deriveSignals tests with the five
+   REAL candidates. Assert these exact values (3dp):
+
+   CAND-018 Diane   firstTryRate 1.000  coverage 1.000  skipped []
+   CAND-017 Tyler   firstTryRate 0.032  coverage 1.000  skipped []
+   CAND-011 Mia     firstTryRate 0.357  coverage 0.452  skipped [7,8,12,16,22]
+   CAND-010 Gerald  firstTryRate 0.043  coverage 0.742  failed  [8,10,22]
+   CAND-008 Harold  firstTryRate 0.556  coverage 0.871  skipped [14,15]
+
+   If any assertion fails, the parsing is wrong. Tell me — do NOT adjust
+   the expected values to match your output.
+
+5. Run npm run test:llm against the real Gemini key. Show the actual
+   output: model, latency, token counts, and the parsed JSON from the
+   schema-enforced call. A 400 here is almost certainly deprecated Gemini
+   3.x params (temperature/top_p/top_k must be absent), not a bad key —
+   re-read https://ai.google.dev/gemini-api/docs/latest-model.
+
+Skip step 6 — check-db.ts already passed 15/15.
+
+Then commit and push. There are unpushed commits (ebb861e and earlier).
+```
 
 **Outcome:** Three mismatches found between the types built from the
 written description and the real files. All five 3dp assertions passed
@@ -305,3 +382,29 @@ uses a numeric threshold, and Gerald (20y, 4% first try) and Harold
 - Static imports mean no filesystem access at runtime, so
   `outputFileTracingIncludes` is no longer needed and was removed.
   Confirmed with a real `next build`.
+
+---
+
+## Entry 7 — PROMPTS.md audit
+
+**Prompt:**
+
+```
+can you keep updating prompts.md properly? are we doing it rn?
+```
+
+**Outcome:** Audited. An entry had been committed alongside every code
+commit from the start, so the log is genuinely live rather than
+reconstructed. Three gaps found and fixed in this entry:
+
+- The GitHub publish turn had no entry at all. Added as Entry 4, which
+  renumbered the two that followed.
+- Entry 5 (credentials) had a paraphrased prompt. Kept paraphrased, but
+  now says explicitly *why*: the original message contained a live API
+  key and this repo is public.
+- Entry 6 had a summarised prompt where entries 1-3 were verbatim. Now
+  verbatim.
+
+**Convention going forward:** one entry per work session, appended
+before the commit that carries the work, with the prompt verbatim in a
+fenced block. Redact only credentials, and say so when redacting.
