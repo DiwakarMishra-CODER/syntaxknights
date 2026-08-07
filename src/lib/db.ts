@@ -71,6 +71,7 @@ const EMPTY_STATE: SessionState = {
   abilityEstimate: 3,
   mode: "normal",
   consecutiveWeak: 0,
+  consecutiveReactions: 0,
 };
 
 export async function createSession(

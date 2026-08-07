@@ -41,6 +41,7 @@ export function initState(blueprint: Blueprint): SessionState {
     abilityEstimate: INITIAL_ABILITY,
     mode: "normal",
     consecutiveWeak: 0,
+    consecutiveReactions: 0,
   };
 }
 
@@ -221,6 +222,7 @@ export function recordTurn(
       abilityEstimate,
       mode,
       consecutiveWeak,
+      consecutiveReactions: state.consecutiveReactions,
     },
     violations,
     concludeBlocked,

@@ -1035,3 +1035,64 @@ worked example.
 validation on the first attempt. Notably its NEXT section caught the
 wildcard CORS the interviewer itself walked past: "replace the wildcard
 in allow_origins for CORS with specific origin URLs." 97 tests pass.
+
+---
+
+## Entry 18 — The HTTP endpoint
+
+**Prompt:** solve the timeout risk first (check Vercel's real limit, try
+reporter at thinking "medium"), then wire the orchestrator into
+`app/api/interview/route.ts` with the exact contract, stateless via
+Supabase, never returning an invalid response; build a conformance script
+and run its `--dry` failure cases.
+
+**1a — the timeout risk was based on an outdated assumption.** Vercel's
+current docs: with fluid compute, enabled by default, the limits are
+**Hobby 300s default AND 300s maximum**; Pro 300s default, 800s maximum.
+The old 10s Hobby ceiling is gone. A final request of ~30s (turn ~7s +
+reporter ~19s) fits with roughly 10x margin. `export const maxDuration =
+120` is set explicitly in the route anyway rather than trusting a default
+that could change.
+
+**1b — reporter at thinking "medium": 16.0s vs 18.5s at "high"**, on the
+same fixture. 13% faster, 4426 tokens vs 4658, and it passed verbatim
+validation on the first attempt with comparable grounding. Since there is
+no longer any timeout pressure, the role stays on "high" per CLAUDE.md;
+`writeReport` now accepts a `thinking` override so the cheaper setting is
+one argument away if that changes.
+
+**2 — the route.** Stateless as specified: `loadSession` at the top,
+`saveSessionState` at the bottom, every request, nothing held between
+invocations. The response builder can only ever emit `reply`, `done` and
+`feedback` — rubric, claims, rationale, violations and state are all
+persisted and none of them can reach the client, because the response
+type is a union that has no room for them.
+
+`consecutiveReactions` moved into `SessionState`. It drives the
+omit-reaction rule, and in a serverless handler there is nowhere else it
+could live: a module variable would have worked locally and silently
+reset on every cold start during judging.
+
+Re-sending the opening request is idempotent — it replays the stored
+opening line rather than spending another planner call.
+
+**3 — no invalid response is reachable.** Client errors return HTTP 400
+but still carry the contract shape so a conformance parser never
+encounters a surprise body. A failed turn call returns a safe question
+with the state untouched, so the next request resumes cleanly rather than
+losing the interview to a 500. The reporter path is wrapped even though
+`writeReport` already cannot throw.
+
+**4 — conformance `--dry`: 28 passed, 0 failed, 0 LLM calls.** Covers
+malformed JSON, empty body, missing sessionId, unknown sessionId, unknown
+candidate, empty message, and a message on a finished session. The last
+one needed a completed session, so the script creates and marks one
+directly through the db helpers rather than running an interview to get
+there. Test rows cleaned up afterwards; all three tables verified back to
+0.
+
+Day coverage is asserted against the persisted turns rather than the
+response, because days are deliberately not observable through the API.
+
+**Not run:** the full interview path. It costs ~11 LLM calls and the user
+should decide when to spend them.

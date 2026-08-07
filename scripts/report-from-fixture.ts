@@ -116,7 +116,11 @@ async function main() {
       daysCovered,
       questionCount: answered,
     },
-    { onUsage: (u) => usages.push(u), maxWaitMs: 70_000 }
+    {
+      onUsage: (u) => usages.push(u),
+      maxWaitMs: 70_000,
+      thinking: process.env.REPORT_THINKING as never,
+    }
   );
 
   console.log(`\n${"=".repeat(66)}\nFINAL REPORT\n${"=".repeat(66)}`);

@@ -85,6 +85,7 @@ async function main() {
     abilityEstimate: 3.4,
     mode: "recovery",
     consecutiveWeak: 2,
+    consecutiveReactions: 1,
   });
   const restated = await loadSession(SESSION_ID);
   check(

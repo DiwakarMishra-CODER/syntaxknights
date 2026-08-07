@@ -213,6 +213,8 @@ export interface SessionState {
   abilityEstimate: number;
   mode: InterviewMode;
   consecutiveWeak: number;
+  /** Acknowledgements in a row, so the route can force one to be omitted. */
+  consecutiveReactions: number;
 }
 
 export type SessionStatus = "active" | "done";

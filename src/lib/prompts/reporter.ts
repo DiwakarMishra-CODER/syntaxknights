@@ -322,6 +322,7 @@ export async function writeReport(
     model?: string;
     maxWaitMs?: number;
     onDegrade?: (d: Degradation) => void;
+    thinking?: Parameters<typeof callLLM>[0]["thinking"];
   } = {}
 ): Promise<Feedback> {
   let correction = "";
@@ -344,6 +345,7 @@ export async function writeReport(
         onUsage: opts.onUsage,
         model: opts.model,
         maxWaitMs: opts.maxWaitMs,
+        thinking: opts.thinking,
       });
     } catch (err) {
       lastError = err;
