@@ -81,11 +81,15 @@ export interface TurnDirective {
   questionsLeft: number;
   followUpsUsed: number;
   followUpsAllowed: number;
+  /** Force an empty reaction this turn — see nextDirective. */
+  omitReaction: boolean;
 }
 
 export function nextDirective(
   state: SessionState,
-  blueprint: Blueprint
+  blueprint: Blueprint,
+  /** How many of the most recent turns opened with an acknowledgement. */
+  consecutiveReactions = 0
 ): TurnDirective {
   const uncovered = uncoveredDays(state, blueprint);
   const questionsLeft = Math.max(0, blueprint.targetQuestions - state.questionCount);
@@ -115,6 +119,10 @@ export function nextDirective(
     questionsLeft,
     followUpsUsed: state.followUpCount,
     followUpsAllowed: state.followUpAllowance,
+    // Every turn carried a reaction in the second live run. Asking nicely
+    // did not work, so after two in a row it becomes a hard instruction
+    // and the caller strips it if the model still emits one.
+    omitReaction: consecutiveReactions >= 2,
   };
 }
 
@@ -188,8 +196,11 @@ export function recordTurn(
     : cover(state.daysCovered, decision.targetDay);
 
   const sameThread = decision.targetDay === state.currentDay;
-  const followUpCount =
-    decision.action === "follow_up" && sameThread ? state.followUpCount + 1 : 0;
+  // Counts any turn spent on the same thread, not just `follow_up`.
+  // Counting only follow_up meant a `clarify` reset the counter to zero, so
+  // alternating follow_up/clarify never tripped the cap — one topic took 6
+  // of 10 questions in the second live run.
+  const followUpCount = sameThread ? state.followUpCount + 1 : 0;
 
   // A productive thread earns more room; a floundering one still caps at 3.
   const followUpAllowance =

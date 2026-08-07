@@ -1,4 +1,4 @@
-import { callLLM } from "../llm";
+import { callLLM, LLMError } from "../llm";
 import type { Blueprint, Candidate, Claim, Feedback, Turn, TurnRubric } from "../types";
 import { ANTI_INVENTION } from "./shared";
 
@@ -242,9 +242,13 @@ function factualSummary(ctx: ReportContext): string {
  * has earned a response. A thinner honest report beats an error.
  */
 export function degradeReport(
-  feedback: Feedback,
+  feedback: Feedback | null,
   ctx: ReportContext
 ): { feedback: Feedback; degradation: Degradation } {
+  // A null report is the total-failure case: the model never returned
+  // anything usable. Everything below then falls through to the factual
+  // fallbacks, which is exactly right.
+  feedback = feedback ?? { summary: "", strengths: [], gaps: [], next: [] };
   const said = normaliseQuote(candidateTranscriptText(ctx.transcript));
 
   const strengths = (feedback.strengths ?? []).filter(
@@ -265,7 +269,8 @@ export function degradeReport(
   );
   const droppedNext = (feedback.next ?? []).filter((n) => !next.includes(n));
 
-  const summaryBad = fabricatedQuotes(feedback.summary ?? "", said).length > 0;
+  const summaryBad =
+    !feedback.summary || fabricatedQuotes(feedback.summary, said).length > 0;
   const summary = summaryBad ? factualSummary(ctx) : feedback.summary;
 
   const strengthsBackfilled = strengths.length === 0;
@@ -321,19 +326,35 @@ export async function writeReport(
 ): Promise<Feedback> {
   let correction = "";
   let last: Feedback | null = null;
+  let lastError: unknown = null;
 
-  // One retry: the first failure is usually a tidied-up quote, and being
-  // shown the exact offending strings fixes it.
+  // Two attempts. EVERY failure path — a rate limit, a truncated response,
+  // unparseable output, a failed verbatim check — falls through to
+  // degradation. This function must never throw: the API contract requires
+  // a feedback object, and a candidate who answered a full interview has
+  // earned a response even if the model could not produce one.
   for (let attempt = 0; attempt < 2; attempt++) {
-    const feedback = await callLLM<Feedback>({
-      role: "reporter",
-      system: REPORTER_SYSTEM,
-      input: buildReporterInput(ctx, correction),
-      schema: REPORTER_SCHEMA as unknown as Record<string, unknown>,
-      onUsage: opts.onUsage,
-      model: opts.model,
-      maxWaitMs: opts.maxWaitMs,
-    });
+    let feedback: Feedback;
+    try {
+      feedback = await callLLM<Feedback>({
+        role: "reporter",
+        system: REPORTER_SYSTEM,
+        input: buildReporterInput(ctx, correction),
+        schema: REPORTER_SCHEMA as unknown as Record<string, unknown>,
+        onUsage: opts.onUsage,
+        model: opts.model,
+        maxWaitMs: opts.maxWaitMs,
+      });
+    } catch (err) {
+      lastError = err;
+      const kind = err instanceof LLMError ? err.kind : "unknown";
+      console.warn(
+        `[reporter] attempt ${attempt + 1} failed (${kind}): ` +
+          `${err instanceof Error ? err.message : String(err)}`
+      );
+      correction = "";
+      continue;
+    }
 
     last = feedback;
     const check = verifyReport(feedback, ctx.transcript);
@@ -356,22 +377,21 @@ export async function writeReport(
     }
   }
 
-  // Second failure: degrade rather than throw. Never leave a candidate who
-  // answered a full interview with nothing, and never break the contract's
-  // required feedback object.
-  const { feedback, degradation } = degradeReport(last as Feedback, ctx);
+  // Degrade with no further model call.
+  const { feedback, degradation } = degradeReport(last, ctx);
 
   console.warn(
-    `[reporter] DEGRADED after 2 failed validations — ` +
-      `dropped ${degradation.droppedStrengths.length} strength(s), ` +
-      `${degradation.droppedGaps.length} gap(s), ` +
-      `${degradation.droppedNext.length} next item(s)` +
-      `${degradation.summaryReplaced ? ", summary replaced with a factual line" : ""}` +
-      `${degradation.strengthsBackfilled ? ", strengths backfilled" : ""}`
+    `[reporter] DEGRADED — ` +
+      (last === null
+        ? `no usable response from the model (${
+            lastError instanceof Error ? lastError.message : "unknown error"
+          }); report built from session state alone`
+        : `dropped ${degradation.droppedStrengths.length} strength(s), ` +
+          `${degradation.droppedGaps.length} gap(s), ` +
+          `${degradation.droppedNext.length} next item(s)` +
+          `${degradation.summaryReplaced ? ", summary replaced" : ""}` +
+          `${degradation.strengthsBackfilled ? ", strengths backfilled" : ""}`)
   );
-  for (const s of degradation.droppedStrengths) {
-    console.warn(`[reporter]   dropped strength: ${s}`);
-  }
   opts.onDegrade?.(degradation);
 
   return feedback;

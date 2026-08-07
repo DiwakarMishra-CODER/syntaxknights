@@ -1,48 +1,41 @@
 {
-  "persona": "You are a Staff AI Engineer hiring for a healthcare AI team. You are encouraging, direct, and focused on practical implementation rather than academic theory. For Tyler, a junior developer with a bootcamp background who showed high persistence across 31 days, you maintain a supportive tone while asking clear questions to see what he learned through his repeated attempts.",
-  "openingLine": "Welcome, Tyler! It's great to meet you. I saw that you persevered through all 31 days and delivered your Day 31 Capstone Project & Final Demo\u2014I'm looking forward to hearing how you built your healthcare system.",
+  "persona": "You are a Staff Engineer hiring for a healthcare AI team. Knowing Tyler worked through 31 days of building with persistent effort across multiple attempts, you are encouraging, direct, and focused on how they worked through challenges to build their healthcare chatbot system.",
+  "openingLine": "Hi Tyler, welcome! I saw that you pushed through the entire 31-day build to complete your healthcare chatbot capstone demo. I'd love to start by talking about how your retrieval and matching engine came together.",
   "targetQuestions": 10,
   "arc": {
     "warmup": 2,
-    "build": 4,
-    "stress": 2,
+    "build": 3,
+    "stress": 3,
     "land": 2
   },
   "focusDays": [
     {
-      "day": 3,
-      "title": "First AI Project, React Frontend & GitHub",
-      "reason": "Tyler passed Day 3 after 5 attempts. Starting here provides an accessible entry point to talk through his early frontend and project setup work.",
-      "startDepth": 1,
-      "strategy": "rebuild_confidence"
-    },
-    {
       "day": 10,
       "title": "The Retrieval & Matching Engine",
-      "reason": "Day 10 is a SHIP_IT day that Tyler passed after 5 attempts. It tests whether he understands his core retrieval engine logic after iterating on it.",
+      "reason": "Tyler passed Day 10 after 5 attempts. As a key SHIP_IT milestone for the retrieval layer of the healthcare chatbot, it is a great place to start exploring how they worked through iterations to get retrieval working.",
       "startDepth": 2,
       "strategy": "rebuild_confidence"
     },
     {
-      "day": 22,
-      "title": "Multi-Agent Orchestration",
-      "reason": "Tyler required 5 attempts to pass Day 22. This complex BUILD day allows us to explore how he handled multi-agent coordination.",
+      "day": 20,
+      "title": "Conversation Memory & Context Management",
+      "reason": "Day 20 is a key SHIP_IT day covering context and memory for the chatbot system. Performance details for this specific day are not in the candidate's partial record, so it provides an opportunity to evaluate how they approached context management.",
       "startDepth": 2,
-      "strategy": "rebuild_confidence"
+      "strategy": "probe_gap"
     },
     {
       "day": 28,
       "title": "Docker & Kubernetes Deployment",
-      "reason": "Day 28 is a critical SHIP_IT deployment day that Tyler passed after 4 attempts. It allows probing his understanding of container deployment.",
+      "reason": "Tyler passed Day 28 after 4 attempts. This is a critical SHIP_IT day for containerizing and deploying the chatbot, making it ideal for verifying their understanding of deployment setup.",
       "startDepth": 2,
-      "strategy": "rebuild_confidence"
+      "strategy": "verify_depth"
     },
     {
       "day": 31,
       "title": "Capstone Project & Final Demo",
-      "reason": "Day 31 is the CAPSTONE deliverable, which Tyler completed in 3 attempts (his lowest attempt count among struggled days). It lets him showcase his full system integration.",
+      "reason": "Tyler completed the final capstone project after 3 attempts. Discussing the final integration of the enterprise healthcare chatbot allows them to speak to the complete system they delivered.",
       "startDepth": 2,
-      "strategy": "rebuild_confidence"
+      "strategy": "verify_depth"
     }
   ]
 }

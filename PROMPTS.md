@@ -962,3 +962,76 @@ preferred, and early scaffolding days discouraged: day 3 consumed 4 of 9
 questions and produced the trivia.
 
 **Not yet verified live** — step 8 is the user's run.
+
+---
+
+## Entry 17 — Six fixes from the second live run, and the lost report
+
+**Prompt:** raise the reporter ceiling and audit every other role's;
+make writeReport degrade on EVERY callLLM failure path, not just
+validation; stop `clarify` resetting the follow-up counter; tighten
+never-reveal-correctness with the two leaking questions as bad examples
+and enforce the omit-reaction rule; add severity ranking when one answer
+contains two weaknesses; then regenerate the report from the fixture.
+
+**Root cause of the lost report — arithmetic, not model behaviour.**
+`maxOutputTokens` is a budget for THOUGHT + OUTPUT on thinking models.
+The reporter at 4096 with thinking "high" spent 3597 thinking and had 482
+left for JSON; both attempts landed within ~16 tokens of the cap and were
+truncated mid-object, which is why they failed to parse. Giving the
+reporter the full transcript is what pushed thinking that high.
+
+The audit found two more heading the same way:
+
+| role | cap | observed peak | used |
+|---|---|---|---|
+| reporter | 4096 | 4081 | 100% — FAILED |
+| planner | 4096 | 3500 | 85% |
+| turn | 2048 | 1517 | 74% |
+| interviewer | 2048 | 708 | 35% |
+| evaluator | 1024 | 142 | 14% |
+
+Ceilings are now 16384 for the 3.6-flash roles and 8192/4096 for
+flash-lite. Headroom that goes unused costs nothing.
+
+**writeReport can no longer throw on any path.** Every `callLLM` failure
+— rate limit, truncation, unparseable output — is caught and falls
+through to `degradeReport`, which now accepts a null report and builds
+one from session state alone. `parseJson` in llm.ts repairs markdown
+fences and surrounding prose first, but deliberately does NOT try to
+repair truncation: a cut-off object is unrecoverable and the fix for that
+is headroom, not cleverness. Tested with a mocked reporter that throws
+on every attempt.
+
+**A second bug this exposed, not in the original list:** the session
+recording was written AFTER the report, so the reporter throwing
+discarded the entire 24-turn interview. I had told the user the opposite.
+The recording now writes before the report, and includes the transcript.
+Run 2 was reconstructed by hand from the terminal output into
+`fixtures/session-CAND-017-run2.json`.
+
+**clarify no longer resets the counter.** `followUpCount` incremented
+only on `action === "follow_up"` and reset to 0 on anything else, so
+alternating follow_up/clarify never tripped the cap — one topic took 6 of
+10 questions. It now counts any turn spent on the same thread.
+
+**Verdict-leaking questions.** "In a healthcare app, returning a general
+paragraph instead of a precise deductible could cause real confusion" and
+"You're relying entirely on a prompt instruction for critical financial
+data" both tell the candidate they were wrong. Both are now BAD examples
+in the prompt, against GOOD rewrites that carry the same probe with no
+verdict. The omit-reaction rule is enforced in code: after two
+consecutive acknowledgements the directive requires an empty reaction and
+the caller strips it if the model emits one anyway.
+
+**Severity ranking.** In one answer Tyler revealed both a missing query
+router and a wildcard CORS origin on a healthcare app. The model chased
+the router — the one matching its current topic — and dropped the
+wildcard. The prompt now ranks weaknesses by consequence, with patient
+data and privacy above architecture, and carries this exact miss as the
+worked example.
+
+**Report regenerated, 1 call, no degradation** — it passed verbatim
+validation on the first attempt. Notably its NEXT section caught the
+wildcard CORS the interviewer itself walked past: "replace the wildcard
+in allow_origins for CORS with specific origin URLs." 97 tests pass.

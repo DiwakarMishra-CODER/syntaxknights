@@ -1,0 +1,245 @@
+{
+  "candidateId": "CAND-017",
+  "transcript": [
+    {
+      "turnNumber": 1,
+      "role": "interviewer",
+      "content": "Hi Tyler, welcome! I saw that you pushed through the entire 31-day build to complete your healthcare chatbot capstone demo. I'd love to start by talking about how your retrieval and matching engine came together.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 2,
+      "role": "candidate",
+      "content": "We used ChromaDB for the vector store. Chunked the healthcare docs and embedded them, then at query time it did a similarity search and passed the top results into the prompt.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 3,
+      "role": "interviewer",
+      "content": "Right. How did you decide on the chunk size for those healthcare documents?",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 4,
+      "role": "candidate",
+      "content": "Honestly we just used the default from the LangChain splitter. I think 1000 characters with some overlap. We didn't really test other sizes.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 5,
+      "role": "interviewer",
+      "content": "Okay. What happens to a policy detail or claim limit split right across that 1000-character boundary?",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 6,
+      "role": "candidate",
+      "content": "Yeah I guess it would get cut in half and neither chunk would have the full thing. We didn't really run into it but I can see how it would break.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 7,
+      "role": "interviewer",
+      "content": "Fair enough. How did your system route a question that needed structured claims data rather than document search?",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 8,
+      "role": "candidate",
+      "content": "We didn't have routing really, everything went to vector search. Honestly a lot of the config was just copied from docs - like for CORS I set allow_origins to a wildcard because it kept erroring and I never went back to it.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 9,
+      "role": "interviewer",
+      "content": "Right. If everything hits vector search, how does the system handle an exact claim amount or policy limit query?",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 10,
+      "role": "candidate",
+      "content": "It would probably just return whatever chunk looked closest. So if someone asked what their deductible was it might pull a paragraph about deductibles generally instead of their actual number.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 11,
+      "role": "interviewer",
+      "content": "I see. In a healthcare app, returning a general paragraph instead of a precise deductible could cause real confusion. How did you mitigate that risk?",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 12,
+      "role": "candidate",
+      "content": "We didn't really. There was a line in the system prompt telling it not to make up numbers but I don't know how well that worked.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 13,
+      "role": "interviewer",
+      "content": "Right. You're relying entirely on a prompt instruction for critical financial data. How would you test if that instruction is actually being followed?",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 14,
+      "role": "candidate",
+      "content": "I guess you'd need to write test cases with known numbers and check the output matches. We never did that though.",
+      "targetDay": 10,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 15,
+      "role": "interviewer",
+      "content": "Fair enough. When a user has a long conversation about their coverage, how does your system handle token limits without losing earlier context?",
+      "targetDay": 20,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 16,
+      "role": "candidate",
+      "content": "We just kept the last few messages in a list and passed them in. If it got too long we'd drop the oldest ones. Nothing fancy.",
+      "targetDay": 20,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 17,
+      "role": "interviewer",
+      "content": "I see. Dropping oldest messages risks losing critical details mentioned early on. How did you determine the cutoff for how many messages to retain?",
+      "targetDay": 20,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 18,
+      "role": "candidate",
+      "content": "It was just whatever number was in the tutorial. Ten messages I think. We never tuned it.",
+      "targetDay": 20,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 19,
+      "role": "interviewer",
+      "content": "Right. When you containerized the backend for deployment, how did you handle passing environment variables like API keys into the Kubernetes cluster safely?",
+      "targetDay": 28,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 20,
+      "role": "candidate",
+      "content": "We used Kubernetes secrets. Created them with kubectl and mounted them as env vars in the deployment yaml.",
+      "targetDay": 28,
+      "depth": 2,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 21,
+      "role": "interviewer",
+      "content": "Fair enough. When you finally demonstrated the complete system live, did all those components\u2014retrieval, memory, and agents\u2014hold up under a real run?",
+      "targetDay": 31,
+      "depth": 1,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 22,
+      "role": "candidate",
+      "content": "Mostly. The retrieval part worked fine in the demo but the agent stuff was flaky so we kind of avoided asking it anything that would trigger the router. We stuck to questions we'd already tested.",
+      "targetDay": 31,
+      "depth": 1,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 23,
+      "role": "interviewer",
+      "content": "Right. Thanks for walking through this, Tyler. I really appreciate your candor about where the system held up. What questions do you have for me about our team?",
+      "targetDay": 31,
+      "depth": 1,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    },
+    {
+      "turnNumber": 24,
+      "role": "candidate",
+      "content": "Yeah, how big is the team and would I be working on the retrieval side or more the agent stuff?",
+      "targetDay": 31,
+      "depth": 1,
+      "rubric": null,
+      "claims": [],
+      "rationale": null
+    }
+  ]
+}

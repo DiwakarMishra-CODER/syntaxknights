@@ -15,6 +15,7 @@
     "quota:report": "tsx --env-file=.env.local scripts/quota-report.ts",
     "compare:turn": "tsx --env-file=.env.local scripts/compare-turn.ts",
     "interview": "tsx --env-file=.env.local scripts/interview.ts",
+    "report:fixture": "tsx --env-file=.env.local scripts/report-from-fixture.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Feedback, Turn } from "../types";
 import {
@@ -338,5 +338,63 @@ describe("degradeReport — never return nothing", () => {
     expect(all).not.toContain("benchmarked");
     expect(all).not.toContain("drain connections");
     expect(all).not.toContain("grace period");
+  });
+});
+
+describe("writeReport never throws", () => {
+  const ctx = {
+    candidate: getCandidate("CAND-017")!,
+    blueprint: {
+      persona: "p",
+      openingLine: "o",
+      targetQuestions: 10,
+      arc: { warmup: 2, build: 4, stress: 2, land: 2 },
+      focusDays: [],
+    },
+    transcript,
+    claimLedger: [],
+    rubrics: [],
+    daysCovered: [10, 20, 28, 31],
+    questionCount: 10,
+  };
+
+  it("returns a usable report when the model call fails every time", async () => {
+    vi.resetModules();
+    vi.doMock("../llm", () => ({
+      LLMError: class LLMError extends Error {
+        kind: string;
+        constructor(kind: string, message: string) {
+          super(message);
+          this.kind = kind;
+        }
+      },
+      callLLM: vi.fn(async () => {
+        const E = class extends Error {
+          kind = "malformed_output";
+        };
+        throw new E("model returned non-JSON despite schema enforcement");
+      }),
+    }));
+
+    const { writeReport: wr } = await import("./reporter");
+    const feedback = await wr(ctx);
+
+    expect(feedback).toBeDefined();
+    expect(typeof feedback.summary).toBe("string");
+    expect(feedback.summary.length).toBeGreaterThan(0);
+    expect(feedback.strengths.length).toBeGreaterThan(0);
+    expect(feedback.next.length).toBeGreaterThan(0);
+    // built from state alone, so it quotes nothing and invents nothing
+    expect(feedback.summary).toContain("10 questions");
+    vi.doUnmock("../llm");
+    vi.resetModules();
+  });
+
+  it("degrades a null report into the contract shape", () => {
+    const { feedback } = degradeReport(null, ctx);
+    expect(feedback.summary).toContain("10 questions");
+    expect(feedback.strengths).toHaveLength(1);
+    expect(feedback.gaps).toEqual([]);
+    expect(feedback.next).toHaveLength(1);
   });
 });

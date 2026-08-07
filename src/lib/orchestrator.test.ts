@@ -273,3 +273,44 @@ describe("the graded floors still hold against a bad model", () => {
     });
   }
 });
+
+describe("clarify no longer resets the follow-up counter", () => {
+  it("trips the cap when follow_up and clarify alternate on one day", () => {
+    let state = initState(blueprint);
+    const pattern = ["follow_up", "clarify", "follow_up", "clarify"] as const;
+
+    for (const action of pattern) {
+      const d = nextDirective(state, blueprint);
+      // Weak answers, so no strong-answer bonus is earned.
+      state = recordTurn(
+        state,
+        turn({ action, targetDay: 28, knowledge: 2 }),
+        blueprint,
+        d
+      ).state;
+    }
+
+    // 4 turns on one thread with an allowance of 3 must force a move.
+    expect(state.followUpCount).toBeGreaterThanOrEqual(MAX_FOLLOW_UPS);
+    expect(nextDirective(state, blueprint).mustMove).toBe(true);
+  });
+
+  it("still resets when the topic actually changes", () => {
+    let state = initState(blueprint);
+    state = step(state, turn({ action: "clarify", targetDay: 28 })).state;
+    state = step(state, turn({ action: "clarify", targetDay: 28 })).state;
+    expect(state.followUpCount).toBe(2);
+
+    state = step(state, turn({ action: "next_topic", targetDay: 23 })).state;
+    expect(state.followUpCount).toBe(0);
+  });
+});
+
+describe("omit-reaction directive", () => {
+  it("is off until two consecutive reactions have been used", () => {
+    const s = initState(blueprint);
+    expect(nextDirective(s, blueprint, 0).omitReaction).toBe(false);
+    expect(nextDirective(s, blueprint, 1).omitReaction).toBe(false);
+    expect(nextDirective(s, blueprint, 2).omitReaction).toBe(true);
+  });
+});

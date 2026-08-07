@@ -55,34 +55,42 @@ export const ROLE_CONFIG: Record<Role, RoleConfig> = {
   turn: {
     model: "gemini-3.5-flash-lite",
     thinkingLevel: "medium",
-    maxOutputTokens: 2048,
+    maxOutputTokens: 8192,
   },
   // 1 call per interview.
   planner: {
     model: "gemini-3.6-flash",
     thinkingLevel: "high",
-    maxOutputTokens: 4096,
+    maxOutputTokens: 16384,
   },
   // 1 call per interview.
   reporter: {
     model: "gemini-3.6-flash",
     thinkingLevel: "high",
-    maxOutputTokens: 4096,
+    maxOutputTokens: 16384,
   },
   // Kept so the merged turn can be un-merged; both on flash-lite so an
   // A/B against `turn` varies only the merge, not the model.
   interviewer: {
     model: "gemini-3.5-flash-lite",
     thinkingLevel: "medium",
-    maxOutputTokens: 2048,
+    maxOutputTokens: 8192,
   },
   evaluator: {
     model: "gemini-3.5-flash-lite",
     thinkingLevel: "minimal",
-    maxOutputTokens: 1024,
+    maxOutputTokens: 4096,
   },
 };
 
+/**
+ * maxOutputTokens is a budget for THOUGHT + OUTPUT on thinking models, not
+ * output alone. The reporter at 4096 with thinking "high" spent 3597 tokens
+ * thinking and had 482 left for JSON — it truncated mid-object twice and the
+ * whole interview's feedback was lost. Observed peaks were planner 3500/4096
+ * (85%) and turn 1517/2048 (74%), both on the same path. Ceilings are now set
+ * far above any observed usage; there is no cost to headroom that is unused.
+ */
 const MAX_ROUNDS = 3;
 const BACKOFF_MS = [1000, 2000, 4000];
 /** Safe for a serverless handler. Offline scripts pass a much larger value. */
@@ -273,6 +281,35 @@ function retryAfterMs(err: unknown): number | null {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Parses model JSON, repairing the two things that actually go wrong:
+ * a markdown fence around the object, and leading/trailing prose. Does NOT
+ * try to repair truncation — a cut-off object is unrecoverable, and the fix
+ * for that is headroom, not cleverness.
+ */
+export function parseJson<T>(text: string): T {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // strip ```json ... ``` fences
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenced) {
+      try {
+        return JSON.parse(fenced[1].trim()) as T;
+      } catch {
+        /* fall through */
+      }
+    }
+    // take the outermost {...}
+    const first = text.indexOf("{");
+    const last = text.lastIndexOf("}");
+    if (first !== -1 && last > first) {
+      return JSON.parse(text.slice(first, last + 1)) as T;
+    }
+    throw new Error("no JSON object found");
+  }
+}
+
 // ---------------------------------------------------------------------------
 // callLLM
 // ---------------------------------------------------------------------------
@@ -394,7 +431,7 @@ export async function callLLM<T = unknown>(
         if (!schema) return text;
 
         try {
-          return JSON.parse(text) as T;
+          return parseJson<T>(text);
         } catch (parseErr) {
           if (softRetried) {
             throw new LLMError(

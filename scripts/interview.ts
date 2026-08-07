@@ -146,6 +146,7 @@ async function main() {
   });
 
   let concluded = false;
+  let consecutiveReactions = 0;
 
   for (let i = 0; i < HARD_CAP && !concluded; i++) {
     const answer = replay
@@ -169,7 +170,7 @@ async function main() {
 
     // Constraints computed BEFORE the call, so the model writes its
     // question for the right topic and nothing is rewritten afterwards.
-    const directive = nextDirective(state, blueprint);
+    const directive = nextDirective(state, blueprint, consecutiveReactions);
 
     const ctx: TurnContext = {
       blueprint,
@@ -200,7 +201,11 @@ async function main() {
       });
     }
 
-    const said = [decision.reaction, decision.question].filter(Boolean).join(" ").trim();
+    // Enforce the omission rather than trusting the instruction.
+    const reaction = directive.omitReaction ? "" : (decision.reaction ?? "").trim();
+    consecutiveReactions = reaction ? consecutiveReactions + 1 : 0;
+
+    const said = [reaction, decision.question].filter(Boolean).join(" ").trim();
     console.log(`\nINTERVIEWER: ${said}`);
     statePanel(state, decision.rationale, recorded.violations, decision.substantive);
 
@@ -253,6 +258,14 @@ async function main() {
     console.log(t.content);
   }
 
+  // Persist BEFORE the report. The second live run lost a 24-turn session
+  // because the recording was written after, and the reporter threw.
+  if (recording) {
+    mkdirSync("fixtures", { recursive: true });
+    writeFileSync(`fixtures/session-${id}.json`, JSON.stringify({ ...record, transcript }, null, 2));
+    console.log(`\n[recorded ${record.turns.length} turns -> fixtures/session-${id}.json]`);
+  }
+
   console.log(`\n${"=".repeat(66)}\nFINAL REPORT\n${"=".repeat(66)}`);
   const feedback = replay
     ? replay.feedback
@@ -289,9 +302,8 @@ async function main() {
   );
 
   if (recording) {
-    mkdirSync("fixtures", { recursive: true });
     const out = `fixtures/session-${id}.json`;
-    writeFileSync(out, JSON.stringify(record, null, 2));
+    writeFileSync(out, JSON.stringify({ ...record, transcript }, null, 2));
     console.log(`\nrecorded -> ${out}  (replay with FIXTURE_REPLAY=${out})`);
   }
 }
