@@ -37,6 +37,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
               </a>
             </li>
             <li>
+              <a href="/interview" className="hover:text-[var(--accent-emerald)] transition-colors">
+                The Interview
+              </a>
+            </li>
+            <li>
               <a href="#dossier" className="hover:text-[var(--accent-emerald)] transition-colors">
                 Dossier
               </a>
@@ -81,6 +86,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
               <li>
                 <a href="#difference" onClick={() => setMobileMenuOpen(false)}>
                   Difference
+                </a>
+              </li>
+              <li>
+                <a href="/interview" onClick={() => setMobileMenuOpen(false)}>
+                  The Interview
                 </a>
               </li>
               <li>
