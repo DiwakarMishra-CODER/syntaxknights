@@ -59,7 +59,7 @@ export default function Dashboard({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-editorial selection:bg-emerald-200">
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 py-12 ">
         {/* Header Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-editorial font-bold text-slate-900 tracking-tight">

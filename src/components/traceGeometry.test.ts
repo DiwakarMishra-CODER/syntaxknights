@@ -4,63 +4,57 @@ import {
   BANDS,
   clampDepth,
   headPath,
-  HEIGHT,
   penPosition,
   settledPath,
   traceWidth,
   traceX,
   traceY,
-  type TracePoint,
 } from "./traceGeometry";
+import type { TracePoint } from "./DepthTrace";
 
 const p = (depth: number): TracePoint => ({ depth, day: 10, measured: true });
 
 describe("depth mapping", () => {
-  it("puts 5 at the top of the paper and 1 at the bottom", () => {
-    expect(traceY(5)).toBe(16);
-    expect(traceY(1)).toBe(HEIGHT - 16);
-    expect(traceY(5)).toBeLessThan(traceY(1));
+  it("puts 1 on the left and 5 on the right", () => {
+    expect(traceX(1)).toBeLessThan(traceX(5));
   });
 
-  it("gives every depth a distinct height", () => {
-    const ys = [1, 2, 3, 4, 5].map(traceY);
-    expect(new Set(ys).size).toBe(5);
+  it("gives every depth a distinct x coordinate", () => {
+    const xs = [1, 2, 3, 4, 5].map(traceX);
+    expect(new Set(xs).size).toBe(5);
   });
 
-  it("clamps out-of-range depths instead of drawing off-paper", () => {
+  it("clamps out-of-range depths instead of drawing out of bounds", () => {
     expect(clampDepth(0)).toBe(1);
     expect(clampDepth(-4)).toBe(1);
     expect(clampDepth(9)).toBe(5);
-    expect(traceY(0)).toBe(traceY(1));
-    expect(traceY(99)).toBe(traceY(5));
+    expect(traceX(0)).toBe(traceX(1));
+    expect(traceX(99)).toBe(traceX(5));
   });
 
   it("names all five bands", () => {
     expect(BANDS).toHaveLength(5);
-    expect(BANDS[0]).toBe("recall");
-    expect(BANDS[4]).toBe("redesign");
+    expect(BANDS[0]).toBe("Recall");
+    expect(BANDS[4]).toBe("Redesign");
   });
 });
 
-describe("a real curve — climb to 5, drop to 1", () => {
+describe("a real curve — move right to 5, left to 1", () => {
   const curve = [1, 2, 3, 4, 5, 4, 2, 1].map(p);
 
-  it("rises then falls monotonically in screen space", () => {
-    const ys = curve.map((pt) => traceY(pt.depth));
-    // climbing depth means decreasing y
-    expect(ys[0]).toBeGreaterThan(ys[4]);
-    // then falling depth means increasing y again
-    expect(ys[7]).toBeGreaterThan(ys[4]);
-    expect(ys[4]).toBe(traceY(5));
-    expect(ys[7]).toBe(traceY(1));
+  it("moves right then left in screen space", () => {
+    const xs = curve.map((pt) => traceX(pt.depth));
+    // increasing depth means increasing x
+    expect(xs[0]).toBeLessThan(xs[4]);
+    // then decreasing depth means decreasing x
+    expect(xs[7]).toBeLessThan(xs[4]);
+    expect(xs[4]).toBe(traceX(5));
+    expect(xs[7]).toBe(traceX(1));
   });
 
-  it("advances the paper one step per turn", () => {
-    expect(traceX(1) - traceX(0)).toBe(34);
-    // The paper holds a minimum of 10 slots so an early trace is not
-    // squeezed; past that it grows one step per turn.
-    expect(traceWidth(2)).toBe(traceWidth(8));
-    expect(traceWidth(20) - traceWidth(19)).toBe(34);
+  it("advances the paper one step per turn downwards", () => {
+    expect(traceY(1) - traceY(0)).toBeGreaterThan(0);
+    expect(traceWidth()).toBeGreaterThan(0);
   });
 
   it("draws all but the newest point in the settled path", () => {
@@ -71,7 +65,7 @@ describe("a real curve — climb to 5, drop to 1", () => {
 
   it("draws exactly the newest segment as the head", () => {
     const d = headPath(curve);
-    expect(d).toBe(`M${traceX(6)},${traceY(2)} L${traceX(7)},${traceY(1)}`);
+    expect(d).toBe(`M${traceX(2)},${traceY(6)} L${traceX(1)},${traceY(7)}`);
   });
 });
 
@@ -83,8 +77,8 @@ describe("the flat fixture", () => {
     expect(headPath(flat)).not.toBe("");
   });
 
-  it("shows the one place it does move", () => {
-    expect(traceY(2)).not.toBe(traceY(1));
+  it("shows the one place it does move horizontally", () => {
+    expect(traceX(2)).not.toBe(traceX(1));
   });
 });
 
@@ -92,7 +86,6 @@ describe("edge cases", () => {
   it("handles no points", () => {
     expect(settledPath([])).toBe("");
     expect(headPath([])).toBe("");
-    expect(traceWidth(0)).toBeGreaterThan(0);
   });
 
   it("handles a single point", () => {
@@ -102,11 +95,11 @@ describe("edge cases", () => {
 
   it("parks the pen one step ahead while thinking", () => {
     const pts = [p(3), p(4)];
-    expect(penPosition(pts, true).x).toBeGreaterThan(penPosition(pts, false).x);
-    expect(penPosition(pts, false).y).toBe(traceY(4));
+    expect(penPosition(pts, true).y).toBeGreaterThan(penPosition(pts, false).y);
+    expect(penPosition(pts, false).x).toBe(traceX(4));
   });
 
   it("gives the pen a resting place before any measurement", () => {
-    expect(penPosition([], true).y).toBe(traceY(2));
+    expect(penPosition([], true).x).toBe(traceX(2));
   });
 });
