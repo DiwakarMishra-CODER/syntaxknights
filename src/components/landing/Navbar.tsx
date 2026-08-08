@@ -48,10 +48,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
           {/* Center: Essential Nav Links */}
           <ul className="hidden items-center gap-8 text-[13px] tracking-wide text-[#CFD7D0] md:flex">
             {[
-              { href: "#comparison", label: "The divergence" },
-              { href: "#how-it-works", label: "The three moments" },
-              { href: "#playground", label: "Inside the interview" },
-              { href: "#report", label: "The report" },
+              { href: "#comparison", label: "Comparison" },
+              { href: "#how-it-works", label: "How it Works" },
+              { href: "#playground", label: "Live Demo" },
+              { href: "#report", label: "Readiness Report" },
             ].map((link) => (
               <li key={link.href}>
                 <a
@@ -120,10 +120,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
             >
               <ul className="flex flex-col gap-4 text-sm text-[#CFD7D0]">
                 {[
-                  { href: "#comparison", label: "The divergence" },
-                  { href: "#how-it-works", label: "The three moments" },
-                  { href: "#playground", label: "Inside the interview" },
-                  { href: "#report", label: "The report" },
+                  { href: "#comparison", label: "Comparison" },
+                  { href: "#how-it-works", label: "How it Works" },
+                  { href: "#playground", label: "Live Demo" },
+                  { href: "#report", label: "Readiness Report" },
                 ].map((link) => (
                   <li key={link.href}>
                     <a

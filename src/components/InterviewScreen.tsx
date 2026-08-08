@@ -186,18 +186,7 @@ function FeedbackBlock({ feedback }: { feedback: Feedback }) {
           <p className="font-sans text-[16px] uppercase tracking-[0.2em] text-[#16A34A] font-medium">Evaluation Results</p>
         </header>
 
-        {/* Score Ring */}
-        <div className="flex flex-col items-center justify-center mb-20 relative group">
-          <div className="absolute inset-0 bg-[#16A34A] opacity-20 blur-[50px] rounded-full group-hover:opacity-30 transition-opacity duration-700" />
-          <div className="w-40 h-40 rounded-full border border-white/10 flex items-center justify-center bg-white/5 backdrop-blur-xl shadow-2xl relative z-10">
-            <div className="w-[140px] h-[140px] rounded-full border-[3px] border-[#16A34A]/30 border-t-[#16A34A] flex items-center justify-center relative shadow-[inset_0_0_20px_rgba(22,163,74,0.1)]">
-              <span className="font-editorial text-[56px] font-medium text-white tracking-tighter">
-                {feedback.score !== undefined ? feedback.score : "--"}
-              </span>
-            </div>
-          </div>
-          <span className="font-sans font-semibold text-[11px] uppercase tracking-[0.14em] text-[#7E8B84] mt-8">Overall Score</span>
-        </div>
+
 
         {/* Summary Skeleton */}
         <div className="w-full max-w-[48rem] mb-20">
