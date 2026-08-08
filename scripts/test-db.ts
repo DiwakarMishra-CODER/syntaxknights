@@ -85,7 +85,12 @@ async function main() {
     abilityEstimate: 3.4,
     mode: "recovery",
     consecutiveWeak: 2,
+    consecutiveStrong: 0,
+    lastScores: null,
+    depthViolations: 0,
     consecutiveReactions: 1,
+    endedEarly: false,
+    lastTurnSubstantive: true,
   });
   const restated = await loadSession(SESSION_ID);
   check(

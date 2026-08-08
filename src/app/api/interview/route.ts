@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   appendTurn,
   createSession,
+  findCachedBlueprint,
   getClaimLedger,
   getRecentTurns,
   loadSession,
@@ -10,7 +11,9 @@ import {
   saveReport,
   saveSessionState,
 } from "@/lib/db";
-import { plan, report, turn as runTurnCall } from "@/lib/engine";
+import { plan, turn as runTurnCall } from "@/lib/engine";
+import { validateBlueprint } from "@/lib/prompts/planner";
+import { buildReport } from "@/lib/report-context";
 import { LLMError } from "@/lib/llm";
 import {
   initState,
@@ -20,7 +23,7 @@ import {
 } from "@/lib/orchestrator";
 import type { TurnResult } from "@/lib/prompts/turn";
 import { getCandidate } from "@/lib/signals";
-import type { Candidate, Feedback, InterviewResponse, Turn } from "@/lib/types";
+import type { Blueprint, Candidate, Feedback, InterviewResponse, Turn } from "@/lib/types";
 
 /**
  * The single endpoint. Contract is fixed in CLAUDE.md:
@@ -97,6 +100,32 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * A cached plan, but only if it is still valid for this candidate.
+ *
+ * `validateBlueprint` is the same check a freshly generated plan must pass —
+ * it asserts the focus days exist in the candidate's record. Skipping it here
+ * would let a plan cached before a curriculum or roster edit start an
+ * interview about days this person never has, which is exactly the
+ * fabrication the planner is validated against in the first place.
+ */
+async function reusableBlueprint(candidate: Candidate): Promise<Blueprint | null> {
+  const cached = await findCachedBlueprint(candidate.member.id);
+  if (!cached) return null;
+
+  try {
+    const ok = validateBlueprint(cached, candidate);
+    console.log(`[plan] reusing cached blueprint for ${candidate.member.id} — 0 planner calls`);
+    return ok;
+  } catch (err) {
+    console.warn(
+      `[plan] cached blueprint for ${candidate.member.id} no longer valid, re-planning: ` +
+        `${err instanceof Error ? err.message : String(err)}`
+    );
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 async function startSession(sessionId: string, rawCandidate: unknown) {
@@ -114,7 +143,11 @@ async function startSession(sessionId: string, rawCandidate: unknown) {
     return reply(existing.blueprint.openingLine, false);
   }
 
-  const blueprint = await plan(candidate);
+  // Reuse the plan already made for this person rather than paying for an
+  // identical one. The planner is on the model capped at 20 requests per DAY
+  // per key, and it used to fire on every page open — including the ones
+  // nobody answered a question in.
+  const blueprint = (await reusableBlueprint(candidate)) ?? (await plan(candidate));
   const state = initState(blueprint);
 
   await createSession(sessionId, candidate, blueprint);
@@ -200,8 +233,8 @@ async function continueSession(sessionId: string, rawMessage: unknown) {
   if (!decision) {
     // A replay ran past the end of its recording. Close cleanly with a
     // report rather than pretending there is another question.
-    const feedback = await buildReport(sessionId, session.candidate, blueprint, state);
-    await saveReport(sessionId, feedback);
+    const feedback = await buildReport({ sessionId, candidate: session.candidate, blueprint, state });
+    await persistReport(sessionId, feedback);
     await markDone(sessionId);
     return reply(
       "That's everything I wanted to cover — thank you for walking me through it.",
@@ -237,42 +270,22 @@ async function continueSession(sessionId: string, rawMessage: unknown) {
 
   if (!ending) return reply(text, false);
 
-  const feedback = await buildReport(sessionId, session.candidate, blueprint, nextState);
-  await saveReport(sessionId, feedback);
+  const feedback = await buildReport({ sessionId, candidate: session.candidate, blueprint, state: nextState });
+  await persistReport(sessionId, feedback);
   await markDone(sessionId);
 
   return reply(text, true, feedback);
 }
 
-/** The report must exist. writeReport never throws; this is belt and braces. */
-async function buildReport(
-  sessionId: string,
-  candidate: Candidate,
-  blueprint: NonNullable<Awaited<ReturnType<typeof loadSession>>>["blueprint"],
-  state: Awaited<ReturnType<typeof loadSession>> extends null
-    ? never
-    : ReturnType<typeof initState>
-): Promise<Feedback> {
-  const transcript: Turn[] = await getRecentTurns(sessionId, 200);
-  const claimLedger = await getClaimLedger(sessionId);
-
-  const rubrics = transcript
-    .filter((t) => t.role === "interviewer" && t.rubric)
-    .map((t) => ({
-      day: t.targetDay ?? 0,
-      depth: t.depth ?? 0,
-      rubric: t.rubric!,
-    }));
-
-  const ctx = {
-    candidate,
-    blueprint: blueprint!,
-    transcript,
-    claimLedger,
-    rubrics,
-    daysCovered: state.daysCovered,
-    questionCount: state.questionCount,
-  };
-
-  return report(ctx);
+/**
+ * Saving the report must never take down the response. A transient Postgres
+ * error would otherwise convert a completed interview into the generic
+ * non-done error reply — a contract failure for a run that actually finished.
+ */
+async function persistReport(sessionId: string, feedback: Feedback) {
+  try {
+    await saveReport(sessionId, feedback);
+  } catch (err) {
+    console.error(`[route] saveReport failed for ${sessionId}:`, err);
+  }
 }

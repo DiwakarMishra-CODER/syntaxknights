@@ -398,3 +398,86 @@ describe("writeReport never throws", () => {
     expect(feedback.next).toHaveLength(1);
   });
 });
+
+/**
+ * The report must never claim more than the session actually contained.
+ *
+ * These guard the two ways it did: a degraded report saying "across days ."
+ * with no days, and one congratulating someone who pressed End for working
+ * through "all 3 questions".
+ */
+describe("the report does not overstate what happened", () => {
+  const base = {
+    candidate: getCandidate("CAND-017")!,
+    blueprint: {
+      persona: "p",
+      openingLine: "o",
+      targetQuestions: 10,
+      arc: { warmup: 2, build: 4, stress: 2, land: 2 },
+      focusDays: [],
+    },
+    transcript,
+    claimLedger: [],
+    rubrics: [],
+  };
+
+  const allStrings = (f: Feedback) => [f.summary, ...f.strengths, ...f.gaps, ...f.next];
+
+  it("says nothing about days when no day was covered", () => {
+    const { feedback } = degradeReport(null, {
+      ...base,
+      transcript: [],
+      daysCovered: [],
+      questionCount: 0,
+    });
+
+    for (const line of allStrings(feedback)) {
+      expect(line.trim().length).toBeGreaterThan(0);
+      expect(line).not.toMatch(/across days\s*[.,]?\s*$/m);
+      expect(line).not.toMatch(/days\s*[.,]/);
+    }
+  });
+
+  it("never tells someone who stopped that they finished", () => {
+    const { feedback } = degradeReport(null, {
+      ...base,
+      daysCovered: [3, 10],
+      questionCount: 3,
+      endedEarly: true,
+    });
+
+    for (const line of allStrings(feedback)) {
+      expect(line).not.toMatch(/\ball (the )?\d+ questions\b/i);
+      expect(line).not.toMatch(/\b(completed|finished) the interview\b/i);
+    }
+    expect(feedback.strengths.join(" ")).toMatch(/before ending the session/);
+  });
+
+  it("keeps the normal-path wording exactly as it was", () => {
+    // The inertness half: endedEarly is opt-in, so an interview that ran to
+    // the end must read byte-for-byte the way it did before the flag existed.
+    const { feedback } = degradeReport(null, {
+      ...base,
+      daysCovered: [3, 10, 22, 28],
+      questionCount: 9,
+    });
+    expect(feedback.strengths[0]).toContain("You worked through all 9 questions");
+  });
+
+  it("frames an early end only when it was one", () => {
+    const normal = buildReporterInput({ ...base, daysCovered: [3], questionCount: 9 });
+    const early = buildReporterInput({
+      ...base,
+      daysCovered: [3],
+      questionCount: 3,
+      endedEarly: true,
+    });
+
+    expect(normal).not.toMatch(/HOW THIS ENDED/);
+    expect(early).toMatch(/HOW THIS ENDED/);
+    // The framing is added to the INPUT, never to REPORTER_SYSTEM — that
+    // constant must stay byte-identical or prompt caching stops hitting.
+    expect(REPORTER_SYSTEM).not.toMatch(/HOW THIS ENDED/);
+    expect(REPORTER_SYSTEM).not.toContain(base.candidate.member.name);
+  });
+});

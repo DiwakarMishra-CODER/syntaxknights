@@ -83,6 +83,93 @@ function assertFeedback(p: Probe) {
 
 // ---------------------------------------------------------------------------
 
+/**
+ * `/end` has its OWN contract and must never be checked with assertShape —
+ * that helper asserts exactly reply+done, and pointing it here would either
+ * fail or, worse, tempt someone to loosen it and take the frozen
+ * /api/interview contract with it.
+ */
+async function postTo(path: string): Promise<Probe> {
+  const res = await fetch(`${BASE.replace(/\/$/, "")}${path}`, { method: "POST" });
+  const raw = await res.text();
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    /* left null — the caller asserts on it */
+  }
+  return { status: res.status, json, raw };
+}
+
+async function getFrom(path: string): Promise<Probe> {
+  const res = await fetch(`${BASE.replace(/\/$/, "")}${path}`, { cache: "no-store" });
+  const raw = await res.text();
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    /* left null */
+  }
+  return { status: res.status, json, raw };
+}
+
+/**
+ * The candidate ending the interview themselves.
+ *
+ * Runs at questionCount 0 on purpose: `worthReporting` is false there, so the
+ * reporter is skipped entirely and the whole round trip costs zero quota.
+ */
+async function endEndpoint() {
+  console.log("\nENDING EARLY (no LLM calls — questionCount is 0, so the reporter is skipped)");
+
+  const id = `conformance-end-${process.pid}`;
+  const candidate = getCandidate(CANDIDATE)!;
+  const stub: Blueprint = {
+    persona: "p",
+    openingLine: "o",
+    targetQuestions: 10,
+    arc: { warmup: 2, build: 4, stress: 2, land: 2 },
+    focusDays: [
+      { day: 10, title: "t", reason: "r", startDepth: 2, strategy: "verify_depth" },
+      { day: 20, title: "t", reason: "r", startDepth: 2, strategy: "probe_gap" },
+      { day: 28, title: "t", reason: "r", startDepth: 2, strategy: "verify_depth" },
+      { day: 31, title: "t", reason: "r", startDepth: 2, strategy: "probe_gap" },
+    ],
+  };
+
+  const missing = await postTo(`/api/session/no-such-session-${process.pid}/end`);
+  check("unknown session: 404", missing.status === 404, `got ${missing.status}`);
+  check("unknown session: parseable JSON", missing.json !== null, missing.raw.slice(0, 120));
+
+  try {
+    await createSession(id, candidate, stub);
+  } catch (err) {
+    check("end: setup", false, (err as Error).message);
+    return;
+  }
+
+  const first = await postTo(`/api/session/${id}/end`);
+  check("end: 200", first.status === 200, `got ${first.status}`);
+  check("end: ok true", first.json?.ok === true);
+  check("end: endedEarly true", first.json?.endedEarly === true);
+  check("end: alreadyDone false", first.json?.alreadyDone === false);
+
+  // The double-click guard. A second press must not spend another reporter
+  // call — the candidate is already looking at the report page.
+  const second = await postTo(`/api/session/${id}/end`);
+  check("end twice: 200", second.status === 200, `got ${second.status}`);
+  check("end twice: alreadyDone true", second.json?.alreadyDone === true);
+
+  // The frozen contract has to survive a session ended out from under it.
+  assertShape("message after ending early", await post({ sessionId: id, message: "hi" }));
+
+  const state = await getFrom(`/api/session/${id}/state`);
+  check("state after ending: done", state.json?.status === "done", `got ${String(state.json?.status)}`);
+  check("state after ending: endedEarly true", state.json?.endedEarly === true);
+}
+
+// ---------------------------------------------------------------------------
+
 async function failureCases() {
   console.log("\nFAILURE CASES (no LLM calls)");
 
@@ -177,6 +264,7 @@ async function main() {
   console.log(`Conformance against ${ENDPOINT}${DRY ? "  [--dry: failure cases only]" : ""}`);
 
   await failureCases();
+  await endEndpoint();
   if (!DRY) await fullInterview();
 
   console.log(`\n${"=".repeat(60)}`);

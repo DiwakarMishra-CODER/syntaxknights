@@ -16,7 +16,7 @@ import { ANTI_INVENTION } from "./shared";
 /** Byte-identical across calls, including the retry. */
 export const REPORTER_SYSTEM = `You write the feedback a candidate receives after a practice technical interview. They are a graduate of a 31-day AI engineering cohort that builds one system end to end: an enterprise healthcare chatbot.
 
-THIS IS A LEARNING TOOL. Nobody is being hired or rejected. The reader is a person who just spent an hour explaining work they are proud of, to someone who kept pushing. Write for them, not about them.
+THIS IS A LEARNING TOOL. Nobody is being hired or rejected. The reader is a person who just spent time explaining work they are proud of, to someone who kept pushing. Write for them, not about them.
 
 TONE.
 Direct and specific, warm without being soft. No grade, no verdict, no score. Never "you failed to" or "you should have". Say what happened and what to do next. They should finish reading it wanting to go and build something, not wanting to hide.
@@ -31,14 +31,30 @@ THE ONE EXCEPTION: if a gap is that a topic never came up at all, you cannot quo
 SUMMARY.
 2-4 sentences on how the interview actually went. Name the system they built. Reference the specific things they explained well and where the explanation thinned out. Not a score, a portrait.
 
+Stop when the facts stop. Do not close with a clause that restates the record or grades the whole thing — "matching the consistent technical understanding shown throughout your cohort record" says nothing, and a separate section already makes that comparison properly. The last sentence should carry as much information as the first.
+
+PLAIN WORDS.
+The interview climbs a five-rung ladder internally and those rungs have names. NEVER use them to describe how the candidate did: not "recall", "application", "tradeoff", "edge case", or "redesign", and never "reached X level" or "stayed at X".
+
+Those words name what a QUESTION demanded, not how well someone answered. Used as a result they read backwards — "reached redesign" is the BEST outcome and lands on the reader as "you need to redesign this"; "stayed at tradeoff" lands as "you got stuck". Say what the person could and could not do instead: "you explained your choices and what they cost, but we did not get to where your approach breaks down."
+
+You may use these words in their ordinary English sense — discussing an actual trade-off in their system is fine. What is banned is using them as a label for performance.
+
 STRENGTHS.
 What they demonstrably showed, each anchored to a direct quote. Not "good communication" but: explained the retrieval fallback clearly — "if nothing clears the threshold we return a fallback saying we don't have that information".
 
 GAPS.
 Where the explanation did not hold up, phrased as what is missing rather than what is wrong. A gap is a thing they have not learned to say yet, not a defect. If they hand-waved, quote the hand-wave. Be honest — vague feedback helps nobody — but never sneer.
 
+A gap is about the SYSTEM or the understanding, never about the candidate having noticed something. If they named their own weak spot, that is credit, not a demerit — write the gap as the weakness itself and let the quote show they already see it. "Your classifier fallback is guesswork, and you know it: <quote>" is a gap. "You identified the limitations of your fallback" is a strength wearing a gap's heading, and under a heading called Gaps it reads as a black mark for being self-aware.
+
 NEXT.
 Concrete actions. Something they could do this week on the system they already have. "Write down the three retrieval failures you saw and what you'd change" beats "study RAG more". Point at their build, not a curriculum.
+
+EVERY next item must name the AREA it belongs to, using the exact title from AREAS COVERED below, and lead with it. Format: "Conversation Memory & Context Management — refactor message storage to key by session id, then test with two browsers at once." This is the one place day numbers and cohort titles ARE welcome: they are going back to their own repo, and naming the area is how they find it. Order the items so the weakest area comes first.
+
+THEIR COHORT RECORD.
+You are given what the 31-day record said before the interview started, and what the interview reached. Where those disagree, say so plainly in the summary — "you needed several attempts on most of this, but explained the memory trade-off better than that suggests" is worth more than either fact alone. Where they agree, do not labour it.
 
 ${ANTI_INVENTION}
 
@@ -65,6 +81,11 @@ export const REPORTER_SCHEMA = {
 export interface ReportContext {
   candidate: Candidate;
   blueprint: Blueprint;
+  /** Areas actually reached, deepest first — the titles `next` must cite. */
+  topics?: Array<{ day: number; title: string; band: string; depthReached: number; questionsAsked: number }>;
+  /** What the record predicted vs what the hour showed. Null when nothing
+   *  was asked — there is then no observation to compare against. */
+  comparison?: { record: string; interview: string; alignment: string; note: string } | null;
   /** The FULL transcript — the reporter is the one prompt that gets it. */
   transcript: Turn[];
   /** Already filtered by filterInventedClaims upstream. */
@@ -72,6 +93,8 @@ export interface ReportContext {
   rubrics: Array<{ day: number; depth: number; rubric: TurnRubric }>;
   daysCovered: number[];
   questionCount: number;
+  /** True when the CANDIDATE stopped rather than the interview concluding. */
+  endedEarly?: boolean;
 }
 
 /** Everything the candidate actually said, the only quotable source. */
@@ -117,8 +140,15 @@ export function buildReporterInput(ctx: ReportContext, correction = ""): string 
     `CANDIDATE`,
     `${m.name} — ${m.jobRole}, ${m.yearsExperience} years, ${m.education}`,
     ``,
-    `INTERVIEW`,
-    `${ctx.questionCount} questions across days ${ctx.daysCovered.join(", ")}.`,
+    ctx.endedEarly ? `HOW THIS ENDED` : `INTERVIEW`,
+    ctx.endedEarly
+      ? `The candidate chose to end the session themselves after ` +
+        `${ctx.questionCount} answer(s)${ctx.daysCovered.length ? ` across days ${ctx.daysCovered.join(", ")}` : ""}. ` +
+        `The plan was ${ctx.blueprint.targetQuestions} questions; most of it never happened. ` +
+        `Write only about what they did explain. Do not imply they finished, do not imply ` +
+        `they gave up, do not speculate about why they stopped, and do not mention the ` +
+        `questions that were never asked.`
+      : `${ctx.questionCount} questions across days ${ctx.daysCovered.join(", ")}.`,
     `Planned focus: ${ctx.blueprint.focusDays
       .map((f) => `day ${f.day} ${f.title} (${f.strategy})`)
       .join("; ")}`,
@@ -132,6 +162,25 @@ export function buildReporterInput(ctx: ReportContext, correction = ""): string 
     `AVERAGES: knowledge ${avg((r) => r.knowledge)}, communication ${avg(
       (r) => r.communication
     )}, specificity ${avg((r) => r.specificity)}`,
+    ``,
+    `AREAS COVERED — use these exact titles in `+"`next`"+`, weakest first`,
+    // The rung NAME is withheld on purpose. Handing over "redesign" invites
+    // the model to write "you reached redesign level", which reads as
+    // criticism when it is the best possible result. The number carries the
+    // same information without the loaded word.
+    ctx.topics?.length
+      ? ctx.topics
+          .map(
+            (t) =>
+              `- ${t.title} — depth ${t.depthReached} of 5 over ${t.questionsAsked} question(s)`
+          )
+          .join("\n")
+      : "(none)",
+    ``,
+    `COHORT RECORD vs THIS INTERVIEW`,
+    ctx.comparison
+      ? `Record:    ${ctx.comparison.record}\nInterview: ${ctx.comparison.interview}\nVerdict:   ${ctx.comparison.alignment} — ${ctx.comparison.note}`
+      : "(not available)",
     ``,
     `CLAIM LEDGER — everything they asserted about their system`,
     ledger,
@@ -224,12 +273,23 @@ export interface Degradation {
   strengthsBackfilled: boolean;
 }
 
+const daysPhrase = (days: number[]) =>
+  days.length ? ` across days ${days.join(", ")}` : "";
+
 /** A grounded sentence built only from state — invents nothing. */
 function factualSummary(ctx: ReportContext): string {
-  const days = ctx.daysCovered.join(", ");
+  const n = ctx.questionCount;
+  const name = ctx.candidate.member.name;
+
+  // "answered 0 questions" is the one-click case: End on the opening line.
+  // There is nothing to report on, so say that rather than reporting zero.
+  if (n === 0) {
+    return `${name} started this session but had not answered anything yet, so there is nothing to give feedback on.`;
+  }
+
   return (
-    `${ctx.candidate.member.name} answered ${ctx.questionCount} questions ` +
-    `across days ${days} of the cohort build.`
+    `${name} answered ${n} question${n === 1 ? "" : "s"}` +
+    `${daysPhrase(ctx.daysCovered)} of the cohort build.`
   );
 }
 
@@ -275,16 +335,26 @@ export function degradeReport(
 
   const strengthsBackfilled = strengths.length === 0;
   if (strengthsBackfilled) {
+    // Telling someone who stopped that they "worked through all N questions"
+    // is both false and tone-deaf. The normal-path wording is unchanged.
     strengths.push(
-      `You worked through all ${ctx.questionCount} questions across days ` +
-        `${ctx.daysCovered.join(", ")} and stayed with each one.`
+      ctx.endedEarly
+        ? ctx.questionCount === 0
+          ? "You opened the session and can pick it up again whenever you want."
+          : `You gave ${ctx.questionCount} answer${ctx.questionCount === 1 ? "" : "s"}` +
+            `${daysPhrase(ctx.daysCovered)} before ending the session.`
+        : `You worked through all ${ctx.questionCount} questions across days ` +
+          `${ctx.daysCovered.join(", ")} and stayed with each one.`
     );
   }
 
   if (next.length === 0) {
     next.push(
-      `Re-read your own answers on days ${ctx.daysCovered.join(", ")} and write ` +
-        `down the one thing you wish you had been able to explain more precisely.`
+      ctx.daysCovered.length
+        ? `Re-read your own answers on days ${ctx.daysCovered.join(", ")} and write ` +
+          `down the one thing you wish you had been able to explain more precisely.`
+        : `Pick the part of your build you understand least and write down what ` +
+          `you would ask someone who knew it well.`
     );
   }
 

@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { getRecentTurns, loadSession } from "@/lib/db";
+import { findDay } from "@/lib/curriculum";
+import { bandFor, depthCeiling } from "@/lib/depth";
 import { MIN_DAYS_COVERED, MIN_QUESTIONS } from "@/lib/orchestrator";
+import { deriveSignals } from "@/lib/signals";
+import {
+  compareToRecord,
+  explanationSignal,
+  topicsReached,
+  unjustifiedClaims,
+} from "@/lib/summary";
 
 /**
  * Read-only view of the session for the instrument panel.
@@ -13,6 +22,11 @@ import { MIN_DAYS_COVERED, MIN_QUESTIONS } from "@/lib/orchestrator";
  */
 
 export const dynamic = "force-dynamic";
+
+const blueprintTitle = (
+  focusDays: Array<{ day: number; title: string }>,
+  day: number
+): string | undefined => focusDays.find((f) => f.day === day)?.title;
 
 export async function GET(
   _request: Request,
@@ -30,12 +44,23 @@ export async function GET(
 
   // One point per question asked. The opening line carries no rubric, so
   // it seeds the trace at its planned depth without implying a measurement.
+  // Same title resolution as summary.ts:47-48 — plan first, curriculum
+  // second — so the chart's segment labels and the report's area names can
+  // never disagree.
+  const titleFor = (day: number | null) =>
+    day === null
+      ? null
+      : blueprintTitle(session.blueprint?.focusDays ?? [], day) ??
+        findDay(day)?.title ??
+        `Day ${day}`;
+
   const depthHistory = interviewerTurns
     .filter((t) => t.depth !== null)
     .map((t, i) => ({
       index: i,
       turnNumber: t.turnNumber,
       day: t.targetDay,
+      title: titleFor(t.targetDay),
       depth: t.depth as number,
       knowledge: t.rubric?.knowledge ?? null,
       measured: t.rubric !== null,
@@ -55,6 +80,8 @@ export async function GET(
   );
 
   const { state, blueprint } = session;
+  const signals = deriveSignals(session.candidate);
+  const topics = topicsReached(turns, blueprint?.focusDays ?? []);
 
   return NextResponse.json({
     status: session.status,
@@ -85,9 +112,46 @@ export async function GET(
       followUpAllowance: state.followUpAllowance,
       abilityEstimate: Number(state.abilityEstimate.toFixed(2)),
       mode: state.mode,
+      consecutiveStrong: state.consecutiveStrong,
+      // The ceiling moves with demonstrated ability — the clearest single
+      // number showing the interview responding rather than asserting it.
+      depthCeiling: depthCeiling({
+        currentDepth: state.currentDepth,
+        abilityEstimate: state.abilityEstimate,
+        mode: state.mode,
+        lastScores: state.lastScores,
+      }),
+      depthBand: bandFor(state.currentDepth),
+      /** Times the model reported a depth 2+ rungs off the directed one. */
+      depthViolations: state.depthViolations,
     },
+    // Enough to rebuild the conversation after a refresh, now that the
+    // session id lives in the URL and a refresh is reachable.
+    transcript: turns.map((t) => ({ role: t.role, content: t.content })),
+    endedEarly: state.endedEarly,
     depthHistory,
     rationale: latest?.rationale ?? null,
     claims,
+    // The end-of-interview result, in place of a score. Both derived from
+    // turns already stored — no extra model call, no schema change, and
+    // nothing added to the frozen /api/interview response.
+    topics,
+    explanation: explanationSignal(
+      turns.map((t) => t.rubric).filter((r): r is NonNullable<typeof r> => r !== null)
+    ),
+    unjustified: unjustifiedClaims(turns.flatMap((t) => t.claims ?? [])),
+    // The comparison a generic interview cannot make: this candidate's
+    // 31-day record existed before they said a word.
+    comparison: compareToRecord({
+      firstTryRate: signals.firstTryRate,
+      coverage: signals.coverage,
+      missionsCompleted: session.candidate.signals.missionsCompleted,
+      missionsFirstTry: session.candidate.signals.missionsFirstTry,
+      skippedDays: signals.skippedDays,
+      failedDays: signals.failedDays,
+      struggledDays: signals.struggledDays,
+      abilityEstimate: state.abilityEstimate,
+      topics,
+    }),
   });
 }

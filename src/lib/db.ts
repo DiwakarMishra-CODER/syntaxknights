@@ -1,6 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import ws from "ws";
 
+import { hydrateState } from "./orchestrator";
+
 import type {
   Blueprint,
   Candidate,
@@ -71,7 +73,12 @@ const EMPTY_STATE: SessionState = {
   abilityEstimate: 3,
   mode: "normal",
   consecutiveWeak: 0,
+  consecutiveStrong: 0,
+  lastScores: null,
+  depthViolations: 0,
   consecutiveReactions: 0,
+  endedEarly: false,
+  lastTurnSubstantive: true,
 };
 
 export async function createSession(
@@ -106,6 +113,40 @@ export async function loadSession(sessionId: string): Promise<Session | null> {
 
     if (error || !data) return null;
     return toSession(data as SessionRow);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A blueprint already planned for this candidate, if there is one.
+ *
+ * The planner's input is ONLY the candidate's mission record, which is static
+ * JSON — no session id, no timestamp, nothing random. So the plan is a pure
+ * function of the candidate, and re-deriving it per session was buying an
+ * identical answer with a call from a 20-per-day budget.
+ *
+ * This is why it needs no new table: every session row already stores the
+ * blueprint it was planned with, so the cache is the data we were keeping
+ * anyway. Newest first, so a deliberate re-plan wins from then on.
+ *
+ * Never throws — a cache miss and a broken cache must both just mean "plan it".
+ */
+export async function findCachedBlueprint(
+  candidateId: string
+): Promise<Blueprint | null> {
+  try {
+    const { data, error } = await db()
+      .from("sessions")
+      .select("blueprint")
+      .eq("candidate->member->>id", candidateId)
+      .not("blueprint", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data?.blueprint) return null;
+    return data.blueprint as Blueprint;
   } catch {
     return null;
   }
@@ -208,6 +249,28 @@ export async function saveReport(
   if (error) throw new Error(`saveReport(${sessionId}): ${error.message}`);
 }
 
+/**
+ * Returns null when no report has been written yet. Never throws.
+ *
+ * Copies loadSession's shape deliberately: a report page asking for a
+ * session that crashed mid-write should render "still being written",
+ * not a stack trace.
+ */
+export async function loadReport(sessionId: string): Promise<Feedback | null> {
+  try {
+    const { data, error } = await db()
+      .from("reports")
+      .select("feedback")
+      .eq("session_id", sessionId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return (data as { feedback: Feedback }).feedback ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function markDone(sessionId: string): Promise<void> {
   const { error } = await db()
     .from("sessions")
@@ -222,7 +285,7 @@ function toSession(row: SessionRow): Session {
     id: row.id,
     candidate: row.candidate,
     blueprint: row.blueprint,
-    state: row.state ?? { ...EMPTY_STATE },
+    state: hydrateState(row.state),
     status: row.status === "done" ? "done" : "active",
     createdAt: row.created_at,
   };

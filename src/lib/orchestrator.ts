@@ -1,3 +1,11 @@
+import {
+  nextMode,
+  seedAbility,
+  STRONG_KNOWLEDGE,
+  updateAbility,
+  WEAK_KNOWLEDGE,
+} from "./ability";
+import { bandFor, clampDepth, nextDepth, type DepthInputs } from "./depth";
 import type { TurnAction, TurnDecision } from "./prompts/turn";
 import type { Blueprint, SessionState } from "./types";
 
@@ -21,13 +29,15 @@ export const MIN_QUESTIONS = 8;
 export const MIN_DAYS_COVERED = 4;
 /** Follow-ups allowed on one thread before we insist on moving. */
 export const MAX_FOLLOW_UPS = 3;
+/**
+ * Below this there is nothing for the reporter to quote. writeReport would
+ * fail verbatim validation twice and burn TWO of a 20/day budget before
+ * degrading to the same output degradeReport gives for free.
+ */
+export const MIN_ANSWERS_FOR_REPORT = 2;
 /** Extra follow-ups earned when the last answer was strong. */
 export const STRONG_ANSWER_BONUS = 2;
-/** knowledge at or above this counts as a productive thread. */
-export const STRONG_KNOWLEDGE = 4;
-
-const ABILITY_ALPHA = 0.4;
-const INITIAL_ABILITY = 3;
+export { STRONG_KNOWLEDGE };
 
 export function initState(blueprint: Blueprint): SessionState {
   const first = blueprint.focusDays[0];
@@ -38,16 +48,55 @@ export function initState(blueprint: Blueprint): SessionState {
     currentDepth: first?.startDepth ?? 2,
     followUpCount: 0,
     followUpAllowance: MAX_FOLLOW_UPS,
-    abilityEstimate: INITIAL_ABILITY,
+    // The planner has already reasoned about this candidate from their
+    // record; its opening depth is a usable prior. Clamped so an LLM number
+    // cannot preset a mode before they have said a word.
+    abilityEstimate: seedAbility(first?.startDepth),
     mode: "normal",
     consecutiveWeak: 0,
+    consecutiveStrong: 0,
+    lastScores: null,
+    depthViolations: 0,
     consecutiveReactions: 0,
+    endedEarly: false,
+    lastTurnSubstantive: true,
+  };
+}
+
+/**
+ * Fills defaults for fields added after a session was created. `db.ts` falls
+ * back to a whole EMPTY_STATE object, not per-field, so an older row would
+ * otherwise return `consecutiveStrong: undefined` and turn the arithmetic
+ * into NaN silently.
+ */
+export function hydrateState(raw: Partial<SessionState> | null | undefined): SessionState {
+  return {
+    questionCount: raw?.questionCount ?? 0,
+    daysCovered: raw?.daysCovered ?? [],
+    currentDay: raw?.currentDay ?? 0,
+    currentDepth: raw?.currentDepth ?? 2,
+    followUpCount: raw?.followUpCount ?? 0,
+    followUpAllowance: raw?.followUpAllowance ?? MAX_FOLLOW_UPS,
+    abilityEstimate: raw?.abilityEstimate ?? 3,
+    mode: raw?.mode ?? "normal",
+    consecutiveWeak: raw?.consecutiveWeak ?? 0,
+    consecutiveStrong: raw?.consecutiveStrong ?? 0,
+    lastScores: raw?.lastScores ?? null,
+    depthViolations: raw?.depthViolations ?? 0,
+    consecutiveReactions: raw?.consecutiveReactions ?? 0,
+    endedEarly: raw?.endedEarly ?? false,
+    lastTurnSubstantive: raw?.lastTurnSubstantive ?? true,
   };
 }
 
 export function uncoveredDays(state: SessionState, blueprint: Blueprint): number[] {
   const covered = new Set(state.daysCovered);
   return blueprint.focusDays.map((f) => f.day).filter((d) => !covered.has(d));
+}
+
+/** Whether an interview has enough substance to spend a reporter call on. */
+export function worthReporting(state: SessionState): boolean {
+  return state.questionCount >= MIN_ANSWERS_FOR_REPORT;
 }
 
 export function mayConclude(state: SessionState): boolean {
@@ -57,12 +106,15 @@ export function mayConclude(state: SessionState): boolean {
   );
 }
 
-/** Depth follows what they have actually shown, not the original plan. */
-export function depthFromAbility(state: SessionState): number {
-  const base = Math.round(state.abilityEstimate);
-  if (state.mode === "recovery") return clamp(base - 1, 1, 5);
-  if (state.mode === "pressure") return clamp(base + 1, 1, 5);
-  return clamp(base, 1, 5);
+/** The inputs the depth walk needs, gathered from state. */
+function depthInputs(state: SessionState): DepthInputs {
+  return {
+    currentDepth: state.currentDepth,
+    abilityEstimate: state.abilityEstimate,
+    mode: state.mode,
+    lastScores: state.lastScores,
+    lastTurnSubstantive: state.lastTurnSubstantive,
+  };
 }
 
 /**
@@ -84,6 +136,10 @@ export interface TurnDirective {
   followUpsAllowed: number;
   /** Force an empty reaction this turn — see nextDirective. */
   omitReaction: boolean;
+  /** Why depth moved (or did not), in words the model and the panel both read. */
+  depthReason: string;
+  depthCeiling: number;
+  depthDelta: -1 | 0 | 1;
 }
 
 export function nextDirective(
@@ -109,9 +165,18 @@ export function nextDirective(
   const targetDay = mustMove ? uncovered[0] : state.currentDay;
   const canEnd = mayConclude(state);
 
+  // The fix at the heart of this: depth is evaluated on EVERY turn, not only
+  // when a topic change forces it. Previously `!mustMove` passed the current
+  // depth straight through, so depth could not move within a thread — and the
+  // strong-answer follow-up bonus delayed the only moment it could.
+  const step = nextDepth(depthInputs(state), mustMove);
+
   return {
     targetDay,
-    depth: mustMove ? depthFromAbility(state) : state.currentDepth,
+    depth: step.depth,
+    depthReason: step.reason,
+    depthCeiling: step.ceiling,
+    depthDelta: step.delta,
     mustMove,
     moveReason,
     mayConclude: canEnd,
@@ -157,6 +222,19 @@ export function recordTurn(
     );
   }
 
+  // The directive is computed from the PREVIOUS answer — the evaluator and
+  // interviewer are merged into one call, so it is one answer stale by
+  // construction. A single rung of self-correction is the model doing its
+  // job; two or more means it ignored the ladder. Recorded, never overridden.
+  const reportedDepth = clampDepth(decision.depth);
+  const depthDrift = Math.abs(reportedDepth - directive.depth);
+  if (depthDrift >= 2) {
+    violations.push(
+      `directed depth ${directive.depth} (${bandFor(directive.depth)}) but reported ` +
+        `${reportedDepth} (${bandFor(reportedDepth)})`
+    );
+  }
+
   const concludeBlocked =
     decision.action === "conclude" && !mayConclude(state);
   if (concludeBlocked) {
@@ -169,24 +247,45 @@ export function recordTurn(
   // A greeting or non-answer carries no signal. Scoring it would seed the
   // ability estimate before any evidence exists.
   const scored = decision.substantive !== false;
-  const knowledge = clamp(decision.rubric?.knowledge ?? INITIAL_ABILITY, 1, 5);
+  const rubric = decision.rubric;
+  const knowledge = clamp(rubric?.knowledge ?? 3, 1, 5);
 
   const abilityEstimate = scored
-    ? ABILITY_ALPHA * knowledge + (1 - ABILITY_ALPHA) * state.abilityEstimate
+    ? updateAbility(state.abilityEstimate, knowledge)
     : state.abilityEstimate;
 
   const consecutiveWeak = !scored
     ? state.consecutiveWeak
-    : knowledge <= 2
+    : knowledge <= WEAK_KNOWLEDGE
       ? state.consecutiveWeak + 1
       : 0;
 
-  let mode = state.mode;
-  if (scored) {
-    if (consecutiveWeak >= 2) mode = "recovery";
-    if (knowledge >= STRONG_KNOWLEDGE) mode = "normal";
-    if (mode === "normal" && abilityEstimate >= 4) mode = "pressure";
-  }
+  const consecutiveStrong = !scored
+    ? state.consecutiveStrong
+    : knowledge >= STRONG_KNOWLEDGE
+      ? state.consecutiveStrong + 1
+      : 0;
+
+  // A real transition function rather than three sequential ifs. The old
+  // cascade made recovery a one-way door: its only exit was knowledge >= 4,
+  // so a candidate who never scored above 3 stayed in it for the whole
+  // interview at depth round(ability) - 1.
+  const mode = nextMode(state.mode, {
+    abilityEstimate,
+    consecutiveWeak,
+    consecutiveStrong,
+    scored,
+  });
+
+  // Only a substantive answer updates the scores the depth walk reads.
+  const lastScores =
+    scored && rubric
+      ? {
+          knowledge,
+          communication: clamp(rubric.communication ?? 3, 1, 5),
+          specificity: clamp(rubric.specificity ?? 3, 1, 5),
+        }
+      : state.lastScores;
 
   const isConclusion = decision.action === "conclude" && !concludeBlocked;
   const questionCount = isConclusion ? state.questionCount : state.questionCount + 1;
@@ -216,13 +315,18 @@ export function recordTurn(
       questionCount,
       daysCovered,
       currentDay: isConclusion ? state.currentDay : decision.targetDay,
-      currentDepth: isConclusion ? state.currentDepth : clamp(decision.depth, 1, 5),
+      currentDepth: isConclusion ? state.currentDepth : reportedDepth,
       followUpCount,
       followUpAllowance,
       abilityEstimate,
       mode,
       consecutiveWeak,
+      consecutiveStrong,
+      lastScores,
+      depthViolations: state.depthViolations + (depthDrift >= 2 ? 1 : 0),
       consecutiveReactions: state.consecutiveReactions,
+      endedEarly: state.endedEarly,
+      lastTurnSubstantive: scored,
     },
     violations,
     concludeBlocked,

@@ -213,8 +213,24 @@ export interface SessionState {
   abilityEstimate: number;
   mode: InterviewMode;
   consecutiveWeak: number;
+  /** Mirror of consecutiveWeak — without it the mode machine is asymmetric. */
+  consecutiveStrong: number;
+  /** Scores of the most recent SUBSTANTIVE answer; drives the depth step. */
+  lastScores: { knowledge: number; communication: number; specificity: number } | null;
+  /** Times the model reported a depth two or more rungs off the directed one. */
+  depthViolations: number;
   /** Acknowledgements in a row, so the route can force one to be omitted. */
   consecutiveReactions: number;
+  /** True when the CANDIDATE stopped, not when the system concluded. */
+  endedEarly: boolean;
+  /**
+   * Whether the last message was an actual answer.
+   *
+   * Freezing `lastScores` on a non-answer is not enough: the depth walk reads
+   * them, so a greeting or a mis-paste inherited the PREVIOUS answer's scores
+   * and escalated off them. Someone who said nothing got a harder question.
+   */
+  lastTurnSubstantive: boolean;
 }
 
 export type SessionStatus = "active" | "done";

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  depthFromAbility,
+  hydrateState,
+  MIN_ANSWERS_FOR_REPORT,
   initState,
   MAX_FOLLOW_UPS,
   MIN_DAYS_COVERED,
@@ -12,6 +13,7 @@ import {
   shouldEnd,
   STRONG_ANSWER_BONUS,
   uncoveredDays,
+  worthReporting,
 } from "./orchestrator";
 import type { TurnDecision } from "./prompts/turn";
 import type { Blueprint, SessionState } from "./types";
@@ -194,17 +196,46 @@ describe("quality-aware follow-up cap", () => {
 });
 
 describe("depth and scoring", () => {
-  it("derives a new topic's depth from ability, not the blueprint", () => {
-    const strong: SessionState = { ...initState(blueprint), abilityEstimate: 4.4 };
-    // day 23's startDepth is 2, but they have shown more than that
-    expect(nextDirective({ ...strong, followUpCount: 3 }, blueprint).depth).toBe(4);
+  it("RAISES depth after a strong answer on the SAME thread", () => {
+    // The regression. Depth used to be a pass-through unless a topic change
+    // forced it, so a productive thread never got harder.
+    let state = initState(blueprint);
+    const before = state.currentDepth;
+    state = step(state, turn({ knowledge: 5, action: "follow_up", targetDay: 28 })).state;
+
+    const d = nextDirective(state, blueprint);
+    expect(d.mustMove).toBe(false);
+    expect(d.depth).toBeGreaterThan(before);
+    expect(d.depthReason).toMatch(/Cleared/i);
   });
 
-  it("drops a level in recovery and raises one under pressure", () => {
-    const base: SessionState = { ...initState(blueprint), abilityEstimate: 3 };
-    expect(depthFromAbility({ ...base, mode: "recovery" })).toBe(2);
-    expect(depthFromAbility({ ...base, mode: "pressure" })).toBe(4);
-    expect(depthFromAbility({ ...base, mode: "normal" })).toBe(3);
+  it("grants the follow-up bonus AND climbs on the same turn", () => {
+    // These used to fight each other: the bonus delayed mustMove, which was
+    // the only moment depth was recomputed. Asserted together so neither can
+    // silently regress.
+    let state = initState(blueprint);
+    const before = state.currentDepth;
+    state = step(state, turn({ knowledge: 5, action: "follow_up", targetDay: 28 })).state;
+
+    expect(state.followUpAllowance).toBe(MAX_FOLLOW_UPS + STRONG_ANSWER_BONUS);
+    expect(nextDirective(state, blueprint).depth).toBeGreaterThan(before);
+  });
+
+  it("lowers depth after a weak answer on the same thread", () => {
+    let state = initState(blueprint);
+    state = step(state, turn({ knowledge: 5 })).state;   // climb first
+    const high = nextDirective(state, blueprint).depth;
+    state = step(state, turn({ knowledge: 1 })).state;
+    expect(nextDirective(state, blueprint).depth).toBeLessThan(high);
+  });
+
+  it("never moves more than one rung per turn, whatever the model does", () => {
+    let state = initState(blueprint);
+    for (let i = 0; i < 40; i++) {
+      const d = nextDirective(state, blueprint);
+      expect(Math.abs(d.depth - state.currentDepth)).toBeLessThanOrEqual(1);
+      state = recordTurn(state, turn({ knowledge: (i % 5) + 1, depth: d.depth }), blueprint, d).state;
+    }
   });
 
   it("does NOT score a non-substantive reply", () => {
@@ -239,6 +270,44 @@ describe("depth and scoring", () => {
     state = step(state, turn({ knowledge: 2 })).state;
     state = step(state, turn({ knowledge: 4 })).state;
     expect(state.mode).toBe("normal");
+  });
+});
+
+describe("depth drift is recorded, never overridden", () => {
+  it("flags a model that reports two or more rungs off the directive", () => {
+    const state = initState(blueprint);
+    const d = nextDirective(state, blueprint);
+    const r = recordTurn(state, turn({ depth: d.depth + 3 }), blueprint, d);
+
+    expect(r.violations.join(" ")).toMatch(/directed depth/);
+    expect(r.state.depthViolations).toBe(1);
+    // the record keeps what was actually asked
+    expect(r.state.currentDepth).toBe(Math.min(d.depth + 3, 5));
+  });
+
+  it("tolerates one rung — the directive is one answer stale by design", () => {
+    const state = initState(blueprint);
+    const d = nextDirective(state, blueprint);
+    const r = recordTurn(state, turn({ depth: d.depth + 1 }), blueprint, d);
+
+    expect(r.violations).toEqual([]);
+    expect(r.state.depthViolations).toBe(0);
+  });
+});
+
+describe("state survives the jsonb round trip", () => {
+  it("is fully JSON-serialisable after a turn", () => {
+    const state = step(initState(blueprint), turn({ knowledge: 4 })).state;
+    expect(JSON.parse(JSON.stringify(state))).toEqual(state);
+  });
+
+  it("hydrates a session row written before these fields existed", () => {
+    const old = { questionCount: 3, daysCovered: [28], currentDay: 28, currentDepth: 3 };
+    const s = hydrateState(old as never);
+    expect(s.consecutiveStrong).toBe(0);
+    expect(s.lastScores).toBeNull();
+    expect(s.depthViolations).toBe(0);
+    expect(Number.isNaN(s.abilityEstimate)).toBe(false);
   });
 });
 
@@ -312,5 +381,97 @@ describe("omit-reaction directive", () => {
     expect(nextDirective(s, blueprint, 0).omitReaction).toBe(false);
     expect(nextDirective(s, blueprint, 1).omitReaction).toBe(false);
     expect(nextDirective(s, blueprint, 2).omitReaction).toBe(true);
+  });
+});
+
+/**
+ * Floor canaries.
+ *
+ * The End button gives the candidate a way out, and the tempting way to have
+ * built it was to relax the gate or route it through `action: "conclude"`.
+ * These assert the graded requirements as literal numbers so that shortcut
+ * fails loudly rather than quietly making a hackathon requirement optional.
+ */
+describe("the graded floors are not negotiable", () => {
+  it("still requires 8 questions and 4 days — the numbers in the brief", () => {
+    expect(MIN_QUESTIONS).toBe(8);
+    expect(MIN_DAYS_COVERED).toBe(4);
+  });
+
+  const at = (questionCount: number, days: number[]): SessionState => ({
+    ...initState(blueprint),
+    questionCount,
+    daysCovered: days,
+  });
+
+  it("refuses to conclude one question short", () => {
+    expect(mayConclude(at(7, [1, 2, 3, 4]))).toBe(false);
+  });
+
+  it("refuses to conclude one day short", () => {
+    expect(mayConclude(at(8, [1, 2, 3]))).toBe(false);
+  });
+
+  it("allows it when both are met", () => {
+    expect(mayConclude(at(8, [1, 2, 3, 4]))).toBe(true);
+  });
+
+  it("ignores a model that tries to conclude early", () => {
+    const decision = turn({ action: "conclude" });
+    expect(shouldEnd(at(3, [1]), decision)).toBe(false);
+  });
+});
+
+describe("worthReporting", () => {
+  it("is false before there is anything to quote", () => {
+    // Below this the reporter would fail verifyReport twice and burn two of a
+    // 20/day budget before degrading to the same text we can produce for free.
+    expect(worthReporting({ ...initState(blueprint), questionCount: 0 })).toBe(false);
+    expect(worthReporting({ ...initState(blueprint), questionCount: 1 })).toBe(false);
+  });
+
+  it("is true at the boundary", () => {
+    expect(MIN_ANSWERS_FOR_REPORT).toBe(2);
+    expect(worthReporting({ ...initState(blueprint), questionCount: 2 })).toBe(true);
+  });
+});
+
+describe("a non-answer does not advance anything", () => {
+  it("leaves ability, scores and the next directive's depth untouched", () => {
+    // Walk up to depth 4 on strong answers, then fumble.
+    let state = initState(blueprint);
+    for (let i = 0; i < 3; i++) state = step(state, turn({ knowledge: 5 })).state;
+
+    const before = {
+      depth: nextDirective(state, blueprint).depth,
+      ability: state.abilityEstimate,
+      lastScores: state.lastScores,
+    };
+
+    const fumbled = step(state, turn({ substantive: false, knowledge: 5 })).state;
+
+    expect(fumbled.abilityEstimate).toBe(before.ability);
+    expect(fumbled.lastScores).toEqual(before.lastScores);
+    expect(fumbled.lastTurnSubstantive).toBe(false);
+    // The one that was broken: the rung must not climb off a non-answer.
+    expect(nextDirective(fumbled, blueprint).depth).toBeLessThanOrEqual(before.depth);
+  });
+
+  it("clears the flag again on the next real answer", () => {
+    // Only the flag is asserted here. The depth AFTER it is not: by this
+    // point the follow-up cap forces a topic move, and reanchorDepth
+    // deliberately opens a rung back — that is a different rule, covered in
+    // depth.test.ts.
+    let state = initState(blueprint);
+    for (let i = 0; i < 3; i++) state = step(state, turn({ knowledge: 5 })).state;
+    state = step(state, turn({ substantive: false })).state;
+    expect(state.lastTurnSubstantive).toBe(false);
+
+    state = step(state, turn({ knowledge: 5 })).state;
+    expect(state.lastTurnSubstantive).toBe(true);
+  });
+
+  it("hydrates old sessions as substantive, so nothing changes for them", () => {
+    expect(hydrateState({ questionCount: 3 }).lastTurnSubstantive).toBe(true);
   });
 });

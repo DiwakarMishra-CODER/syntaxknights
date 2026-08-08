@@ -28,6 +28,7 @@ import {
 import { writeReport } from "../src/lib/prompts/reporter";
 import { runTurn, type TurnContext, type TurnResult } from "../src/lib/prompts/turn";
 import { getCandidate } from "../src/lib/signals";
+import { bandFor } from "../src/lib/depth";
 import type { Blueprint, Claim, Feedback, SessionState, Turn } from "../src/lib/types";
 
 const HARD_CAP = 16; // safety net; the orchestrator should conclude first
@@ -85,19 +86,26 @@ function statePanel(
   state: SessionState,
   rationale: string,
   violations: string[],
-  substantive = true
+  substantive = true,
+  directive?: { depth: number; depthCeiling: number; depthReason: string }
 ) {
   const line = (k: string, v: string) => `  ${k.padEnd(16)} ${v}`;
   console.log(`\n  ${"-".repeat(62)}`);
   console.log(line("question", String(state.questionCount)));
   console.log(line("current day", String(state.currentDay)));
-  console.log(line("depth", `${state.currentDepth}/5`));
+  console.log(line("depth", `${state.currentDepth}/5 ${bandFor(state.currentDepth)}`));
   console.log(line("days covered", `[${state.daysCovered.join(", ")}]`));
   console.log(line("ability est.", state.abilityEstimate.toFixed(2)));
   console.log(line("mode", state.mode));
   console.log(
     line("follow-ups", `${state.followUpCount}/${state.followUpAllowance}`)
   );
+  if (directive) {
+    console.log(
+      line("directed", `${directive.depth} ${bandFor(directive.depth)} (ceiling ${directive.depthCeiling})`)
+    );
+    console.log(line("why depth", directive.depthReason));
+  }
   if (!substantive) console.log(line("scored", "no — non-substantive reply"));
   console.log(line("rationale", rationale));
   for (const v of violations) console.log(line("VIOLATION", v));
@@ -207,7 +215,7 @@ async function main() {
 
     const said = [reaction, decision.question].filter(Boolean).join(" ").trim();
     console.log(`\nINTERVIEWER: ${said}`);
-    statePanel(state, decision.rationale, recorded.violations, decision.substantive);
+    statePanel(state, decision.rationale, recorded.violations, decision.substantive, directive);
 
     transcript.push({
       turnNumber: transcript.length + 1,
