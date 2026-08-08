@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, GraduationCap, CheckCircle, ChevronRight, BarChart, BookOpen, Clock, Search } from "lucide-react";
+import { Users, BookOpen, Search, ArrowLeft, Sun, Moon, ChevronRight, Briefcase, GraduationCap } from "lucide-react";
 
 type Candidate = {
   member: {
@@ -36,200 +36,204 @@ export default function Dashboard({
 }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // Aggregated Stats
-  const totalCandidates = candidates.length;
-  const avgExperience = useMemo(() => {
-    const total = candidates.reduce((sum, c) => sum + c.member.yearsExperience, 0);
-    return (total / totalCandidates).toFixed(1);
-  }, [candidates, totalCandidates]);
-
-  const avgCompletion = useMemo(() => {
-    const total = candidates.reduce((sum, c) => sum + (c.signals.missionsCompleted / 31) * 100, 0);
-    return Math.round(total / totalCandidates);
-  }, [candidates, totalCandidates]);
-
-  const handleStartInterview = (id: string) => {
-    router.push(`/interview?candidateId=${id}`);
+  const handleViewProfile = (id: string) => {
+    router.push(`/candidates/${id}`);
   };
 
   const filteredCandidates = searchQuery.trim() === "" 
-    ? [] 
-    : candidates.filter(c => c.member.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    ? [] // Empty by default for privacy
+    : candidates.filter(c => c.member.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.member.id.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  // Theme Classes for smooth, creative design
+  const bgClass = isDarkMode ? "bg-slate-950" : "bg-slate-50";
+  const textPrimary = isDarkMode ? "text-slate-50" : "text-slate-900";
+  const textSecondary = isDarkMode ? "text-slate-400" : "text-slate-500";
+  
+  // Glassmorphic Card Styles
+  const cardBg = isDarkMode 
+    ? "bg-white/5 backdrop-blur-xl border-white/10 hover:bg-white/10 hover:border-[#1FD16A]/50" 
+    : "bg-white border-slate-200 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/10";
+  
+  // Hero Search Styles
+  const searchInputBg = isDarkMode 
+    ? "bg-white/5 border-white/10 text-white placeholder-slate-500 focus:ring-[#1FD16A] focus:bg-white/10" 
+    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:ring-emerald-500";
+
+  // Buttons
+  const primaryBtn = isDarkMode 
+    ? "bg-[#1FD16A] text-slate-950 hover:bg-[#1FD16A]/90 shadow-[0_0_15px_rgba(31,209,106,0.3)]" 
+    : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm";
+  
+  const outlineBtn = isDarkMode
+    ? "bg-white/5 text-white border border-white/10 hover:bg-white/10"
+    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-editorial selection:bg-emerald-200">
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        {/* Header Section */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-editorial font-bold text-slate-900 tracking-tight">
-            Cohort Dashboard
-          </h1>
-          <p className="text-lg text-slate-500 mt-2">
-            {curriculum.cohort} • Select a candidate to begin their adaptive interview.
-          </p>
+    <div className={`min-h-screen ${bgClass} ${textPrimary} font-editorial transition-colors duration-500 selection:bg-[#1FD16A]/25 selection:text-[#1FD16A] relative overflow-hidden`}>
+      
+      {/* Ambient Background Glows (Dark Mode Only) */}
+      {isDarkMode && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#1FD16A] opacity-[0.04] blur-[120px] rounded-full mix-blend-screen" />
+          <div className="absolute top-[40%] right-[-10%] w-[30%] h-[50%] bg-[#1FD16A] opacity-[0.03] blur-[100px] rounded-full mix-blend-screen" />
         </div>
+      )}
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <StatCard
-            title="Total Candidates"
-            value={totalCandidates.toString()}
-            icon={<Users className="w-5 h-5 text-emerald-600" />}
-          />
-          <StatCard
-            title="Average Experience"
-            value={`${avgExperience} Years`}
-            icon={<Clock className="w-5 h-5 text-emerald-600" />}
-          />
-          <StatCard
-            title="Avg Completion Rate"
-            value={`${avgCompletion}%`}
-            icon={<CheckCircle className="w-5 h-5 text-emerald-600" />}
-          />
-        </div>
-
-        {/* Main Content Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <main className="max-w-7xl mx-auto px-6 py-10 relative z-10">
+        
+        {/* Top Navigation & Theme Toggle */}
+        <div className="flex justify-between items-center mb-16">
+          <button
+            onClick={() => router.push('/')}
+            className={`flex items-center text-sm font-medium ${textSecondary} hover:${textPrimary} transition-colors group`}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+            Back to Home
+          </button>
           
-          {/* Candidates List */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 bg-white flex items-center justify-between">
-                <h3 className="font-semibold text-slate-800">Candidate Search</h3>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search candidate by name..."
-                    className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent w-64 bg-slate-50"
-                  />
-                </div>
-              </div>
-              <div className="overflow-x-auto min-h-[300px]">
-                {searchQuery.trim() === "" ? (
-                  <div className="flex flex-col items-center justify-center h-[300px] text-slate-500">
-                    <Search className="w-10 h-10 mb-4 text-slate-300" />
-                    <p>Search for a candidate to view their details and start an interview.</p>
-                  </div>
-                ) : filteredCandidates.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-[300px] text-slate-500">
-                    <p>No candidates found matching "{searchQuery}"</p>
-                  </div>
-                ) : (
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                      <th className="px-6 py-4 font-medium">Candidate</th>
-                      <th className="px-6 py-4 font-medium">Role & Experience</th>
-                      <th className="px-6 py-4 font-medium">Progress</th>
-                      <th className="px-6 py-4 font-medium text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredCandidates.map((candidate) => (
-                      <tr key={candidate.member.id} className="hover:bg-slate-50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">
-                              {candidate.member.name}
-                            </span>
-                            <span className="text-sm text-slate-500 mt-0.5">
-                              {candidate.member.id}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="text-slate-700">{candidate.member.jobRole}</span>
-                            <span className="text-sm text-slate-500 mt-0.5">
-                              {candidate.member.yearsExperience} yrs • {candidate.member.education}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden w-24">
-                              <div
-                                className="h-full bg-emerald-500 rounded-full"
-                                style={{ width: `${(candidate.signals.missionsCompleted / 31) * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-sm font-medium text-slate-600">
-                              {candidate.signals.missionsCompleted}/31
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handleStartInterview(candidate.member.id)}
-                            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors group-hover:border-emerald-300"
-                          >
-                            Interview
-                            <ChevronRight className="w-4 h-4 ml-1 opacity-70" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                )}
-              </div>
-            </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/candidates')}
+              className={`flex items-center text-sm font-medium px-5 py-2.5 rounded-full transition-all ${outlineBtn}`}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              View All Candidates
+            </button>
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`p-3 rounded-full transition-all ${outlineBtn}`}
+              title="Toggle Theme"
+            >
+              {isDarkMode ? <Sun className="w-4 h-4 text-slate-300" /> : <Moon className="w-4 h-4 text-slate-600" />}
+            </button>
           </div>
+        </div>
 
-          {/* Curriculum Snapshot */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden sticky top-24">
-              <div className="px-6 py-5 border-b border-slate-100 bg-white">
-                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-emerald-600" />
-                  Curriculum Focus
-                </h3>
-              </div>
-              <div className="p-6">
-                <p className="text-sm text-slate-600 mb-6">
-                  The candidates completed {curriculum.modules.length} modules covering AI foundations, agents, and deployments.
-                </p>
-                <div className="space-y-4">
-                  {curriculum.modules.map((mod) => (
-                    <div key={mod.n} className="flex gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-medium">
-                        {mod.n}
+        {/* Hero Section & Massive Search */}
+        <div className="flex flex-col items-center text-center mb-12 max-w-3xl mx-auto">
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium uppercase tracking-widest mb-6 ${isDarkMode ? 'bg-[#1FD16A]/10 text-[#1FD16A]' : 'bg-emerald-100 text-emerald-700'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isDarkMode ? 'bg-[#1FD16A]' : 'bg-emerald-500'} animate-pulse`} />
+            {curriculum.cohort}
+          </div>
+          <h1 className={`text-5xl md:text-6xl font-editorial font-bold tracking-tight mb-6`}>
+            Candidate Directory
+          </h1>
+          <p className={`text-lg md:text-xl mb-10 ${textSecondary} max-w-2xl`}>
+            Search securely by name or ID to review candidate profiles and launch technical interviews.
+          </p>
+
+          <div className="relative w-full group max-w-2xl">
+            <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+              <Search className={`h-6 w-6 ${isDarkMode ? 'text-slate-400 group-focus-within:text-[#1FD16A]' : 'text-slate-400 group-focus-within:text-emerald-500'} transition-colors`} />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or ID to reveal..."
+              className={`w-full pl-16 pr-6 py-5 rounded-2xl text-lg font-sans border-2 focus:outline-none focus:ring-0 ${searchInputBg} transition-all duration-300 shadow-lg`}
+            />
+          </div>
+        </div>
+
+        {/* Dynamic Content Area */}
+        {searchQuery.trim() === "" ? (
+          /* Default State: Show Horizontal Curriculum */
+          <div className="mt-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
+             <div className={`rounded-3xl border p-8 ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-slate-50 border-slate-200'} font-sans relative overflow-hidden`}>
+                <div className="flex flex-col items-center text-center mb-10">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${isDarkMode ? 'bg-[#1FD16A]/10 text-[#1FD16A]' : 'bg-emerald-100 text-emerald-600'}`}>
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-semibold text-2xl tracking-wide">Curriculum Focus</h3>
+                  <p className={`text-sm mt-2 max-w-md ${textSecondary}`}>
+                    Tracking {curriculum.modules.length} key modules encompassing AI engineering, agent architectures, and production deployments.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+                  {curriculum.modules.map((mod, i) => (
+                    <div key={mod.n} className={`p-6 rounded-2xl border transition-colors ${isDarkMode ? 'bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10' : 'bg-white border-slate-200 hover:border-emerald-200'} shadow-sm flex flex-col items-start`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm mb-4 ${isDarkMode ? 'bg-[#1FD16A]/20 text-[#1FD16A]' : 'bg-emerald-100 text-emerald-700'}`}>
+                        M{mod.n}
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-800">{mod.title}</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Days {mod.days[0]}-{mod.days[1]}
-                        </p>
-                      </div>
+                      <h4 className="text-lg font-semibold mb-2">{mod.title}</h4>
+                      <span className={`text-[11px] uppercase font-bold tracking-widest mt-auto pt-4 ${textSecondary}`}>Days {mod.days[0]}-{mod.days[1]}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
+             </div>
           </div>
+        ) : (
+          /* Search State: Show Candidates */
+          <div className="animate-in fade-in duration-500">
+            {filteredCandidates.length === 0 ? (
+              <div className={`flex flex-col items-center justify-center h-64 rounded-3xl border mt-8 ${isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-slate-200 bg-slate-50'}`}>
+                <Search className={`w-12 h-12 mb-4 ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}`} />
+                <p className={`font-sans text-lg ${textSecondary}`}>No candidates found for "{searchQuery}"</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                {filteredCandidates.map((candidate) => (
+                  <div 
+                    key={candidate.member.id} 
+                    className={`rounded-3xl border p-6 flex flex-col transition-all duration-300 ${cardBg} font-sans group`}
+                  >
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h3 className="text-xl font-bold mb-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[#1FD16A] group-hover:to-emerald-400 transition-all">
+                          {candidate.member.name}
+                        </h3>
+                        <p className={`text-sm font-medium ${textSecondary}`}>{candidate.member.id}</p>
+                      </div>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${isDarkMode ? 'bg-white/5 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                        {candidate.member.name.charAt(0)}
+                      </div>
+                    </div>
 
-        </div>
+                    <div className="space-y-3 mb-8">
+                      <div className="flex items-center gap-3">
+                        <Briefcase className={`w-4 h-4 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                        <span className="text-sm">{candidate.member.jobRole}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <GraduationCap className={`w-4 h-4 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                        <span className="text-sm">{candidate.member.yearsExperience} Years Exp • {candidate.member.education}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto">
+                      <div className="flex justify-between items-end mb-2">
+                        <span className={`text-xs font-semibold uppercase tracking-wider ${textSecondary}`}>Progress</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                          {candidate.signals.missionsCompleted} <span className={textSecondary}>/ 31</span>
+                        </span>
+                      </div>
+                      <div className={`h-1.5 w-full rounded-full overflow-hidden mb-6 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}>
+                        <div 
+                          className={`h-full rounded-full ${isDarkMode ? 'bg-[#1FD16A]' : 'bg-emerald-500'}`}
+                          style={{ width: `${(candidate.signals.missionsCompleted / 31) * 100}%` }}
+                        />
+                      </div>
+                      
+                      <button
+                        onClick={() => handleViewProfile(candidate.member.id)}
+                        className={`w-full py-3.5 rounded-xl flex items-center justify-center font-bold text-sm tracking-wide uppercase transition-all duration-300 ${primaryBtn}`}
+                      >
+                        View Profile
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
-    </div>
-  );
-}
-
-function StatCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-      <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <p className="text-2xl font-semibold text-slate-900 mt-0.5">{value}</p>
-      </div>
     </div>
   );
 }

@@ -19,10 +19,10 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           clearInterval(interval);
           return 100;
         }
-        const increment = prev < 60 ? 5 : prev < 85 ? 3 : 2;
+        const increment = prev < 50 ? 2 : prev < 85 ? 1 : 0.5;
         return Math.min(prev + increment, 100);
       });
-    }, 20);
+    }, 30);
 
     return () => clearInterval(interval);
   }, []);

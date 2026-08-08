@@ -76,12 +76,21 @@ export function MainInterview({
           Question {questionCount} {targetQuestions ? `/ ${targetQuestions}` : '· In Progress'}
         </div>
         
-        <button 
-          onClick={onExit}
-          className="font-sans font-medium text-[11px] uppercase tracking-widest text-[#7E8B84] hover:text-white transition-colors cursor-pointer"
-        >
-          Exit interview
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onExit}
+            className="font-sans font-medium text-[11px] uppercase tracking-widest text-[#7E8B84] hover:text-white transition-colors cursor-pointer"
+          >
+            End Interview
+          </button>
+          
+          <Link 
+            href="/dashboard"
+            className="font-sans font-medium text-[11px] uppercase tracking-widest px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-[#CFD7D0] hover:text-white hover:bg-white/10 transition-colors"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
       </header>
 
       {/* Question scrolls; the composer below it does not. */}
