@@ -167,3 +167,78 @@ body {
     border-color: var(--glass-border-hover);
   }
 }
+
+/* ==========================================================================
+   INTERVIEW SCREEN
+   Scoped so it cannot fight the landing page and the landing page cannot
+   fight it. The layout styles `body` dark with its own font and letter
+   spacing, all of which inherits everywhere — so the interview re-establishes
+   its own ground rather than relying on inheritance.
+   ========================================================================== */
+
+@theme {
+  /* Cool clinical paper — deliberately not cream. One deep ink. Exactly one
+     saturated signal, reserved for the depth trace and contradiction flags.
+     Every value below passes WCAG AA against its own ground; the labels were
+     2.78:1 before correction and vanished on compressed video. */
+  --color-paper: #f4f7f8;
+  --color-paper-raised: #eef2f4;
+  --color-rule: #c2ccd1;
+  --color-rule-strong: #808e95;
+  --color-rule-soft: #e6ebed;
+  --color-graphite: #161c1f;
+  --color-graphite-60: #586268;
+  --color-graphite-35: #646e73;
+  --color-trace: #c4005c;
+
+  /* Both faces are already loaded by the root layout. */
+  --font-question: var(--font-newsreader), Georgia, serif;
+  --font-apparatus: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+.interview-root {
+  background-color: var(--color-paper);
+  color: var(--color-graphite);
+  font-family: var(--font-apparatus);
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Instrument paper: a faint printed grid, not a flat fill. */
+.interview-root .paper-grid {
+  background-image:
+    linear-gradient(to right, var(--color-rule-soft) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-rule-soft) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.interview-root :focus-visible {
+  outline: 2px solid var(--color-graphite);
+  outline-offset: 2px;
+}
+
+.interview-root ::selection {
+  background: var(--color-graphite);
+  color: var(--color-paper);
+}
+
+/* The pen hovers while a measurement settles. The only motion on the page. */
+@keyframes pen-drift {
+  0%, 100% { transform: translateY(-5px); }
+  50% { transform: translateY(5px); }
+}
+.pen-drift { animation: pen-drift 2.4s ease-in-out infinite; }
+
+@keyframes trace-draw {
+  from { stroke-dashoffset: var(--dash); }
+  to { stroke-dashoffset: 0; }
+}
+.trace-draw {
+  stroke-dasharray: var(--dash);
+  animation: trace-draw 600ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pen-drift { animation: none; }
+  .trace-draw { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
+}

@@ -1192,3 +1192,70 @@ declined, so no screenshot was taken and the self-critique in step 4 of
 the brief is unfinished. Everything measurable was checked — contrast
 ratios, geometry, build, both routes, replay shape — but nobody has
 looked at it yet.
+
+---
+
+## Entry 21 — Merging the landing page with the interview screen
+
+**Prompt:** pull the teammate's changes, then make both pages intact and
+connected.
+
+**The collision.** `8f0a96c` added a MockMate landing page (20 components)
+and rewrote three files the interview screen depended on:
+`page.tsx`, `layout.tsx` and `globals.css`. The pull was a clean
+fast-forward with no git conflict, but functionally it left the interview
+screen unreachable and unstyled — every design token, both typefaces and
+all three animations were gone. The test suite still passed, because
+nothing in it covers CSS.
+
+**Resolution — additive, nothing un-merged.**
+- The interview moved to `/interview`; the landing page keeps `/`.
+- Design tokens went back into `globals.css` as an appended, clearly
+  labelled block rather than a restoration of the old file.
+- `.interview-root` re-establishes background, colour, font and letter
+  spacing. The landing page styles `body` dark with its own font and a
+  negative letter-spacing, and all of that inherits everywhere — so the
+  interview could not rely on inheritance.
+- A "The Interview" link was added to the desktop and mobile nav. Their
+  "Start Practicing" modal was left alone: it is someone else's form and
+  rewiring it without understanding what it collects was not worth the
+  risk.
+
+**Typography reused rather than added.** Their layout already loads
+Newsreader, which was the exact face chosen for questions, so that voice
+survived untouched. Apparatus moved from IBM Plex Mono to the
+already-loaded JetBrains Mono — Plex was the more deliberate choice, but
+not worth a fourth webfont on a page judged over shared video.
+
+**Verified:** both routes 200, landing links to `/interview`, tokens
+present in the served CSS, `.interview-root` applied, 111 tests pass,
+conformance `--dry` still 28/28, and a full replayed turn through the real
+endpoint returns exactly `reply` + `done` with the panel state populated.
+
+**Still unverified: how any of it looks.** No screenshot has been taken.
+
+---
+
+## Entry 22 — Start Practicing routes to the live interview
+
+**Prompt:** make "Start Practicing" go to /interview too. Also: from now
+on, commit and push only when asked.
+
+**Change:** one edit in `src/app/page.tsx`. All three "Start Practicing"
+buttons — Header, Hero and FinalCTA — receive their handler from the same
+place, so replacing `() => setStartModalOpen(true)` with a
+`router.push("/interview")` covers every one without touching any of the
+landing-page components.
+
+**Consequence flagged, not acted on:** `StartInterviewModal` now has no
+trigger and is dead code. Left in place rather than deleting a teammate's
+component.
+
+**Also noticed:** `PricingSection`, `FAQSection`, `HowItThinks`,
+`InteractiveSandbox` and `TargetAudience` exist but are not rendered by
+`page.tsx`.
+
+**Self-inflicted breakage worth recording:** running `next build` while
+`next dev` was serving the same `.next` directory corrupted it and both
+routes returned 500. Cleared `.next` and restarted. Do not run a
+production build against a live dev server.

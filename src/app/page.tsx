@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/mockmate/Header";
 import { Hero } from "@/components/mockmate/Hero";
 import { ProductShowcase } from "@/components/mockmate/ProductShowcase";
@@ -15,6 +16,11 @@ import { AuroraBackground } from "@/components/mockmate/AuroraBackground";
 
 export default function Home() {
   const [startModalOpen, setStartModalOpen] = useState(false);
+  const router = useRouter();
+
+  const handleStartPracticing = () => {
+    setStartModalOpen(true);
+  };
 
   return (
     <div className="relative min-h-screen bg-[var(--bg-base)] text-[var(--ink-primary)] selection:bg-[var(--accent-emerald-soft)] selection:text-[var(--accent-emerald)] overflow-x-hidden">
@@ -22,12 +28,12 @@ export default function Home() {
       <AuroraBackground />
 
       {/* Floating Glass Navigation */}
-      <Header onOpenStartModal={() => setStartModalOpen(true)} />
+      <Header onOpenStartModal={handleStartPracticing} />
 
       {/* Main Layout Flow (Max 6 Primary Sections) */}
       <main className="relative z-10">
         {/* Section 1: Hero */}
-        <Hero onOpenStartModal={() => setStartModalOpen(true)} />
+        <Hero onOpenStartModal={handleStartPracticing} />
 
         {/* Section 1 Signature Element: Live Dialogue Demo Panel */}
         <ProductShowcase />
@@ -45,7 +51,7 @@ export default function Home() {
         <ActionableReport />
 
         {/* Section 6: Final CTA */}
-        <FinalCTA onOpenStartModal={() => setStartModalOpen(true)} />
+        <FinalCTA onOpenStartModal={handleStartPracticing} />
       </main>
 
       {/* Footer */}

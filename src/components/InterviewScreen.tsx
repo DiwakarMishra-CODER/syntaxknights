@@ -128,7 +128,7 @@ export function InterviewScreen({ candidateId }: { candidateId: string }) {
   }, [candidateId, send]);
 
   return (
-    <main className="flex h-screen overflow-hidden">
+    <main className="interview-root flex h-screen overflow-hidden">
       <div className="paper-grid flex min-w-0 flex-1 flex-col bg-paper">
         {entries.length === 0 && !thinking && (
           <div className="flex flex-1 items-center justify-center">
