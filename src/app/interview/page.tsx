@@ -5,11 +5,15 @@ export const metadata = {
   description: "An adaptive practice technical interview for cohort graduates.",
 };
 
-export default function InterviewPage({
+export default async function InterviewPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const candidateId = typeof searchParams.candidateId === "string" ? searchParams.candidateId : "CAND-017";
+  const resolvedSearchParams = await searchParams;
+  const candidateId =
+    typeof resolvedSearchParams?.candidateId === "string"
+      ? resolvedSearchParams.candidateId
+      : "CAND-017";
   return <InterviewScreen candidateId={candidateId} />;
 }
