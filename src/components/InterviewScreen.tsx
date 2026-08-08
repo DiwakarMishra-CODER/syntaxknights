@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { type Entry } from "./ConversationTranscript";
+import { type PanelData } from "./Panel";
+import { JourneyPanel } from "./JourneyPanel";
+import { SignalPanel } from "./SignalPanel";
+import { MainInterview } from "./MainInterview";
 
-import { Composer } from "./Composer";
-import { Conversation, type Entry } from "./Conversation";
-import { Panel, type PanelData } from "./Panel";
-
-/** The deliberate beat between acknowledgement and question. */
 const BEAT_MS = 600;
 
 interface Feedback {
@@ -16,15 +16,6 @@ interface Feedback {
   next: string[];
 }
 
-/**
- * Splits "Okay. What happens when a pod restarts?" into the acknowledgement
- * and the question, so the question can land after a beat.
- *
- * The API returns `reply` as one string and the split is not stored, so
- * this is a heuristic: a short leading sentence with substance after it.
- * When it does not match, the whole reply is shown as the question, which
- * is the safe failure.
- */
 function splitReply(reply: string): { ack: string | null; question: string } {
   const m = reply.match(/^([^.?!]{1,28}[.!])\s+([\s\S]+)$/);
   if (!m) return { ack: null, question: reply };
@@ -56,11 +47,10 @@ export function InterviewScreen({ candidateId }: { candidateId: string }) {
       });
       if (res.ok) setPanel((await res.json()) as PanelData);
     } catch {
-      /* the panel is an instrument, not the interview — never block on it */
+      // Instrument fail soft
     }
   }, []);
 
-  /** Appends the interviewer's turn: acknowledgement, beat, then question. */
   const speak = useCallback((reply: string, closing: boolean) => {
     const { ack, question } = splitReply(reply);
     const traceIndex = traceCount.current++;
@@ -128,77 +118,94 @@ export function InterviewScreen({ candidateId }: { candidateId: string }) {
   }, [candidateId, send]);
 
   return (
-    <main className="interview-root flex h-screen overflow-hidden">
-      <div className="paper-grid flex min-w-0 flex-1 flex-col bg-paper">
-        {entries.length === 0 && !thinking && (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="font-apparatus text-[10.5px] uppercase tracking-[0.14em] text-graphite-35">
-              opening
-            </p>
-          </div>
-        )}
-
-        <Conversation
-          entries={entries}
-          thinking={thinking}
-          activeIndex={activeIndex}
-          onHoverIndex={setActiveIndex}
-        />
-
-        {done && feedback ? (
-          <FeedbackBlock feedback={feedback} />
-        ) : (
-          <Composer
+    <main className="flex h-screen overflow-hidden bg-paper text-graphite">
+      {/* 3-Column Layout */}
+      {!feedback ? (
+        <>
+          <JourneyPanel data={panel} />
+          <MainInterview 
+            entries={entries}
+            thinking={thinking}
+            panelData={panel}
             onSubmit={(text) => void send({ message: text }, text)}
-            disabled={thinking || done}
-            status={thinking ? "measuring…" : status}
+            done={done}
+            status={status}
+            activeIndex={activeIndex}
+            onHoverIndex={setActiveIndex}
           />
-        )}
-      </div>
-
-      <Panel
-        data={panel}
-        thinking={thinking}
-        activeIndex={activeIndex}
-        onHoverIndex={setActiveIndex}
-      />
+          <SignalPanel 
+            data={panel}
+            entries={entries}
+            thinking={thinking}
+            activeIndex={activeIndex}
+            onHoverIndex={setActiveIndex}
+          />
+        </>
+      ) : (
+        <FeedbackBlock feedback={feedback} />
+      )}
     </main>
   );
 }
 
 function FeedbackBlock({ feedback }: { feedback: Feedback }) {
   const groups: Array<[string, string[]]> = [
-    ["Strengths", feedback.strengths],
-    ["Gaps", feedback.gaps],
-    ["Next", feedback.next],
+    ["Next practice", feedback.next],
   ];
 
   return (
-    <div className="max-h-[54vh] overflow-y-auto border-t border-rule bg-paper-raised">
-      <div className="mx-auto max-w-[46rem] px-10 py-8">
-        <h2 className="font-apparatus text-[10.5px] uppercase tracking-[0.14em] text-graphite-35">
-          After the interview
-        </h2>
-        <p className="mt-4 max-w-[34rem] font-question text-[19px] font-light leading-[1.6] text-graphite">
-          {feedback.summary}
-        </p>
+    <div className="w-full flex-1 overflow-y-auto bg-paper px-8 py-16 flex flex-col items-center">
+      <div className="w-full max-w-[64rem]">
+        <header className="mb-16 text-center">
+          <h1 className="font-editorial text-[42px] text-graphite mb-4">Interview complete</h1>
+          <p className="font-sans text-[18px] text-graphite-60">Here&apos;s what your interview revealed.</p>
+        </header>
+
+        <div className="mb-12">
+          <p className="font-editorial text-[24px] font-light leading-[1.6] text-graphite max-w-[48rem] mx-auto text-center">
+            {feedback.summary}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+          <div>
+            <h3 className="font-apparatus text-[12px] uppercase tracking-widest text-graphite-60 mb-6">Strongest areas</h3>
+            <div className="space-y-4">
+              {feedback.strengths.map((s, i) => (
+                <div key={i} className="p-6 border border-rule rounded bg-paper-raised">
+                  <p className="font-sans text-[15px] leading-relaxed text-graphite">{s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="font-apparatus text-[12px] uppercase tracking-widest text-graphite-60 mb-6">Areas to strengthen</h3>
+            <div className="space-y-4">
+              {feedback.gaps.map((s, i) => (
+                <div key={i} className="p-6 border border-rule rounded bg-paper-raised">
+                  <p className="font-sans text-[15px] leading-relaxed text-graphite">{s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {groups.map(([label, items]) =>
           items.length === 0 ? null : (
-            <section key={label} className="mt-7">
-              <h3 className="font-apparatus text-[9.5px] uppercase tracking-[0.09em] text-graphite-35">
+            <section key={label} className="mt-7 text-center">
+              <h3 className="font-apparatus text-[12px] uppercase tracking-widest text-graphite-60 mb-8">
                 {label}
               </h3>
-              <ul className="mt-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {items.map((t, i) => (
-                  <li
-                    key={i}
-                    className="font-apparatus max-w-[40rem] text-[11.5px] leading-[1.7] text-graphite-60"
-                  >
-                    {t}
-                  </li>
+                  <div key={i} className="flex flex-col items-center p-8 border border-rule rounded bg-paper-raised">
+                    <span className="font-apparatus text-accent-emerald text-[24px] mb-4">0{i + 1}</span>
+                    <p className="font-sans text-[15px] leading-relaxed text-graphite">
+                      {t}
+                    </p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </section>
           )
         )}

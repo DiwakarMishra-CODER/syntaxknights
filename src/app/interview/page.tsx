@@ -5,12 +5,10 @@ export const metadata = {
   description: "An adaptive practice technical interview for cohort graduates.",
 };
 
-export default async function InterviewPage({
-  searchParams,
-}: {
+export default async function InterviewPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const resolvedSearchParams = await searchParams;
+  const resolvedSearchParams = await props.searchParams;
   const candidateId =
     typeof resolvedSearchParams?.candidateId === "string"
       ? resolvedSearchParams.candidateId
