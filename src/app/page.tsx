@@ -1,68 +1,53 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Header } from "@/components/mockmate/Header";
-import { Hero } from "@/components/mockmate/Hero";
-import { ProductShowcase } from "@/components/mockmate/ProductShowcase";
-import { WhyDifferent } from "@/components/mockmate/WhyDifferent";
-import { PhilosophyQuote } from "@/components/mockmate/PhilosophyQuote";
-import { ProductMoments } from "@/components/mockmate/ProductMoments";
-import { HowItThinks } from "@/components/mockmate/HowItThinks";
-import { ActionableReport } from "@/components/mockmate/ActionableReport";
-import { FinalCTA } from "@/components/mockmate/FinalCTA";
-import { Footer } from "@/components/mockmate/Footer";
+import { Navbar } from "@/components/landing/Navbar";
+import { Hero } from "@/components/landing/Hero";
+import { AdaptiveFlow } from "@/components/landing/AdaptiveFlow";
+import { InterviewDemo } from "@/components/landing/InterviewDemo";
+import { ReadinessReport } from "@/components/landing/ReadinessReport";
+import { FinalCTA } from "@/components/landing/FinalCTA";
+import { Footer } from "@/components/landing/Footer";
 import { StartInterviewModal } from "@/components/mockmate/Modals";
-import { AuroraBackground } from "@/components/mockmate/AuroraBackground";
 
 export default function Home() {
   const [startModalOpen, setStartModalOpen] = useState(false);
-  const router = useRouter();
 
-  // Straight into the live interview. The calibration modal it used to open
-  // ends in a fake "Configuring Adaptive Session" screen and never reaches
-  // the API — the interview is planned from a real cohort record.
-  const handleStartPracticing = () => router.push("/interview");
+  const handleStartPracticing = () => {
+    setStartModalOpen(true);
+  };
 
   return (
-    <div className="relative min-h-screen bg-[var(--bg-base)] text-[var(--ink-primary)] selection:bg-[var(--accent-emerald-soft)] selection:text-[var(--accent-emerald)] overflow-x-hidden">
-      {/* Background Washes */}
-      <AuroraBackground />
+    <div className="relative min-h-screen overflow-x-hidden bg-[#050806] text-[#F5F7F4] selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">
+      {/* Navbar */}
+      <Navbar onOpenStartModal={handleStartPracticing} />
 
-      {/* Floating Glass Navigation */}
-      <Header onOpenStartModal={handleStartPracticing} />
-
-      {/* Main Layout Flow (Max 6 Primary Sections) */}
-      <main className="relative z-10">
-        {/* Section 1: Hero */}
+      {/* Continuous Page Flow */}
+      <main className="relative z-10 space-y-0">
+        {/* 1. Hero Anchor */}
         <Hero onOpenStartModal={handleStartPracticing} />
 
-        {/* Section 1 Signature Element: Live Dialogue Demo Panel */}
-        <ProductShowcase />
+        {/* 2. Comparison Matrix & Adaptive Reasoning Loop */}
+        <AdaptiveFlow />
 
-        {/* Section 2: Contrast */}
-        <WhyDifferent />
+        {/* 3. Live Interview Playground */}
+        <section id="playground">
+          <InterviewDemo />
+        </section>
 
-        {/* Section 3: How the engine actually works */}
-        <HowItThinks />
+        {/* 4. Evidence-Backed Readiness Report */}
+        <section id="report">
+          <ReadinessReport />
+        </section>
 
-        {/* Section 4: Core Philosophy Quote */}
-        <PhilosophyQuote />
-
-        {/* Section 5: Behavior Cards */}
-        <ProductMoments />
-
-        {/* Section 6: Evaluation Dossier */}
-        <ActionableReport />
-
-        {/* Section 7: Final CTA */}
+        {/* 5. High-Conversion Final Call-to-Action */}
         <FinalCTA onOpenStartModal={handleStartPracticing} />
       </main>
 
-      {/* Footer */}
+      {/* 6. Footer */}
       <Footer />
 
-      {/* Session Calibration Modal */}
+      {/* Interactive Session Calibration Modal */}
       <StartInterviewModal
         isOpen={startModalOpen}
         onClose={() => setStartModalOpen(false)}

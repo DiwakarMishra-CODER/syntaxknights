@@ -29,50 +29,51 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--ink-primary)]/40 backdrop-blur-sm">
-      <div className="bg-[var(--bg-elevated)] border border-[var(--glass-border)] rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-xl relative text-left">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050806]/70 p-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-[#0B120E] p-6 text-left shadow-2xl sm:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(31,209,106,0.12),transparent_35%)]" />
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-[var(--ink-muted)] hover:text-[var(--ink-primary)] p-1 transition-colors"
+          className="absolute right-5 top-5 p-1 text-[#7E8B84] transition-colors hover:text-[#F5F7F4]"
         >
           <X className="w-4 h-4" />
         </button>
 
         {isSubmitted ? (
           <div className="py-10 text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-[var(--accent-emerald-soft)] text-[var(--accent-emerald)] flex items-center justify-center mx-auto text-lg font-bold">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#1FD16A]/15 text-lg font-bold text-[#73F0A0]">
               ✓
             </div>
-            <h3 className="text-xl font-editorial text-[var(--ink-primary)] font-semibold">
+            <h3 className="text-xl font-editorial font-semibold text-[#F5F2EB]">
               Configuring Adaptive Session
             </h3>
-            <p className="text-xs font-mono text-[var(--ink-muted)]">
+            <p className="text-xs font-mono text-[#8C867A]">
               Synthesizing context for {role} ({domain})
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <span className="text-[11px] font-mono text-[var(--accent-emerald)] font-semibold uppercase tracking-wider block mb-1">
+              <span className="mb-1 block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#1FD16A]">
                 New Session Calibration
               </span>
-              <h3 className="text-xl font-editorial text-[var(--ink-primary)] font-semibold">
+              <h3 className="text-xl font-editorial font-semibold text-[#F5F2EB]">
                 Start Mock Interview
               </h3>
-              <p className="text-xs text-[var(--ink-muted)] mt-1">
+              <p className="mt-1 text-xs text-[#7E8B84]">
                 Select your engineering profile to calibrate the adaptive evaluation engine.
               </p>
             </div>
 
             <div className="space-y-3 pt-2">
               <div>
-                <label className="block text-[11px] font-mono text-[var(--ink-muted)] mb-1 uppercase">
+                <label className="mb-1 block text-[11px] font-mono uppercase text-[#7E8B84]">
                   Target Role
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-[var(--bg-base)] border border-[var(--glass-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--ink-primary)] focus:border-[var(--accent-emerald)] focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050806] px-3.5 py-2 text-xs text-[#F5F7F4] outline-none focus:border-[#1FD16A]"
                 >
                   <option>Senior Distributed Systems Engineer</option>
                   <option>Staff Backend Architect</option>
@@ -82,13 +83,13 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-[var(--ink-muted)] mb-1 uppercase">
+                <label className="mb-1 block text-[11px] font-mono uppercase text-[#7E8B84]">
                   Focus Domain
                 </label>
                 <select
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                  className="w-full bg-[var(--bg-base)] border border-[var(--glass-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--ink-primary)] focus:border-[var(--accent-emerald)] focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050806] px-3.5 py-2 text-xs text-[#F5F7F4] outline-none focus:border-[#1FD16A]"
                 >
                   <option>System Design & High-Scale Architecture</option>
                   <option>Async Concurrency & Lock-Free Structures</option>
@@ -98,13 +99,13 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-[var(--ink-muted)] mb-1 uppercase">
+                <label className="mb-1 block text-[11px] font-mono uppercase text-[#7E8B84]">
                   Experience Tier
                 </label>
                 <select
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
-                  className="w-full bg-[var(--bg-base)] border border-[var(--glass-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--ink-primary)] focus:border-[var(--accent-emerald)] focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#050806] px-3.5 py-2 text-xs text-[#F5F7F4] outline-none focus:border-[#1FD16A]"
                 >
                   <option>Early Career (0-2 YOE)</option>
                   <option>Mid-Level Software Engineer (2-5 YOE)</option>
@@ -114,11 +115,11 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
               </div>
             </div>
 
-            <div className="pt-4 flex items-center justify-end gap-2 border-t border-[var(--glass-border)]">
+            <div className="flex items-center justify-end gap-2 border-t border-[rgba(255,255,255,0.08)] pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-full text-xs font-mono text-[var(--ink-muted)] hover:text-[var(--ink-primary)]"
+                className="rounded-full px-4 py-2 text-xs font-mono text-[#7E8B84] hover:text-[#F5F7F4]"
               >
                 Cancel
               </button>

@@ -5,11 +5,11 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface HeaderProps {
+interface NavbarProps {
   onOpenStartModal: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -22,70 +22,70 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 px-4 py-4 md:px-8 transition-all duration-300">
-      <div className="max-w-6xl mx-auto">
+    <header className="fixed left-0 right-0 top-0 z-40 px-4 py-4 transition-all duration-300 md:px-8">
+      <div className="max-w-7xl mx-auto">
         <nav
           className={cn(
-            "rounded-full px-6 py-3 flex items-center justify-between transition-all duration-300",
+            "flex items-center justify-between rounded-full px-5 py-3.5 transition-all duration-500 md:px-6",
             scrolled
-              ? "glass-dark bg-[#070A0F]/85 border-slate-800 shadow-xl"
-              : "bg-transparent border border-transparent"
+              ? "glass-card bg-[#050806]/90 shadow-2xl"
+              : "border-transparent bg-transparent"
           )}
         >
-          {/* Left: Brand Logo matching reference */}
+          {/* Left: MockMate Logo */}
           <motion.a
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             href="#"
-            className="flex items-center gap-2.5 text-left"
+            className="group flex items-center gap-2.5 text-left"
           >
-            <div className="w-7 h-7 rounded-lg bg-[#10B981] flex items-center justify-center font-sans font-bold text-xs text-[#070A0F] shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#101813] text-sm font-bold text-[#F5F7F4] shadow-sm transition-transform group-hover:scale-105 font-editorial">
               M
             </div>
-            <span className="text-base font-semibold tracking-tight text-white font-sans">
+            <span className="text-base font-semibold tracking-tight text-[#F5F7F4] font-sans">
               MockMate
             </span>
           </motion.a>
 
-          {/* Center: Nav Items matching reference */}
+          {/* Center: Essential Nav Links */}
           <motion.ul
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="hidden md:flex items-center gap-8 text-xs font-sans text-slate-300 tracking-wide"
+            className="hidden items-center gap-8 text-[13px] tracking-wide text-[#CFD7D0] font-sans md:flex"
           >
             <li>
-              <a href="#how-it-works" className="hover:text-white transition-colors">
-                How it works
+              <a href="#comparison" className="transition-colors hover:text-[#F5F7F4]">
+                The divergence
               </a>
             </li>
             <li>
-              <a href="#difference" className="hover:text-white transition-colors">
-                Why it&apos;s different
+              <a href="#how-it-works" className="transition-colors hover:text-[#F5F7F4]">
+                The three moments
               </a>
             </li>
             <li>
-              <a href="#readiness" className="hover:text-white transition-colors">
-                Sample report
+              <a href="#playground" className="transition-colors hover:text-[#F5F7F4]">
+                Inside the interview
               </a>
             </li>
             <li>
-              <a href="#readiness" className="hover:text-white transition-colors">
-                For teams
+              <a href="#report" className="transition-colors hover:text-[#F5F7F4]">
+                The report
               </a>
             </li>
           </motion.ul>
 
-          {/* Right: Primary CTA matching reference button */}
+          {/* Right: Start Interview CTA */}
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="hidden md:flex items-center"
+            className="hidden items-center md:flex"
           >
-            <button onClick={onOpenStartModal} className="btn-primary-teal text-xs px-5 py-2">
-              Start Interview
+            <button onClick={onOpenStartModal} className="btn-pill-amber text-xs h-9 px-4">
+              Start Practice
               <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
           </motion.div>
@@ -93,8 +93,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
           {/* Mobile Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1.5 text-slate-300 hover:text-white"
-            aria-label="Toggle Menu"
+            className="rounded-full p-2 text-[#CFD7D0] transition-colors hover:text-[#F5F7F4] md:hidden"
+            aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {mobileMenuOpen ? (
@@ -106,28 +107,28 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
           </button>
         </nav>
 
-        {/* Mobile Overlay */}
+        {/* Mobile Overlay Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-2 glass-dark p-5 rounded-2xl space-y-4">
-            <ul className="flex flex-col gap-3 text-xs font-sans text-slate-300">
+          <div className="glass-card-amber mt-2 space-y-4 rounded-2xl p-5 md:hidden">
+            <ul className="flex flex-col gap-4 text-sm text-[#CFD7D0] font-sans">
+              <li>
+                <a href="#comparison" onClick={() => setMobileMenuOpen(false)}>
+                  The divergence
+                </a>
+              </li>
               <li>
                 <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>
-                  How it works
+                  The three moments
                 </a>
               </li>
               <li>
-                <a href="#difference" onClick={() => setMobileMenuOpen(false)}>
-                  Why it&apos;s different
+                <a href="#playground" onClick={() => setMobileMenuOpen(false)}>
+                  Inside the interview
                 </a>
               </li>
               <li>
-                <a href="#readiness" onClick={() => setMobileMenuOpen(false)}>
-                  Sample report
-                </a>
-              </li>
-              <li>
-                <a href="#readiness" onClick={() => setMobileMenuOpen(false)}>
-                  For teams
+                <a href="#report" onClick={() => setMobileMenuOpen(false)}>
+                  The report
                 </a>
               </li>
             </ul>
@@ -136,9 +137,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
                 setMobileMenuOpen(false);
                 onOpenStartModal();
               }}
-              className="w-full btn-primary-teal text-xs py-2.5"
+              className="btn-pill-amber w-full py-3 text-sm"
             >
-              Start Interview →
+              Start Practice →
             </button>
           </div>
         )}
