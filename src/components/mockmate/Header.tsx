@@ -1,78 +1,123 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Sun, Moon } from "lucide-react";
+import { MagneticButton } from "./MagneticButton";
+import { useTheme } from "./ThemeProvider";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onOpenStartModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
+  const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 30);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 px-4 py-5 md:px-8 transition-all duration-300">
-      <div className="max-w-6xl mx-auto">
-        <nav className="glass-nav rounded-full px-6 py-3 flex items-center justify-between border border-[var(--glass-border)] shadow-2xl relative overflow-hidden">
-          {/* Logo with Pulsing Emerald Ring */}
-          <a href="#" className="flex items-center gap-2.5 text-left group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent-emerald)] to-[#10B981] flex items-center justify-center shadow-lg shadow-[var(--accent-emerald-glow)] group-hover:scale-105 transition-transform relative">
-              <span className="text-[#0B1220] font-bold text-sm font-sans z-10">M</span>
-              <span className="absolute inset-0 rounded-xl bg-[var(--accent-emerald)] opacity-40 pulse-ring"></span>
+    <header className="fixed top-0 left-0 right-0 z-40 px-4 py-4 md:px-8 transition-all duration-300">
+      <div className="max-w-5xl mx-auto">
+        <nav
+          className={cn(
+            "rounded-full px-6 py-3 flex items-center justify-between transition-all duration-300",
+            scrolled
+              ? "glass shadow-md bg-[var(--glass-fill)] border-[var(--glass-border)]"
+              : "bg-transparent border border-transparent"
+          )}
+        >
+          {/* Logo */}
+          <a href="#" className="flex items-center gap-2 text-left">
+            <div className="w-7 h-7 rounded-lg bg-[var(--accent-emerald)] flex items-center justify-center font-sans font-bold text-xs text-white">
+              M
             </div>
-            <span className="text-lg font-semibold tracking-tight text-white font-sans">
-              Mock<span className="text-[var(--accent-emerald)] font-light">Mate</span>
+            <span className="text-base font-semibold tracking-tight text-[var(--ink-primary)] font-sans">
+              MockMate
             </span>
           </a>
 
           {/* Minimal Nav Links */}
-          <ul className="hidden md:flex items-center gap-10 text-xs font-mono tracking-wider uppercase text-slate-300">
+          <ul className="hidden md:flex items-center gap-8 text-xs font-mono tracking-wide text-[var(--ink-muted)]">
             <li>
-              <a href="#showcase" className="hover:text-[var(--accent-emerald)] transition-colors">
+              <a href="#showcase" className="hover:text-[var(--ink-primary)] transition-colors">
                 Showcase
               </a>
             </li>
             <li>
-              <a href="#difference" className="hover:text-[var(--accent-emerald)] transition-colors">
+              <a href="#difference" className="hover:text-[var(--ink-primary)] transition-colors">
                 Difference
               </a>
             </li>
             <li>
-              <a href="#dossier" className="hover:text-[var(--accent-emerald)] transition-colors">
+              <a href="#dossier" className="hover:text-[var(--ink-primary)] transition-colors">
                 Dossier
               </a>
             </li>
           </ul>
 
-          {/* Single Action CTA */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Action CTAs + Theme Toggle */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Theme Toggle Button */}
             <button
-              onClick={onOpenStartModal}
-              className="btn-primary text-xs px-5 py-2.5 font-medium tracking-wide shadow-md hover:shadow-lg"
+              onClick={toggleTheme}
+              className="p-2 rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] text-[var(--ink-primary)] hover:border-[var(--glass-border-hover)] hover:bg-[var(--glass-fill-hover)] transition-all duration-200"
+              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+              title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
             >
-              Start Practicing
+              {theme === "light" ? (
+                <Moon className="w-4 h-4 text-[var(--ink-primary)]" />
+              ) : (
+                <Sun className="w-4 h-4 text-[var(--accent-gold)]" />
+              )}
             </button>
+
+            <MagneticButton onClick={onOpenStartModal} className="text-xs px-4 py-2">
+              Start Practicing
+            </MagneticButton>
           </div>
 
-          {/* Mobile Toggle Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-300 hover:text-white"
-            aria-label="Toggle Navigation"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+          {/* Mobile Actions: Theme Toggle + Menu Button */}
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] text-[var(--ink-primary)]"
+              aria-label="Toggle theme"
+            >
+              {theme === "light" ? (
+                <Moon className="w-4 h-4 text-[var(--ink-primary)]" />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8h16M4 16h16" />
+                <Sun className="w-4 h-4 text-[var(--accent-gold)]" />
               )}
-            </svg>
-          </button>
+            </button>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-1.5 text-[var(--ink-muted)] hover:text-[var(--ink-primary)]"
+              aria-label="Toggle Menu"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8h16M4 16h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </nav>
 
-        {/* Mobile Overlay Menu */}
+        {/* Mobile Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-3 glass-panel rounded-2xl p-6 border border-slate-800 animate-in fade-in duration-200">
-            <ul className="flex flex-col gap-4 text-sm font-mono text-slate-200 mb-6">
+          <div className="md:hidden mt-2 glass p-5 rounded-2xl space-y-4">
+            <ul className="flex flex-col gap-3 text-xs font-mono text-[var(--ink-muted)]">
               <li>
                 <a href="#showcase" onClick={() => setMobileMenuOpen(false)}>
                   Showcase
@@ -94,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenStartModal }) => {
                 setMobileMenuOpen(false);
                 onOpenStartModal();
               }}
-              className="w-full btn-primary text-center justify-center py-3 text-xs"
+              className="w-full btn-primary text-xs py-2.5"
             >
               Start Practicing
             </button>

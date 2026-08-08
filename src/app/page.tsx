@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Preloader } from "@/components/mockmate/Preloader";
 import { Header } from "@/components/mockmate/Header";
 import { Hero } from "@/components/mockmate/Hero";
 import { ProductShowcase } from "@/components/mockmate/ProductShowcase";
@@ -11,77 +10,51 @@ import { ProductMoments } from "@/components/mockmate/ProductMoments";
 import { ActionableReport } from "@/components/mockmate/ActionableReport";
 import { FinalCTA } from "@/components/mockmate/FinalCTA";
 import { Footer } from "@/components/mockmate/Footer";
-import {
-  StartInterviewModal,
-  WatchDemoModal,
-  SampleReportModal,
-} from "@/components/mockmate/Modals";
+import { StartInterviewModal } from "@/components/mockmate/Modals";
+import { AuroraBackground } from "@/components/mockmate/AuroraBackground";
 
 export default function Home() {
-  const [preloaderComplete, setPreloaderComplete] = useState(false);
   const [startModalOpen, setStartModalOpen] = useState(false);
-  const [demoModalOpen, setDemoModalOpen] = useState(false);
-  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-emerald-glow)] selection:text-[var(--accent-emerald)] overflow-x-hidden">
-      {/* 1-Second Product Introduction Preloader */}
-      {!preloaderComplete && (
-        <Preloader onComplete={() => setPreloaderComplete(true)} />
-      )}
+    <div className="relative min-h-screen bg-[var(--bg-base)] text-[var(--ink-primary)] selection:bg-[var(--accent-emerald-soft)] selection:text-[var(--accent-emerald)] overflow-x-hidden">
+      {/* Background Washes */}
+      <AuroraBackground />
 
-      {/* Corner Ambient Edge Auroras */}
-      <div className="aurora-bg">
-        <div className="aurora-top-left" />
-        <div className="aurora-top-right" />
-        <div className="aurora-bottom-left" />
-        <div className="aurora-bottom-right" />
-      </div>
-
-      {/* Semantic Floating Glass Navbar */}
+      {/* Floating Glass Navigation */}
       <Header onOpenStartModal={() => setStartModalOpen(true)} />
 
-      {/* Semantic Main Content Flow */}
+      {/* Main Layout Flow (Max 6 Primary Sections) */}
       <main className="relative z-10">
-        {/* Section 1: Hero Thesis Statement */}
+        {/* Section 1: Hero */}
         <Hero onOpenStartModal={() => setStartModalOpen(true)} />
 
-        {/* Section 2: Full-Width Glass Interview Room Showcase */}
+        {/* Section 1 Signature Element: Live Dialogue Demo Panel */}
         <ProductShowcase />
 
-        {/* Section 3: One Striking Comparison */}
+        {/* Section 2: Contrast */}
         <WhyDifferent />
 
-        {/* Section 4: Core Philosophy Quote */}
+        {/* Section 3: Core Philosophy Quote */}
         <PhilosophyQuote />
 
-        {/* Section 5: Three Human Product Moments (Keeps Context, Challenges Assumptions, Knows When To Push) */}
+        {/* Section 4: Behavior Cards */}
         <ProductMoments />
 
-        {/* Section 6: Actionable Staff Design Review Dossier */}
-        <ActionableReport
-          onOpenReportModal={() => setReportModalOpen(true)}
-        />
+        {/* Section 5: Evaluation Dossier */}
+        <ActionableReport />
 
-        {/* Section 7: Final Product Launch Call To Action */}
+        {/* Section 6: Final CTA */}
         <FinalCTA onOpenStartModal={() => setStartModalOpen(true)} />
       </main>
 
-      {/* Semantic Footer */}
+      {/* Footer */}
       <Footer />
 
-      {/* Interactive Modals */}
+      {/* Session Calibration Modal */}
       <StartInterviewModal
         isOpen={startModalOpen}
         onClose={() => setStartModalOpen(false)}
-      />
-      <WatchDemoModal
-        isOpen={demoModalOpen}
-        onClose={() => setDemoModalOpen(false)}
-      />
-      <SampleReportModal
-        isOpen={reportModalOpen}
-        onClose={() => setReportModalOpen(false)}
       />
     </div>
   );

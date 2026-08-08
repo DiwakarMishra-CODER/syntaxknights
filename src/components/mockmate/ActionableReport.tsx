@@ -1,114 +1,183 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, FileText } from "lucide-react";
+import { MagneticButton } from "./MagneticButton";
 
-interface ActionableReportProps {
-  onOpenReportModal: () => void;
-}
-
-export const ActionableReport: React.FC<ActionableReportProps> = ({
-  onOpenReportModal,
-}) => {
+const GlassDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   return (
-    <section id="dossier" className="py-28 relative z-10 border-t border-slate-800/50">
-      <div className="max-w-5xl mx-auto px-4 md:px-8 space-y-16">
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-50 bg-[var(--ink-primary)]/40 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            className="fixed left-[50%] top-[50%] z-50 w-full max-w-2xl translate-x-[-50%] translate-y-[-50%] p-4 sm:p-0"
+          >
+            <div className="bg-[var(--bg-elevated)] border border-[var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col text-left">
+              {/* Dialog Header */}
+              <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border)] bg-[var(--bg-base)]">
+                <div>
+                  <h2 className="text-base font-editorial text-[var(--ink-primary)] font-semibold">
+                    Evaluation Dossier Preview
+                  </h2>
+                  <p className="text-xs font-mono text-[var(--ink-muted)] mt-0.5">
+                    TECHNICAL FOCUS: DISTRIBUTED SYSTEMS
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-lg hover:bg-[var(--glass-border)] text-[var(--ink-muted)] hover:text-[var(--ink-primary)] transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Dialog Content */}
+              <div className="overflow-y-auto p-6 space-y-6 text-xs text-[var(--ink-primary)]">
+                {/* 2 Clean Circular Gauges */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-base)] flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] font-mono text-[var(--ink-muted)]">SYSTEM BOUNDARIES</div>
+                      <div className="text-lg font-editorial text-[var(--accent-emerald)] font-bold">Strong Hire</div>
+                    </div>
+                    <svg className="w-10 h-10 transform -rotate-90">
+                      <circle cx="20" cy="20" r="16" stroke="var(--glass-border)" strokeWidth="3" fill="none" />
+                      <circle cx="20" cy="20" r="16" stroke="var(--accent-emerald)" strokeWidth="3" strokeDasharray="100" strokeDashoffset="25" fill="none" />
+                    </svg>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-base)] flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] font-mono text-[var(--ink-muted)]">TRADE-OFF REASONING</div>
+                      <div className="text-lg font-editorial text-[var(--accent-emerald)] font-bold">Strong Hire</div>
+                    </div>
+                    <svg className="w-10 h-10 transform -rotate-90">
+                      <circle cx="20" cy="20" r="16" stroke="var(--glass-border)" strokeWidth="3" fill="none" />
+                      <circle cx="20" cy="20" r="16" stroke="var(--accent-emerald)" strokeWidth="3" strokeDasharray="100" strokeDashoffset="15" fill="none" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Feedback Notes */}
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-[var(--accent-emerald-soft)]/20 border border-[var(--accent-emerald)]/30 space-y-1">
+                    <div className="font-mono text-[11px] text-[var(--accent-emerald)] font-semibold uppercase">
+                      Architectural Depth
+                    </div>
+                    <p className="text-[var(--ink-primary)] leading-relaxed font-normal">
+                      Articulated edge-rate limiting with clear token bucket bounds. When pressed on network partitions, correctly identified quorum write trade-offs.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-[var(--accent-champagne)]/10 border border-[var(--accent-champagne)]/30 space-y-1">
+                    <div className="font-mono text-[11px] text-[var(--accent-champagne)] font-semibold uppercase">
+                      Growth Opportunity
+                    </div>
+                    <p className="text-[var(--ink-primary)] leading-relaxed font-normal">
+                      Initial cache invalidation proposal relied on write-through; probe deeper into lease-based caching under high write contention.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export const ActionableReport: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <section id="dossier" className="py-20 relative z-10 border-t border-[var(--glass-border)]">
+      <div className="max-w-4xl mx-auto px-4 md:px-8 space-y-12">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <div className="pill-badge pill-badge-emerald">
-            <span>THE ARCHITECTURAL DOSSIER</span>
-          </div>
-          <h2 className="text-4xl sm:text-5xl font-editorial text-white tracking-tight">
-            Leave knowing <span className="italic text-[var(--accent-emerald)]">what to improve.</span>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center space-y-3 max-w-xl mx-auto"
+        >
+          <span className="text-xs font-mono text-[var(--accent-emerald)] uppercase tracking-wider font-semibold">
+            Post-Interview Evaluation
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-editorial text-[var(--ink-primary)] tracking-tight">
+            Leave knowing <span className="italic font-normal text-[var(--accent-emerald)]">what to improve.</span>
           </h2>
-          <p className="text-base text-slate-300 font-light">
-            No vanity scores or arbitrary percentages. MockMate produces an executive staff-engineer review focused strictly on architectural depth.
+          <p className="text-sm text-[var(--ink-muted)] font-normal">
+            No generic scores. An engineering-level evaluation of your architectural choices and communication clarity.
           </p>
-        </div>
+        </motion.div>
 
-        {/* One Elegant Report Panel */}
-        <div className="glass-panel glass-shine-card rounded-[32px] p-8 sm:p-12 border border-[var(--glass-border)] bg-slate-900/80 shadow-2xl relative overflow-hidden text-left">
-          {/* Top Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-800">
+        {/* Report Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="glass glass-hover p-8 rounded-2xl space-y-6 text-left max-w-2xl mx-auto"
+        >
+          <div className="flex items-center justify-between border-b border-[var(--glass-border)] pb-4">
             <div>
-              <div className="text-xs font-mono text-[var(--accent-emerald)] font-semibold uppercase tracking-widest mb-1">
-                STAFF DESIGN REVIEW
+              <div className="text-xs font-mono text-[var(--ink-muted)]">SAMPLE DOSSIER</div>
+              <div className="text-sm font-editorial text-[var(--ink-primary)] font-semibold">
+                System Design Evaluation
               </div>
-              <h3 className="text-2xl font-editorial text-white">
-                Senior Distributed Systems Evaluation
-              </h3>
+            </div>
+            <div className="px-2.5 py-1 rounded bg-[var(--accent-emerald-soft)] text-[var(--accent-emerald)] text-xs font-mono font-semibold border border-[var(--accent-emerald)]/20">
+              HIRE RECOMMENDATION
+            </div>
+          </div>
+
+          {/* Minimal 2 Gauges */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--glass-border)] flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-mono text-[var(--ink-muted)]">SYSTEM BOUNDARIES</div>
+                <div className="text-base font-editorial text-[var(--accent-emerald)] font-semibold">Strong</div>
+              </div>
+              <svg className="w-8 h-8 transform -rotate-90">
+                <circle cx="16" cy="16" r="12" stroke="var(--glass-border)" strokeWidth="2.5" fill="none" />
+                <circle cx="16" cy="16" r="12" stroke="var(--accent-emerald)" strokeWidth="2.5" strokeDasharray="75" strokeDashoffset="18" fill="none" />
+              </svg>
             </div>
 
-            <button
-              onClick={onOpenReportModal}
-              className="btn-primary text-xs px-5 py-2.5 shrink-0"
-            >
+            <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--glass-border)] flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-mono text-[var(--ink-muted)]">TRADE-OFF CLARITY</div>
+                <div className="text-base font-editorial text-[var(--accent-emerald)] font-semibold">Strong</div>
+              </div>
+              <svg className="w-8 h-8 transform -rotate-90">
+                <circle cx="16" cy="16" r="12" stroke="var(--glass-border)" strokeWidth="2.5" fill="none" />
+                <circle cx="16" cy="16" r="12" stroke="var(--accent-emerald)" strokeWidth="2.5" strokeDasharray="75" strokeDashoffset="10" fill="none" />
+              </svg>
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-center">
+            <MagneticButton onClick={() => setIsModalOpen(true)} variant="secondary" className="text-xs px-5 py-2">
+              <FileText className="w-3.5 h-3.5 mr-1.5 text-[var(--ink-muted)]" />
               View Full Sample Dossier
-            </button>
+            </MagneticButton>
           </div>
-
-          {/* Report Highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              {/* Timeline */}
-              <div className="p-6 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                  <span>CONVERSATION TIMELINE</span>
-                  <span className="text-[var(--accent-emerald)] font-bold">45 MIN</span>
-                </div>
-                <div className="space-y-2.5 font-mono text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300">00:00 • SLA Bounds Setup</span>
-                    <span className="text-[var(--accent-emerald)] font-bold">Strong</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300">15:30 • Distributed Locking & Raft</span>
-                    <span className="text-[var(--accent-ice-blue)] font-bold">Detailed</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300">32:00 • Cache Stampede Mitigation</span>
-                    <span className="text-[var(--accent-champagne)] font-bold">Refinement</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Strengths */}
-              <div className="p-6 rounded-2xl bg-emerald-950/20 border border-[var(--accent-emerald-border)] space-y-2">
-                <div className="text-xs font-mono text-[var(--accent-emerald)] font-bold uppercase tracking-wider">
-                  KEY ARCHITECTURAL STRENGTHS
-                </div>
-                <ul className="text-xs text-slate-200 space-y-2 list-disc list-inside font-light">
-                  <li>Identified network partition risks early during topology setup.</li>
-                  <li>Articulated clear trade-offs between linearizability vs eventual consistency.</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* Refinement */}
-              <div className="p-6 rounded-2xl bg-amber-950/20 border border-amber-500/30 space-y-2">
-                <div className="text-xs font-mono text-[var(--accent-champagne)] font-bold uppercase tracking-wider">
-                  TARGETED REFINEMENT
-                </div>
-                <ul className="text-xs text-slate-200 space-y-2 list-disc list-inside font-light">
-                  <li>Over-indexed on Redis cache layer before evaluating database write queues.</li>
-                  <li>Could deepen memory safety guarantees under lock-free queues.</li>
-                </ul>
-              </div>
-
-              {/* Recommendation Panel */}
-              <div className="p-6 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
-                <div className="text-xs font-mono text-[var(--accent-ice-blue)] font-bold uppercase tracking-wider">
-                  RECOMMENDED READING
-                </div>
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center text-xs text-slate-300">
-                  <span>Designing Data-Intensive Applications (Ch. 8)</span>
-                  <span className="text-[var(--accent-emerald)] font-mono">Chapter 8</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </div>
+
+      <GlassDialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 };
