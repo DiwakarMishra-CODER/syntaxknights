@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* The interview surface. Kept in its own file so a landing rewrite
+   cannot delete it by accident — see the header there. */
+@import "./interview-theme.css";
 
 :root {
   /* ─── Core Palette ─── */

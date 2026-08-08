@@ -2,6 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
+import { shouldFollow } from "./conversationScroll";
+
+
 /**
  * Append-only transcript. Entries are never re-rendered once placed —
  * re-rendering flickers and kills the conversational illusion.
@@ -32,14 +35,32 @@ export function Conversation({
   activeIndex: number | null;
   onHoverIndex?: (i: number | null) => void;
 }) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  /** Set by the READER's scrolling, never by a render. */
+  const stuck = useRef(true);
 
+  // Follow the newest turn only when the reader is already following.
+  //
+  // The previous version measured this in a layout effect, which runs AFTER
+  // React commits the new entry — so it read the post-insert height, decided
+  // the reader had scrolled away, and latched `stuck` false forever. One turn
+  // was enough to stop the transcript following for the rest of the
+  // interview. "Was I at the bottom" can only come from a scroll event.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [entries.length, thinking]);
+    const el = scrollRef.current;
+    if (el && stuck.current) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [entries.length]);
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div
+      ref={scrollRef}
+      data-lenis-prevent
+      onScroll={(e) => {
+        const el = e.currentTarget;
+        stuck.current = shouldFollow(el.scrollTop, el.scrollHeight, el.clientHeight);
+      }}
+      className="min-h-0 flex-1 overflow-y-auto"
+    >
       <div className="mx-auto max-w-[46rem] px-10 py-14">
         {entries.map((e) => {
           const dim = activeIndex !== null && e.traceIndex !== activeIndex;
@@ -94,7 +115,6 @@ export function Conversation({
           </p>
         )}
 
-        <div ref={endRef} />
       </div>
     </div>
   );

@@ -4,7 +4,12 @@ import { useState } from "react";
 
 /**
  * Multi-line input with an explicit submit and a visible character count.
- * Enter inserts a newline; the answer is sent deliberately, not by reflex.
+ *
+ * Enter sends; Shift+Enter inserts a newline. This used to be the other way
+ * round — Cmd/Ctrl+Enter to send — on the theory that an answer should be
+ * deliberate rather than reflexive. Testing killed it: everyone types Enter,
+ * gets a newline, and has to hunt for the button. Chat convention wins over
+ * the theory.
  */
 export function Composer({
   onSubmit,
@@ -36,10 +41,12 @@ export function Composer({
           disabled={disabled}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              submit();
-            }
+            if (e.key !== "Enter" || e.shiftKey) return;
+            // Mid-composition Enter CONFIRMS an IME candidate — Japanese,
+            // Chinese and Korean input would submit a half-typed word.
+            if (e.nativeEvent.isComposing) return;
+            e.preventDefault();
+            submit();
           }}
           rows={3}
           spellCheck
@@ -49,7 +56,14 @@ export function Composer({
 
         <div className="mt-2 flex items-center justify-between">
           <span className="font-apparatus text-[10.5px] tabular-nums text-graphite-35">
-            {status ?? `${value.length} characters`}
+            {status ?? (
+              <>
+                {value.length} characters
+                <span className="ml-3 tracking-[0.02em]">
+                  Enter to send · Shift+Enter for a new line
+                </span>
+              </>
+            )}
           </span>
 
           <button

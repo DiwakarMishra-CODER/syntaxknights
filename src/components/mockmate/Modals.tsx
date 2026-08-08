@@ -24,17 +24,16 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
-    
-    // Map experience tier to a known backend Candidate ID
-    let candidateId = "CAND-017"; // default (Senior)
-    if (experience.includes("0-2")) candidateId = "CAND-005"; // Junior
-    else if (experience.includes("2-5")) candidateId = "CAND-002"; // Mid
-    else if (experience.includes("8+")) candidateId = "CAND-001"; // Staff
 
+    // To the roster, not straight into an interview. The experience tier used
+    // to be mapped to one hardcoded candidate id here, which silently decided
+    // who you were; every graduate has a different 31-day record and the
+    // interview is planned from it, so that choice belongs to the person
+    // making it.
     setTimeout(() => {
       setIsSubmitted(false);
       onClose();
-      router.push(`/interview?candidateId=${candidateId}`);
+      router.push("/candidates");
     }, 1800);
   };
 

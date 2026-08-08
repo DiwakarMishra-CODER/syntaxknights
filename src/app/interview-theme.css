@@ -1,0 +1,101 @@
+/* ==========================================================================
+   THE INTERVIEW SURFACE — a separate file on purpose.
+
+   These tokens are what /interview, /report and /candidates are built from.
+   They have now been silently deleted three times by a landing-page rewrite:
+   the landing owns globals.css, nothing in the test suite covers CSS, and the
+   failure looks like unstyled grey blocks rather than an error.
+
+   Keeping them here means the next landing rewrite has no reason to touch
+   them. Import stays at the top of globals.css.
+
+   Ported verbatim from the pre-merge globals.css. Do not "fix" the two font
+   variables below without meaning to: --font-newsreader and
+   --font-jetbrains-mono are not defined by any layout, so these already
+   resolve to Georgia and ui-monospace, and that is what the interview looks
+   like today. Pointing them at fonts that ARE loaded would change it.
+   ========================================================================== */
+
+@theme {
+  /* Cool clinical paper — deliberately not cream. One deep ink. Exactly one
+     saturated signal, reserved for the depth trace and contradiction flags.
+     Every value below passes WCAG AA against its own ground; the labels were
+     2.78:1 before correction and vanished on compressed video. */
+  --color-paper: #f4f7f8;
+  --color-paper-raised: #eef2f4;
+  --color-rule: #c2ccd1;
+  --color-rule-strong: #808e95;
+  --color-rule-soft: #e6ebed;
+  --color-graphite: #161c1f;
+  --color-graphite-60: #586268;
+  --color-graphite-35: #646e73;
+  --color-trace: #c4005c;
+
+  /* Both faces are already loaded by the root layout. */
+  --font-question: var(--font-newsreader), Georgia, serif;
+  --font-apparatus: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+.interview-root {
+  /* Re-declared here, not just in @theme, and this is load-bearing.
+     globals.css defines its own --color-paper (#0A0A0A), --color-rule and
+     --color-trace for the landing theme, in a :root block that comes after
+     this file's import — so at :root the landing wins and `bg-paper` renders
+     black. Declaring them on this element means they win inside the
+     interview subtree whatever :root says and whatever order the imports
+     end up in. The landing page keeps its own values untouched. */
+  --color-paper: #f4f7f8;
+  --color-paper-raised: #eef2f4;
+  --color-rule: #c2ccd1;
+  --color-rule-strong: #808e95;
+  --color-rule-soft: #e6ebed;
+  --color-graphite: #161c1f;
+  --color-graphite-60: #586268;
+  --color-graphite-35: #646e73;
+  --color-trace: #c4005c;
+
+  background-color: var(--color-paper);
+  color: var(--color-graphite);
+  font-family: var(--font-apparatus);
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Instrument paper: a faint printed grid, not a flat fill. */
+.interview-root .paper-grid {
+  background-image:
+    linear-gradient(to right, var(--color-rule-soft) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-rule-soft) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.interview-root :focus-visible {
+  outline: 2px solid var(--color-graphite);
+  outline-offset: 2px;
+}
+
+.interview-root ::selection {
+  background: var(--color-graphite);
+  color: var(--color-paper);
+}
+
+/* The pen hovers while a measurement settles. The only motion on the page. */
+@keyframes pen-drift {
+  0%, 100% { transform: translateY(-5px); }
+  50% { transform: translateY(5px); }
+}
+.pen-drift { animation: pen-drift 2.4s ease-in-out infinite; }
+
+@keyframes trace-draw {
+  from { stroke-dashoffset: var(--dash); }
+  to { stroke-dashoffset: 0; }
+}
+.trace-draw {
+  stroke-dasharray: var(--dash);
+  animation: trace-draw 600ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pen-drift { animation: none; }
+  .trace-draw { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
+}
