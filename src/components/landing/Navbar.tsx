@@ -1,65 +1,67 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from "react";
+import { ArrowRight, Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetClose,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+const NAV_LINKS = [
+  { href: "#comparison", label: "Comparison" },
+  { href: "#how-it-works", label: "How it Works" },
+  { href: "#playground", label: "Live Demo" },
+  { href: "#report", label: "Readiness Report" },
+];
 
 interface NavbarProps {
   onOpenStartModal: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export function Navbar({ onOpenStartModal }: NavbarProps) {
+  const [scrolled, setScrolled] = React.useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 30);
-    };
+  React.useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 px-4 py-4 transition-all duration-300 md:px-8">
-      <div className="max-w-7xl mx-auto">
-        <motion.nav
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className={cn(
-            "flex items-center justify-between rounded-2xl px-5 py-3.5 transition-all duration-500 md:px-6",
+    <header className="fixed left-0 right-0 top-0 z-40 px-4 py-4 md:px-8">
+      <div className="mx-auto max-w-7xl">
+        <nav
+          className={`flex items-center justify-between rounded-2xl px-5 py-3 transition-all duration-500 md:px-6 ${
             scrolled
-              ? "glass-card bg-[#050806]/92 shadow-2xl border-[rgba(31,209,106,0.08)]"
-              : "bg-transparent border border-transparent"
-          )}
+              ? "border border-primary/10 bg-background/90 shadow-2xl backdrop-blur-xl"
+              : "border border-transparent bg-transparent"
+          }`}
         >
           {/* Left: MockMate Logo */}
-          <a href="#" className="group flex items-center gap-2.5 text-left">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#101813] border border-[rgba(31,209,106,0.2)] text-sm font-bold text-[#F5F7F4] shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-[rgba(31,209,106,0.4)] group-hover:shadow-[0_0_16px_rgba(31,209,106,0.15)] font-editorial">
+          <a href="#" className="group flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-primary/20 bg-secondary font-display text-sm font-bold text-foreground shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-primary/40 group-hover:shadow-[0_0_16px_rgba(31,209,106,0.15)]">
               M
             </div>
-            <span className="text-base font-semibold tracking-tight text-[#F5F7F4] font-editorial">
+            <span className="font-display text-base font-semibold tracking-tight text-foreground">
               MockMate
             </span>
           </a>
 
           {/* Center: Essential Nav Links */}
-          <ul className="hidden items-center gap-8 text-[13px] tracking-wide text-[#CFD7D0] md:flex">
-            {[
-              { href: "#comparison", label: "Comparison" },
-              { href: "#how-it-works", label: "How it Works" },
-              { href: "#playground", label: "Live Demo" },
-              { href: "#report", label: "Readiness Report" },
-            ].map((link) => (
+          <ul className="hidden items-center gap-8 text-[13px] tracking-wide text-muted-foreground md:flex">
+            {NAV_LINKS.map((link) => (
               <li key={link.href}>
                 <a
                   href={link.href}
-                  className="relative py-1 transition-colors hover:text-[#F5F7F4] group"
+                  className="relative py-1 text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {link.label}
-                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#1FD16A] transition-all duration-300 group-hover:w-full" />
+                  <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full" />
                 </a>
               </li>
             ))}
@@ -67,88 +69,50 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
 
           {/* Right: Start Interview CTA */}
           <div className="hidden items-center md:flex">
-            <button
-              onClick={onOpenStartModal}
-              className="btn-primary text-xs h-10 px-5 rounded-xl"
-            >
+            <Button size="sm" onClick={onOpenStartModal}>
               Start Practice
-              <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </button>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           {/* Mobile Toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-full p-2 text-[#CFD7D0] transition-colors hover:text-[#F5F7F4] md:hidden"
-            aria-label="Toggle menu"
-            aria-expanded={mobileMenuOpen}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 8h16M4 16h16"
-                />
-              )}
-            </svg>
-          </button>
-        </motion.nav>
-
-        {/* Mobile Overlay Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="glass-card-green mt-2 space-y-4 rounded-2xl p-5 md:hidden"
-            >
-              <ul className="flex flex-col gap-4 text-sm text-[#CFD7D0]">
-                {[
-                  { href: "#comparison", label: "Comparison" },
-                  { href: "#how-it-works", label: "How it Works" },
-                  { href: "#playground", label: "Live Demo" },
-                  { href: "#report", label: "Readiness Report" },
-                ].map((link) => (
-                  <li key={link.href}>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Toggle menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72 border-border bg-background">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-1 px-6">
+                {NAV_LINKS.map((link) => (
+                  <SheetClose asChild key={link.href}>
                     <a
                       href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="hover:text-[#F5F7F4] transition-colors"
+                      className="rounded-lg px-2 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       {link.label}
                     </a>
-                  </li>
+                  </SheetClose>
                 ))}
-              </ul>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenStartModal();
-                }}
-                className="btn-primary w-full py-3 text-sm"
-              >
-                Start Practice →
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <SheetClose asChild>
+                  <Button className="mt-3 w-full" onClick={onOpenStartModal}>
+                    Start Practice
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </nav>
       </div>
     </header>
   );
-};
+}

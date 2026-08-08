@@ -20,7 +20,7 @@ export default async function NewInterview({
 }: {
   searchParams: Promise<{ candidate?: string; candidateId?: string }>;
 }) {
-  // Both spellings. The landing page's StartInterviewModal links with
+  // Both spellings. The landing page's "Start practice" CTA links with
   // `candidateId`; this route was written with `candidate`. Accepting both
   // keeps their components untouched.
   const { candidate, candidateId } = await searchParams;

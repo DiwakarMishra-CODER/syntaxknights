@@ -1,32 +1,20 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Sora, Silkscreen } from "next/font/google";
+import { Inter, Sora } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
-import { LenisProvider } from "@/components/mockmate/LenisProvider";
 
-const silkscreen = Silkscreen({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-pixel",
+  variable: "--font-inter",
   display: "swap",
 });
 
+// Sora stays loaded for the dashboard / mockmate surfaces (they use
+// .font-editorial). The public landing uses Geist (display) + Inter (body).
 const sora = Sora({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-sora",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -49,13 +37,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${sora.variable} ${jetbrainsMono.variable} ${silkscreen.variable} dark`}
+      className={`${inter.variable} ${GeistSans.variable} ${sora.variable} dark`}
       suppressHydrationWarning
     >
-      <body className="antialiased bg-[#050806] min-h-screen text-[#F5F7F4] selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">
-        <LenisProvider>
-          {children}
-        </LenisProvider>
+      <body className="antialiased bg-background min-h-screen text-foreground selection:bg-primary/25 selection:text-primary">
+        {children}
       </body>
     </html>
   );

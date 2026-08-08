@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import * as React from "react";
+import dynamic from "next/dynamic";
 import { ArrowRight, CheckCircle2, Play, ShieldCheck } from "lucide-react";
-import { MockMateHeroScene } from "../three/MockMateHeroScene";
-import { FloatingParticles } from "../three/FloatingParticles";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Reveal } from "@/components/landing/Reveal";
 
 interface HeroProps {
   onOpenStartModal: () => void;
@@ -21,177 +17,135 @@ const REPLAY_BEATS = [
     question:
       "Walk me through what happens when someone asks your chatbot about their coverage.",
     answer: "It searches the vector database and sends what it finds to the LLM.",
-    rationale:
-      "Correct but generic — he is describing the diagram, not the build.",
   },
   {
     question: "How many results does it pull back?",
     answer: "I think five. That was the default.",
-    rationale:
-      "Now the number matters. If the right answer is in the sixth slot, the system breaks.",
   },
 ];
 
-export const Hero: React.FC<HeroProps> = ({ onOpenStartModal }) => {
-  const [activePromptIndex, setActivePromptIndex] = useState(0);
-  const sectionRef = useRef<HTMLElement>(null);
-  const headlineRef = useRef<HTMLHeadingElement>(null);
-  const subtextRef = useRef<HTMLParagraphElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-  const proofRef = useRef<HTMLDivElement>(null);
-  const visualRef = useRef<HTMLDivElement>(null);
+// 3D hero scene is heavy (three.js). Load it as a separate, non-blocking
+// chunk so first paint / LCP isn't gated on the WebGL bundle.
+const MockMateHeroScene = dynamic(
+  () => import("@/components/three/MockMateHeroScene").then((m) => m.MockMateHeroScene),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-auto aspect-square w-full max-w-[560px] animate-pulse rounded-3xl border border-primary/10 bg-secondary/40" />
+    ),
+  }
+);
 
-  // Rotate conversation beats
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActivePromptIndex((prev) => (prev + 1) % REPLAY_BEATS.length);
-    }, 4500);
+export function Hero({ onOpenStartModal }: HeroProps) {
+  const [activeBeat, setActiveBeat] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(
+      () => setActiveBeat((prev) => (prev + 1) % REPLAY_BEATS.length),
+      4500
+    );
     return () => clearInterval(timer);
   }, []);
 
-  // GSAP entrance animations
-  useEffect(() => {
-    if (!sectionRef.current) return;
-
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ delay: 0.1 });
-
-      if (headlineRef.current) {
-        tl.fromTo(
-          headlineRef.current,
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
-          0
-        );
-      }
-      if (subtextRef.current) {
-        tl.fromTo(
-          subtextRef.current,
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
-          0.15
-        );
-      }
-      if (ctaRef.current) {
-        tl.fromTo(
-          ctaRef.current,
-          { y: 20, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
-          0.3
-        );
-      }
-      if (proofRef.current) {
-        tl.fromTo(
-          proofRef.current,
-          { y: 15, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
-          0.4
-        );
-      }
-      if (visualRef.current) {
-        tl.fromTo(
-          visualRef.current,
-          { scale: 0.95, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 1, ease: "power3.out" },
-          0.2
-        );
-      }
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const beat = REPLAY_BEATS[activeBeat];
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative z-10 overflow-hidden pt-32 pb-20 lg:pt-40 lg:pb-28"
-      style={{ background: "linear-gradient(180deg, #050806 0%, #0B120E 100%)" }}
-    >
-      {/* Ambient background effects */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(31,209,106,0.15)_0%,transparent_70%)] blur-3xl" />
-        <div className="absolute right-[-10%] top-20 w-72 h-72 rounded-full bg-[#22C55E]/8 blur-3xl" />
-        <div className="absolute left-[-10%] top-40 w-64 h-64 rounded-full bg-[#73F0A0]/5 blur-3xl" />
-        <FloatingParticles count={30} color="rgba(31, 209, 106, 0.3)" />
+    <section className="relative z-10 overflow-hidden bg-gradient-to-b from-background to-[#0B120E] pb-20 pt-32 lg:pb-28 lg:pt-40">
+      {/* Ambient background — pure CSS, no canvas */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(31,209,106,0.15)_0%,transparent_70%)] blur-3xl" />
+        <div className="absolute right-[-10%] top-20 h-72 w-72 rounded-full bg-[#22C55E]/10 blur-3xl" />
+        <div className="absolute left-[-10%] top-40 h-64 w-64 rounded-full bg-[#73F0A0]/5 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-6">
-          {/* Left — Editorial Content */}
-          <div className="lg:col-span-6 space-y-7 text-left">
-            {/* Eyebrow pill */}
-            <div className="inline-flex items-center gap-2.5 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3.5 py-1.5 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
-              <ShieldCheck className="h-3.5 w-3.5 text-[#1FD16A]" />
-              <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
-                PROBES BEYOND THE SURFACE
-              </span>
-            </div>
+      <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:gap-6 lg:px-8">
+        {/* Left — Editorial Content */}
+        <div className="space-y-7 text-left lg:col-span-6">
+          <Reveal>
+            <Badge variant="default" className="text-eyebrow uppercase">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Probes beyond the surface
+            </Badge>
+          </Reveal>
 
-            {/* Headline */}
-            <h1
-              ref={headlineRef}
-              className="max-w-md text-[clamp(3rem,6vw,5.5rem)] leading-[1] tracking-tight text-[#F5F7F4]"
-            >
-              <span className="font-sans font-medium text-white">Your adaptive</span><br />
-              <span className="font-pixel text-transparent bg-clip-text bg-gradient-to-r from-[#F5F7F4] to-[#73F0A0]">AI Interviewer</span>
+          <Reveal delay={80}>
+            <h1 className="max-w-2xl font-display text-hero text-foreground">
+              Your adaptive{" "}
+              <span className="text-gradient-green">AI Interviewer</span>
             </h1>
+          </Reveal>
 
-            {/* Subtitle */}
-            <p
-              ref={subtextRef}
-              className="max-w-sm text-base sm:text-[17px] font-sans font-light leading-relaxed text-[#CFD7D0]"
-            >
-              Master your next technical interview. MockMate analyzes your 31-Day AI Cohort journey, adapts to your answers, and uncovers the true depth of your experience.
+          <Reveal delay={160}>
+            <p className="max-w-md text-[15px] font-light leading-relaxed text-muted-foreground sm:text-base">
+              Master your next technical interview. MockMate analyzes your
+              31-Day AI Cohort journey, adapts to your answers, and uncovers the
+              true depth of your experience.
             </p>
+          </Reveal>
 
-            {/* CTA buttons */}
-            <div ref={ctaRef} className="flex flex-wrap items-center gap-4 pt-1">
-              <button onClick={onOpenStartModal} className="btn-primary">
+          <Reveal delay={240}>
+            <div className="flex flex-wrap items-center gap-4 pt-1">
+              <Button size="xl" onClick={onOpenStartModal}>
                 Start practice interview
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-
-              <a
-                href="#how-it-works"
-                className="btn-secondary flex items-center gap-2"
-              >
-                <Play className="h-3.5 w-3.5 fill-current text-[#F5F7F4]" />
-                See how it works
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <a href="#how-it-works">
+                <Button size="xl" variant="outline">
+                  <Play className="h-3.5 w-3.5 fill-current" />
+                  See how it works
+                </Button>
               </a>
             </div>
+          </Reveal>
 
-            {/* Proof points */}
-            <div
-              ref={proofRef}
-              className="flex flex-wrap items-center gap-5 pt-3 text-xs text-[#A9B6AF]"
-            >
+          <Reveal delay={320}>
+            <div className="flex flex-wrap items-center gap-5 pt-3 text-xs text-[#A9B6AF]">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#1FD16A]" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                 Recorded replay
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#1FD16A]" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                 No API calls
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#1FD16A]" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                 Respects reduced motion
               </span>
             </div>
-          </div>
-
-          {/* Right — 3D Scene + Live Telemetry Card */}
-          <div
-            ref={visualRef}
-            className="lg:col-span-6 relative translate-x-4 lg:translate-x-12"
-          >
-            {/* 3D Scene fills this container */}
-            <div className="relative w-full aspect-square max-w-[560px] mx-auto">
-              <MockMateHeroScene />
-            </div>
-          </div>
+          </Reveal>
         </div>
+
+        {/* Right — 3D Hero Scene (lazy) + live interview Card mock */}
+        <Reveal
+          delay={200}
+          className="relative lg:col-span-6 lg:translate-x-8"
+        >
+          <div className="relative mx-auto w-full max-w-[560px]">
+            <MockMateHeroScene />
+            <Card className="absolute bottom-4 left-4 right-4 border-primary/15 bg-card/80 shadow-[0_24px_48px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+              <CardContent className="gap-3 !py-4">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.22em] text-primary">
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4" />
+                    Live session
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[#73F0A0]">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                    Adaptive
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-foreground">
+                  {beat.question}
+                </p>
+                <p className="text-sm leading-relaxed text-[#D6E0D9]">
+                  {beat.answer}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
-};
+}
