@@ -4,6 +4,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
+/**
+ * Bumped from "mockmate-theme". The previous default wrote light into
+ * storage, and a stored preference beats the default on every load, so dark
+ * could never take effect. Changing the key retires those values once.
+ */
+const THEME_KEY = "mockmate-theme-v2";
+
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
@@ -13,21 +20,20 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem("mockmate-theme") as Theme | null;
+    const savedTheme = localStorage.getItem(THEME_KEY) as Theme | null;
     if (savedTheme === "light" || savedTheme === "dark") {
       setThemeState(savedTheme);
       applyTheme(savedTheme);
     } else {
-      // Default to light theme as per latest brief, or system preference
-      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const initialTheme: Theme = systemPrefersDark ? "dark" : "light";
-      setThemeState(initialTheme);
-      applyTheme(initialTheme);
+      // Dark by default: the glass system is only legible on the dark ground
+      // (light mode fills white-on-near-white). The toggle still switches.
+      setThemeState("dark");
+      applyTheme("dark");
     }
   }, []);
 
@@ -43,7 +49,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem("mockmate-theme", newTheme);
+    localStorage.setItem(THEME_KEY, newTheme);
     applyTheme(newTheme);
   };
 

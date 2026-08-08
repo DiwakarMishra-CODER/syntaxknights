@@ -59,9 +59,7 @@ export function DepthTrace({
         className="block"
         role="img"
       >
-        <title>
-          Depth trace: {points.map((p) => p.depth).join(", ") || "no measurements yet"}
-        </title>
+        <title>{`Depth trace: ${points.map((p) => p.depth).join(", ") || "no measurements yet"}`}</title>
 
         {BANDS.map((label, i) => {
           const depth = i + 1;
