@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
 interface StartInterviewModalProps {
@@ -16,15 +17,24 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
   const [domain, setDomain] = useState("System Design & Architecture");
   const [experience, setExperience] = useState("5-8 Years (Senior L5)");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const router = useRouter();
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
+    
+    // Map experience tier to a known backend Candidate ID
+    let candidateId = "CAND-017"; // default (Senior)
+    if (experience.includes("0-2")) candidateId = "CAND-005"; // Junior
+    else if (experience.includes("2-5")) candidateId = "CAND-002"; // Mid
+    else if (experience.includes("8+")) candidateId = "CAND-001"; // Staff
+
     setTimeout(() => {
       setIsSubmitted(false);
       onClose();
+      router.push(`/interview?candidateId=${candidateId}`);
     }, 1800);
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
 import { AdaptiveFlow } from "@/components/landing/AdaptiveFlow";
@@ -9,49 +9,61 @@ import { ReadinessReport } from "@/components/landing/ReadinessReport";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 import { StartInterviewModal } from "@/components/mockmate/Modals";
+import { Preloader } from "@/components/mockmate/Preloader";
 
 export default function Home() {
   const [startModalOpen, setStartModalOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const handleStartPracticing = () => {
     setStartModalOpen(true);
   };
 
+  const handlePreloaderComplete = useCallback(() => {
+    setLoaded(true);
+  }, []);
+
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#050806] text-[#F5F7F4] selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">
-      {/* Navbar */}
-      <Navbar onOpenStartModal={handleStartPracticing} />
+    <>
+      {/* Preloader overlay */}
+      {!loaded && <Preloader onComplete={handlePreloaderComplete} />}
 
-      {/* Continuous Page Flow */}
-      <main className="relative z-10 space-y-0">
-        {/* 1. Hero Anchor */}
-        <Hero onOpenStartModal={handleStartPracticing} />
+      {/* Main page content - always visible under preloader */}
+      <div className="relative min-h-screen overflow-x-hidden bg-[#050806] text-[#F5F7F4] selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">
+        {/* Navbar */}
+        <Navbar onOpenStartModal={handleStartPracticing} />
 
-        {/* 2. Comparison Matrix & Adaptive Reasoning Loop */}
-        <AdaptiveFlow />
+        {/* Continuous Page Flow */}
+        <main className="relative z-10 space-y-0">
+          {/* 1. Hero Anchor */}
+          <Hero onOpenStartModal={handleStartPracticing} />
 
-        {/* 3. Live Interview Playground */}
-        <section id="playground">
-          <InterviewDemo />
-        </section>
+          {/* 2. Comparison Matrix & Adaptive Reasoning Loop */}
+          <AdaptiveFlow />
 
-        {/* 4. Evidence-Backed Readiness Report */}
-        <section id="report">
-          <ReadinessReport />
-        </section>
+          {/* 3. Live Interview Playground */}
+          <section id="playground">
+            <InterviewDemo />
+          </section>
 
-        {/* 5. High-Conversion Final Call-to-Action */}
-        <FinalCTA onOpenStartModal={handleStartPracticing} />
-      </main>
+          {/* 4. Evidence-Backed Readiness Report */}
+          <section id="report">
+            <ReadinessReport />
+          </section>
 
-      {/* 6. Footer */}
-      <Footer />
+          {/* 5. High-Conversion Final Call-to-Action */}
+          <FinalCTA onOpenStartModal={handleStartPracticing} />
+        </main>
 
-      {/* Interactive Session Calibration Modal */}
-      <StartInterviewModal
-        isOpen={startModalOpen}
-        onClose={() => setStartModalOpen(false)}
-      />
-    </div>
+        {/* 6. Footer */}
+        <Footer />
+
+        {/* Interactive Session Calibration Modal */}
+        <StartInterviewModal
+          isOpen={startModalOpen}
+          onClose={() => setStartModalOpen(false)}
+        />
+      </div>
+    </>
   );
 }

@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Sora } from "next/font/google";
+import { Inter, JetBrains_Mono, Sora, Silkscreen } from "next/font/google";
 import "./globals.css";
 import { LenisProvider } from "@/components/mockmate/LenisProvider";
+
+const silkscreen = Silkscreen({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-pixel",
+  display: "swap",
+});
 
 const sora = Sora({
   subsets: ["latin"],
@@ -42,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${sora.variable} ${jetbrainsMono.variable} dark`}
+      className={`${inter.variable} ${sora.variable} ${jetbrainsMono.variable} ${silkscreen.variable} dark`}
       suppressHydrationWarning
     >
       <body className="antialiased bg-[#050806] min-h-screen text-[#F5F7F4] selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">

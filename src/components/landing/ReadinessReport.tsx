@@ -1,8 +1,13 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
-import { Award, ArrowRight, FileText } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Award, ArrowRight, FileText, Activity } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const NEXT_STEPS = [
   {
@@ -23,83 +28,211 @@ const NEXT_STEPS = [
 ];
 
 export const ReadinessReport: React.FC = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const rightColRef = useRef<HTMLDivElement>(null);
+
+  // Live metric pulsing state
+  const [pulseMetric, setPulseMetric] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPulseMetric((prev) => (prev + 1) % 3);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    const ctx = gsap.context(() => {
+      if (headerRef.current) {
+        gsap.fromTo(
+          headerRef.current.querySelectorAll("[data-reveal]"),
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.9,
+            stagger: 0.1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: headerRef.current,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      }
+
+      if (leftColRef.current) {
+        gsap.fromTo(
+          leftColRef.current.children,
+          { y: 50, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.9,
+            stagger: 0.15,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: leftColRef.current,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      }
+
+      if (rightColRef.current) {
+        gsap.fromTo(
+          rightColRef.current,
+          { y: 60, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.9,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: rightColRef.current,
+              start: "top 88%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+
+        const steps = rightColRef.current.querySelectorAll("[data-step]");
+        gsap.fromTo(
+          steps,
+          { x: 40, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: 0.7,
+            stagger: 0.12,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: rightColRef.current,
+              start: "top 80%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="relative z-10 bg-[#050806] py-24 text-[#F5F7F4] lg:py-32">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute right-0 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-[#1FD16A]/6 blur-3xl" />
-        <div className="absolute left-0 top-24 h-72 w-72 rounded-full bg-[#73F0A0]/5 blur-3xl" />
+    <section
+      ref={sectionRef}
+      className="relative z-10 py-24 lg:py-32 text-[#F5F7F4]"
+      style={{ background: "linear-gradient(180deg, #050806 0%, #0B120E 100%)" }}
+    >
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-[#1FD16A]/5 blur-[120px]" />
+        <div className="absolute left-0 top-24 h-72 w-72 rounded-full bg-[#73F0A0]/4 blur-[100px]" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-16 max-w-3xl space-y-4 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#101813] px-3 py-1">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+        <div ref={headerRef} className="mx-auto mb-16 max-w-3xl space-y-4 text-center">
+          <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3 py-1 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
             <Award className="h-3.5 w-3.5 text-[#1FD16A]" />
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#1FD16A]">
-              The report
+            <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
+              THE REPORT
             </span>
           </div>
-          <h2 className="text-4xl font-editorial text-[#F5F2EB] sm:text-5xl">
-            An annotated transcript, not a scorecard.
+          <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1.05] tracking-tight text-[#F5F7F4]">
+            <span className="font-editorial text-white">An annotated transcript.</span><br />
+            <span className="font-editorial italic text-[#1FD16A]">Not a scorecard.</span>
           </h2>
-          <p className="text-base font-light leading-relaxed text-[#CFD7D0] font-sans">
-            The report should help the judge understand why the interview landed the way it did, then point the candidate to the next useful days.
+          <p data-reveal className="text-base font-light leading-relaxed text-[#CFD7D0]">
+            The report should help the judge understand why the interview landed
+            the way it did, then point the candidate to the next useful days.
           </p>
         </div>
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-6">
-            <div className="glass-card-green relative overflow-hidden space-y-6 p-8 text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#1FD16A]">
-                  Evidence summary
+          <div ref={leftColRef} className="space-y-6 lg:col-span-6">
+            <div className="glass-card-green relative overflow-hidden space-y-6 p-8 text-left animate-scanline border-[rgba(31,209,106,0.2)]">
+              <div className="flex items-center justify-between relative z-10">
+                <span className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[#1FD16A]">
+                  <Activity className="h-4 w-4" />
+                  Live Evidence summary
                 </span>
-                <span className="rounded-full bg-[#101813] px-2.5 py-1 text-xs font-mono font-semibold text-[#73F0A0]">
-                  Direct quotes only
+                <span className="rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20 px-2.5 py-1 text-[10px] font-mono font-semibold text-[#73F0A0] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
+                  Analyzing
                 </span>
               </div>
 
-              <div className="space-y-4">
-                <blockquote className="rounded-3xl bg-[#0A0A0A] p-5 text-sm leading-relaxed text-[#D6E0D9]">
-                  &ldquo;Redid Day 23 (MCP server build), then Day 24. You passed both, but on the second attempt, and the interview showed the gap is in tool schema design.&rdquo;
+              <div className="space-y-4 relative z-10">
+                <blockquote className="rounded-2xl bg-[#0A0A0A] p-5 text-sm leading-relaxed text-[#D6E0D9] border border-[rgba(255,255,255,0.03)]">
+                  &ldquo;Redid Day 23 (MCP server build), then Day 24. You passed
+                  both, but on the second attempt, and the interview showed the
+                  gap is in tool schema design.&rdquo;
                 </blockquote>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-[#101813] px-4 py-3">
-                    <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">Concept</div>
-                    <div className="mt-2 text-sm text-[#F5F2EB]">Strong</div>
+                  {/* Metric 1 */}
+                  <div className={`rounded-xl bg-[#101813] px-4 py-3 border transition-colors duration-300 ${pulseMetric === 0 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-[rgba(255,255,255,0.05)]"}`}>
+                    <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">
+                      Concept
+                    </div>
+                    <div className="mt-2 text-sm text-[#F5F7F4] flex items-center justify-between">
+                      Strong
+                      {pulseMetric === 0 && <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A]" />}
+                    </div>
                   </div>
-                  <div className="rounded-2xl bg-[#101813] px-4 py-3">
-                    <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">Communication</div>
-                    <div className="mt-2 text-sm text-[#F5F2EB]">Uneven</div>
+                  {/* Metric 2 */}
+                  <div className={`rounded-xl bg-[#101813] px-4 py-3 border transition-colors duration-300 ${pulseMetric === 1 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-[rgba(255,255,255,0.05)]"}`}>
+                    <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">
+                      Communication
+                    </div>
+                    <div className="mt-2 text-sm text-[#F5F7F4] flex items-center justify-between">
+                      Uneven
+                      {pulseMetric === 1 && <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A]" />}
+                    </div>
                   </div>
-                  <div className="rounded-2xl bg-[#101813] px-4 py-3 sm:col-span-1 col-span-2">
-                    <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">Signal</div>
-                    <div className="mt-2 text-sm text-[#1FD16A]">Use the next run to tighten schema reasoning</div>
+                  {/* Metric 3 */}
+                  <div className={`rounded-xl bg-[#101813] px-4 py-3 col-span-2 sm:col-span-1 border transition-colors duration-300 ${pulseMetric === 2 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-[rgba(255,255,255,0.05)]"}`}>
+                    <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">
+                      Signal
+                    </div>
+                    <div className="mt-2 text-sm text-[#1FD16A] leading-tight">
+                      Use next run to tighten reasoning
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card p-6 space-y-4 text-left">
-              <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[#F5F2EB]">
+            <div className="glass-card p-6 space-y-4 text-left group hover:border-[#1FD16A]/30 transition-colors duration-500">
+              <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[#F5F7F4] group-hover:text-[#1FD16A] transition-colors">
                 <FileText className="h-4 w-4 text-[#1FD16A]" />
                 Direct Transcript Evidence
               </div>
 
-              <blockquote className="rounded-3xl bg-[#0A0A0A] p-4 text-sm italic leading-relaxed text-[#D6E0D9] font-sans">
-                &ldquo;Correct but generic — he is describing the diagram, not the build. Pushing for a number he should know.&rdquo;
+              <blockquote className="rounded-2xl bg-[#0A0A0A] p-4 text-sm italic leading-relaxed text-[#D6E0D9]">
+                &ldquo;Correct but generic — he is describing the diagram, not
+                the build. Pushing for a number he should know.&rdquo;
               </blockquote>
 
               <div className="flex items-center justify-between text-xs text-[#8B968F]">
                 <span>Evaluated by MockMate AI</span>
-                <span className="text-[#1FD16A] font-mono">Verbatim checked</span>
+                <span className="text-[#1FD16A] font-mono flex items-center gap-1.5">
+                  Verbatim checked
+                  <Award className="w-3.5 h-3.5" />
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="glass-card space-y-6 p-8 text-left lg:col-span-6">
+          <div ref={rightColRef} className="glass-card space-y-6 p-8 text-left lg:col-span-6 border-[rgba(255,255,255,0.04)] hover:border-[#1FD16A]/20 transition-colors duration-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-editorial text-[#F5F2EB]">
+              <h3 className="text-xl font-editorial text-[#F5F7F4]">
                 Next steps, tied to curriculum days
               </h3>
               <ArrowRight className="h-5 w-5 text-[#1FD16A]" />
@@ -107,22 +240,23 @@ export const ReadinessReport: React.FC = () => {
 
             <div className="space-y-4">
               {NEXT_STEPS.map((step) => (
-                <motion.div
+                <div
                   key={step.day}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.3 }}
-                  className="rounded-3xl bg-[#0A0A0A] p-5"
+                  data-step
+                  className="rounded-2xl bg-[#0A0A0A] p-5 group hover:bg-[#0E1712] hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-transparent hover:border-[#1FD16A]/20 hover:shadow-[0_4px_20px_rgba(31,209,106,0.05)]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#1FD16A]">
+                    <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#1FD16A] group-hover:text-[#73F0A0] transition-colors duration-300">
                       {step.day}
                     </span>
-                    <span className="text-[11px] font-mono text-[#8B968F]">{step.title}</span>
+                    <span className="text-[11px] font-mono text-[#8B968F] group-hover:text-[#CFD7D0] transition-colors duration-300">
+                      {step.title}
+                    </span>
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-[#D6E0D9]">{step.note}</p>
-                </motion.div>
+                  <p className="mt-3 text-sm leading-relaxed text-[#D6E0D9]">
+                    {step.note}
+                  </p>
+                </div>
               ))}
             </div>
           </div>

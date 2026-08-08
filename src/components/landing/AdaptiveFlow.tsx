@@ -1,8 +1,14 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useRef } from "react";
 import { ArrowRight, GitFork, ListChecks, Sparkles } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { FloatingParticles } from "../three/FloatingParticles";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const DIVERGENCE = [
   {
@@ -38,44 +44,160 @@ const MOMENTS = [
 ];
 
 export const AdaptiveFlow: React.FC = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const divergenceHeaderRef = useRef<HTMLDivElement>(null);
+  const card1Ref = useRef<HTMLDivElement>(null);
+  const card2Ref = useRef<HTMLDivElement>(null);
+  const momentsHeaderRef = useRef<HTMLDivElement>(null);
+  const momentsCardsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    const ctx = gsap.context(() => {
+      // Divergence header reveal
+      if (divergenceHeaderRef.current) {
+        gsap.fromTo(
+          divergenceHeaderRef.current.querySelectorAll("[data-reveal]"),
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.9,
+            stagger: 0.1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: divergenceHeaderRef.current,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      }
+
+      // Divergence cards
+      [card1Ref, card2Ref].forEach((ref, i) => {
+        if (ref.current) {
+          gsap.fromTo(
+            ref.current,
+            { y: 60, opacity: 0, scale: 0.95 },
+            {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 0.9,
+              delay: i * 0.15,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: ref.current,
+                start: "top 88%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+        }
+      });
+
+      // Moments header
+      if (momentsHeaderRef.current) {
+        gsap.fromTo(
+          momentsHeaderRef.current.querySelectorAll("[data-reveal]"),
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.9,
+            stagger: 0.1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: momentsHeaderRef.current,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      }
+
+      // Moment cards stagger
+      if (momentsCardsRef.current) {
+        gsap.fromTo(
+          momentsCardsRef.current.children,
+          { y: 50, opacity: 0, scale: 0.95 },
+          {
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.8,
+            stagger: 0.12,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: momentsCardsRef.current,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="relative z-10 bg-[#0A0A0A] py-24 text-[#F5F2EB] lg:py-32">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-0 top-1/3 h-96 w-96 rounded-full bg-[#1FD16A]/6 blur-3xl" />
-        <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#73F0A0]/5 blur-3xl" />
+    <section
+      ref={sectionRef}
+      className="relative z-10 py-24 lg:py-32 text-[#F5F7F4]"
+      style={{ background: "linear-gradient(180deg, #0B120E 0%, #050806 50%, #0B120E 100%)" }}
+    >
+      {/* Ambient */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute left-0 top-1/3 h-96 w-96 rounded-full bg-[#1FD16A]/5 blur-[120px]" />
+        <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#73F0A0]/4 blur-[100px]" />
+        <FloatingParticles count={20} color="rgba(115, 240, 160, 0.2)" />
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-20 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-24 px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* ── The Divergence ── */}
         <div id="comparison" className="space-y-10">
-          <div className="mx-auto max-w-3xl space-y-4 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#101813] px-3 py-1">
+          <div ref={divergenceHeaderRef} className="mx-auto max-w-3xl space-y-4 text-center">
+            <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3 py-1 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
               <GitFork className="h-3.5 w-3.5 text-[#1FD16A]" />
-              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#1FD16A]">
-                The divergence
+              <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
+                THE DIVERGENCE
               </span>
             </div>
-            <h2 className="text-4xl font-editorial text-[#F5F2EB] sm:text-5xl">
-              Same cohort. Different interview.
+            <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1.1] tracking-tight text-[#F5F7F4]">
+              <span className="font-mono text-[clamp(1.5rem,3vw,2.5rem)] uppercase tracking-widest text-[#1FD16A]">Same cohort.</span><br />
+              <span className="font-editorial italic text-white">Different interview.</span>
             </h2>
-            <p className="text-base font-light leading-relaxed text-[#CFD7D0] font-sans">
-              Diane and Tyler both completed the full 31-day program. The point is that completion alone is not enough to explain readiness.
+            <p data-reveal className="text-base font-light leading-relaxed text-[#CFD7D0]">
+              Diane and Tyler both completed the full 31-day program. The point is
+              that completion alone is not enough to explain readiness.
             </p>
           </div>
 
           <div className="grid gap-5 lg:grid-cols-[1fr_auto_1fr]">
-            <div className="glass-card-green space-y-4 p-6 sm:p-8">
+            <div ref={card1Ref} className="glass-card-green space-y-4 p-6 sm:p-8">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#1FD16A]">Candidate A</p>
-                  <h3 className="mt-2 text-2xl font-editorial text-[#F5F2EB]">{DIVERGENCE[0].name}</h3>
+                  <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#1FD16A]">
+                    Candidate A
+                  </p>
+                  <h3 className="mt-2 text-2xl font-editorial text-[#F5F7F4]">
+                    {DIVERGENCE[0].name}
+                  </h3>
                 </div>
                 <span className="rounded-full bg-[#101813] px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-[#73F0A0]">
                   {DIVERGENCE[0].firstTry}
                 </span>
               </div>
-
               <div className="space-y-3 text-sm leading-relaxed text-[#D6E0D9]">
-                <p>Completed: <span className="text-[#F5F2EB]">{DIVERGENCE[0].completed}</span></p>
+                <p>
+                  Completed:{" "}
+                  <span className="text-[#F5F7F4]">
+                    {DIVERGENCE[0].completed}
+                  </span>
+                </p>
                 <p>{DIVERGENCE[0].story}</p>
               </div>
             </div>
@@ -90,58 +212,71 @@ export const AdaptiveFlow: React.FC = () => {
               </div>
             </div>
 
-            <div className="glass-card-green space-y-4 p-6 sm:p-8">
+            <div ref={card2Ref} className="glass-card-green space-y-4 p-6 sm:p-8">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#1FD16A]">Candidate B</p>
-                  <h3 className="mt-2 text-2xl font-editorial text-[#F5F2EB]">{DIVERGENCE[1].name}</h3>
+                  <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#1FD16A]">
+                    Candidate B
+                  </p>
+                  <h3 className="mt-2 text-2xl font-editorial text-[#F5F7F4]">
+                    {DIVERGENCE[1].name}
+                  </h3>
                 </div>
                 <span className="rounded-full bg-[#101813] px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-[#73F0A0]">
                   {DIVERGENCE[1].firstTry}
                 </span>
               </div>
-
               <div className="space-y-3 text-sm leading-relaxed text-[#D6E0D9]">
-                <p>Completed: <span className="text-[#F5F2EB]">{DIVERGENCE[1].completed}</span></p>
+                <p>
+                  Completed:{" "}
+                  <span className="text-[#F5F7F4]">
+                    {DIVERGENCE[1].completed}
+                  </span>
+                </p>
                 <p>{DIVERGENCE[1].story}</p>
               </div>
             </div>
           </div>
         </div>
 
+        {/* ── The Three Moments ── */}
         <div id="how-it-works" className="space-y-10">
-          <div className="mx-auto max-w-3xl space-y-4 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#101813] px-3 py-1">
+          <div ref={momentsHeaderRef} className="mx-auto max-w-3xl space-y-4 text-center">
+            <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3 py-1 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
               <ListChecks className="h-3.5 w-3.5 text-[#1FD16A]" />
-              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#1FD16A]">
-                The three moments
+              <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
+                THE THREE MOMENTS
               </span>
             </div>
-            <h2 className="text-4xl font-editorial text-[#F5F2EB] sm:text-5xl">
-              Read. Interview. Report.
+            <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1] tracking-tight text-[#F5F7F4]">
+              <span className="font-sans font-medium text-white">Read. Interview.</span><br />
+              <span className="font-pixel text-transparent bg-clip-text bg-gradient-to-r from-[#F5F7F4] to-[#73F0A0]">Report.</span>
             </h2>
-            <p className="text-base font-light leading-relaxed text-[#CFD7D0] font-sans">
-              Those are the three things the page needs to prove. Everything else is just helping the judge understand the sequence quickly.
+            <p data-reveal className="text-base font-light leading-relaxed text-[#CFD7D0]">
+              Those are the three things the page needs to prove. Everything else
+              is just helping the judge understand the sequence quickly.
             </p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div ref={momentsCardsRef} className="grid gap-4 lg:grid-cols-3">
             {MOMENTS.map((moment) => (
-              <motion.div
+              <div
                 key={moment.step}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.35 }}
-                className="glass-card-green space-y-4 p-6"
+                className="glass-card-green space-y-4 p-6 group cursor-default"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-[#1FD16A]">{moment.step}</span>
-                  <span className="h-2 w-2 rounded-full bg-[#1FD16A]" />
+                  <span className="text-2xl font-editorial text-[#1FD16A] opacity-40 group-hover:opacity-100 transition-opacity duration-500">
+                    {moment.step}
+                  </span>
+                  <span className="h-2 w-2 rounded-full bg-[#1FD16A] group-hover:shadow-[0_0_12px_rgba(31,209,106,0.8)] transition-shadow duration-500" />
                 </div>
-                <h3 className="text-xl font-editorial text-[#F5F2EB]">{moment.title}</h3>
-                <p className="text-sm leading-relaxed text-[#D6E0D9] font-sans">{moment.body}</p>
-              </motion.div>
+                <h3 className="text-xl font-editorial text-[#F5F7F4]">
+                  {moment.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-[#D6E0D9]">
+                  {moment.body}
+                </p>
+              </div>
             ))}
           </div>
         </div>

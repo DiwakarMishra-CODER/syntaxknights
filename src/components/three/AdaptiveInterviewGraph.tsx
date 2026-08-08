@@ -4,7 +4,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 interface AdaptiveInterviewGraphProps {
-  activeStage?: "answer" | "evaluate" | "understand" | "adapt" | "followup";
+  activeStage?: "answer" | "understand" | "evaluate" | "adapt" | "followup";
 }
 
 const STAGES = [
@@ -29,7 +29,7 @@ export const AdaptiveInterviewGraph: React.FC<AdaptiveInterviewGraphProps> = ({
   const activeIdx = stageMap[activeStage] ?? 2;
 
   return (
-    <div className="flex flex-col items-start gap-5 h-full justify-center py-4 relative font-sans">
+    <div className="flex flex-col items-start gap-5 h-full justify-center py-4 relative">
       {STAGES.map((stg, idx) => {
         const isActive = idx <= activeIdx;
         const isCurrent = idx === activeIdx;
@@ -38,9 +38,9 @@ export const AdaptiveInterviewGraph: React.FC<AdaptiveInterviewGraphProps> = ({
           <div key={stg.id} className="relative flex items-center gap-3.5 group">
             {/* Connecting line */}
             {idx < STAGES.length - 1 && (
-              <div className="absolute left-[3px] top-[14px] w-[2px] h-[24px] bg-[rgba(255,255,255,0.08)]">
+              <div className="absolute left-[3px] top-[14px] w-[2px] h-[24px] bg-[rgba(255,255,255,0.06)]">
                 {isActive && activeIdx > idx && (
-                  <div className="w-full h-full bg-[#43D8CB] shadow-[0_0_8px_#43D8CB]" />
+                  <div className="w-full h-full bg-[#1FD16A] shadow-[0_0_8px_#1FD16A]" />
                 )}
               </div>
             )}
@@ -51,10 +51,10 @@ export const AdaptiveInterviewGraph: React.FC<AdaptiveInterviewGraphProps> = ({
                 className={cn(
                   "w-2 h-2 rounded-full transition-all duration-500",
                   isCurrent
-                    ? "bg-[#43D8CB] shadow-[0_0_12px_#43D8CB] scale-125"
+                    ? "bg-[#1FD16A] shadow-[0_0_12px_#1FD16A] scale-125"
                     : isActive
-                    ? "bg-[#43D8CB] opacity-80 scale-100"
-                    : "bg-[#9BA19F] opacity-40 scale-100"
+                    ? "bg-[#1FD16A] opacity-80 scale-100"
+                    : "bg-[#7E8B84] opacity-40 scale-100"
                 )}
               />
             </div>
@@ -62,12 +62,12 @@ export const AdaptiveInterviewGraph: React.FC<AdaptiveInterviewGraphProps> = ({
             {/* Label */}
             <span
               className={cn(
-                "text-xs transition-colors duration-500 font-sans",
+                "text-xs transition-colors duration-500",
                 isCurrent
-                  ? "text-[#F4F4EF] font-medium"
+                  ? "text-[#F5F7F4] font-medium"
                   : isActive
-                  ? "text-[#F4F4EF]/90"
-                  : "text-[#9BA19F]"
+                  ? "text-[#F5F7F4]/90"
+                  : "text-[#7E8B84]"
               )}
             >
               {stg.label}
