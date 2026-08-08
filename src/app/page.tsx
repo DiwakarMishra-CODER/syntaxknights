@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Preloader } from "@/components/mockmate/Preloader";
 import { Header } from "@/components/mockmate/Header";
@@ -20,6 +21,12 @@ import {
 export default function Home() {
   const [preloaderComplete, setPreloaderComplete] = useState(false);
   const [startModalOpen, setStartModalOpen] = useState(false);
+  const router = useRouter();
+
+  // Every "Start Practicing" button goes straight into the live interview.
+  // Routing it here rather than in each component means Header, Hero,
+  // FinalCTA and the pricing tiers all follow without being touched.
+  const startInterview = () => router.push("/interview");
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
@@ -39,12 +46,12 @@ export default function Home() {
       </div>
 
       {/* Semantic Floating Glass Navbar */}
-      <Header onOpenStartModal={() => setStartModalOpen(true)} />
+      <Header onOpenStartModal={startInterview} />
 
       {/* Semantic Main Content Flow */}
       <main className="relative z-10">
         {/* Section 1: Hero Thesis Statement */}
-        <Hero onOpenStartModal={() => setStartModalOpen(true)} />
+        <Hero onOpenStartModal={startInterview} />
 
         {/* Section 2: Full-Width Glass Interview Room Showcase */}
         <ProductShowcase />
@@ -64,7 +71,7 @@ export default function Home() {
         />
 
         {/* Section 7: Final Product Launch Call To Action */}
-        <FinalCTA onOpenStartModal={() => setStartModalOpen(true)} />
+        <FinalCTA onOpenStartModal={startInterview} />
       </main>
 
       {/* Semantic Footer */}

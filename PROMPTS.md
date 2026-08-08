@@ -1233,3 +1233,29 @@ conformance `--dry` still 28/28, and a full replayed turn through the real
 endpoint returns exactly `reply` + `done` with the panel state populated.
 
 **Still unverified: how any of it looks.** No screenshot has been taken.
+
+---
+
+## Entry 22 — Start Practicing routes to the live interview
+
+**Prompt:** make "Start Practicing" go to /interview too. Also: from now
+on, commit and push only when asked.
+
+**Change:** one edit in `src/app/page.tsx`. All three "Start Practicing"
+buttons — Header, Hero and FinalCTA — receive their handler from the same
+place, so replacing `() => setStartModalOpen(true)` with a
+`router.push("/interview")` covers every one without touching any of the
+landing-page components.
+
+**Consequence flagged, not acted on:** `StartInterviewModal` now has no
+trigger and is dead code. Left in place rather than deleting a teammate's
+component.
+
+**Also noticed:** `PricingSection`, `FAQSection`, `HowItThinks`,
+`InteractiveSandbox` and `TargetAudience` exist but are not rendered by
+`page.tsx`.
+
+**Self-inflicted breakage worth recording:** running `next build` while
+`next dev` was serving the same `.next` directory corrupted it and both
+routes returned 500. Cleared `.next` and restarted. Do not run a
+production build against a live dev server.
