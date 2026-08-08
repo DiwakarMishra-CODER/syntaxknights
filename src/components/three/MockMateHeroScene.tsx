@@ -315,7 +315,7 @@ export const MockMateHeroScene: React.FC = () => {
               </div>
             </div>
             <div className="h-6 w-[1px] bg-[#1FD16A]/50 my-2" />
-            <div className="bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
+            <div className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
               <span className="text-[10px] font-mono text-[#73F0A0]">MAPPING CURRICULUM</span>
             </div>
@@ -335,7 +335,7 @@ export const MockMateHeroScene: React.FC = () => {
             {nodePositions.map((pos, idx) => (
               <div
                 key={idx}
-                className={`absolute text-[10px] font-mono text-[#73F0A0] bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "opacity-50 scale-95" : "opacity-100 scale-100"}`}
+                className={`absolute text-[10px] font-mono text-[#73F0A0] bg-slate-100 dark:bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "opacity-50 scale-95" : "opacity-100 scale-100"}`}
                 style={{
                   left: pos.x,
                   top: pos.y,
@@ -349,7 +349,7 @@ export const MockMateHeroScene: React.FC = () => {
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#0A0A0A] border border-[rgba(31,209,106,0.3)] px-3 py-1.5 rounded text-[9px] text-[#D6E0D9] whitespace-nowrap flex items-center gap-1.5"
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white dark:bg-[#0A0A0A] border border-[rgba(31,209,106,0.3)] px-3 py-1.5 rounded text-[9px] text-slate-600 dark:text-[#D6E0D9] whitespace-nowrap flex items-center gap-1.5"
                   >
                     Module 4 <span className="text-[#1FD16A]">→</span> Day 22
                   </motion.div>
@@ -385,7 +385,7 @@ export const MockMateHeroScene: React.FC = () => {
             }}
           >
             <div className="text-[10px] font-mono text-[#73F0A0] mb-2 uppercase">Day 22 Probe</div>
-            <p className="text-sm text-[#F5F7F4] leading-relaxed">
+            <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;I see you took three attempts to pass the Multi-Agent Orchestration module. Walk me through the race condition you hit.&rdquo;
             </p>
           </motion.div>
@@ -409,7 +409,7 @@ export const MockMateHeroScene: React.FC = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
               Adaptive Reaction
             </div>
-            <p className="text-sm text-[#F5F7F4] leading-relaxed">
+            <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;Exactly. Now, if one of those agents needed to invoke a vector database tool, how would you manage the state lock?&rdquo;
             </p>
           </motion.div>
@@ -433,7 +433,7 @@ export const MockMateHeroScene: React.FC = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               Skipped Topic Detected
             </div>
-            <p className="text-sm text-[#F5F7F4] leading-relaxed">
+            <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;Candidate skipped Observability on Day 29. Pivoting to ask how they would monitor this MCP integration in production...&rdquo;
             </p>
           </motion.div>
@@ -447,7 +447,7 @@ export const MockMateHeroScene: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.2 }}
             transition={{ type: "spring", bounce: 0.5 }}
-            className="absolute z-50 flex flex-col items-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] bg-[#051109]/90 p-6 rounded-2xl border border-[#1FD16A]/50 shadow-[0_0_50px_rgba(31,209,106,0.3)] backdrop-blur-xl"
+            className="absolute z-50 flex flex-col items-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] bg-white dark:bg-[#051109]/90 p-6 rounded-2xl border border-[#1FD16A]/50 shadow-[0_0_50px_rgba(31,209,106,0.3)] backdrop-blur-xl"
           >
             <div className="bg-[#1FD16A] text-[#051109] rounded-full p-4 mb-4 shadow-[0_0_40px_rgba(31,209,106,0.8)]">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -459,10 +459,10 @@ export const MockMateHeroScene: React.FC = () => {
               INTERVIEW READY
             </h2>
             <div className="mt-2 flex gap-2 w-full justify-center">
-              <span className="bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-[#73F0A0] whitespace-nowrap">
+              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-[#73F0A0] whitespace-nowrap">
                 Context Loaded
               </span>
-              <span className="bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-[#73F0A0] whitespace-nowrap">
+              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-[#73F0A0] whitespace-nowrap">
                 Agent Calibrated
               </span>
             </div>

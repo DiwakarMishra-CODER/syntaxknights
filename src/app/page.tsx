@@ -13,9 +13,20 @@ import { Footer } from "@/components/landing/Footer";
 export default function Home() {
   const router = useRouter();
 
-  // Straight into the live interview. The calibration modal it used to open
-  // ends in a fake "Configuring Adaptive Session" screen and never reaches
-  // the API — the interview is planned from a real cohort record.
+  useEffect(() => {
+    // Only show preloader if not already shown in this session
+    const alreadyShown =
+      typeof window !== "undefined" &&
+      Boolean(
+        (window as any).__MOCKMATE_LOADED__ ||
+        sessionStorage.getItem("mockmate_preloader_shown") === "true"
+      );
+
+    if (!alreadyShown) {
+      setShowPreloader(true);
+    }
+  }, []);
+
   const handleStartPracticing = () => router.push("/dashboard");
 
   return (

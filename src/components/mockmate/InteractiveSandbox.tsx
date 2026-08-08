@@ -98,7 +98,7 @@ export const InteractiveSandbox: React.FC = () => {
           <div className="pill-badge pill-badge-champagne">
             <span>LIVE INTERACTIVE PREVIEW</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-editorial text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans text-white tracking-tight">
             Experience <span className="italic text-[var(--accent-champagne)]">The Interview</span>
           </h2>
           <p className="text-base sm:text-lg text-slate-300">

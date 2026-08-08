@@ -3,7 +3,7 @@
 import { type Entry } from "./ConversationTranscript";
 import { type PanelData } from "./Panel";
 import { Composer } from "./Composer";
-import Link from "next/link";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 
@@ -69,7 +69,7 @@ export function MainInterview({
           <div className="w-6 h-6 bg-[#16A34A] rounded shadow-[0_0_12px_rgba(22,163,74,0.4)] flex items-center justify-center">
             <span className="text-white text-[11px] font-bold font-sans">M</span>
           </div>
-          <span className="font-editorial font-semibold text-[14px] text-white tracking-tight">MockMate</span>
+          <span className="font-sans font-semibold text-[14px] text-white tracking-tight">MockMate</span>
         </div>
         
         <div className="font-sans font-medium text-[11px] uppercase tracking-widest text-[#7E8B84]">
@@ -83,13 +83,6 @@ export function MainInterview({
           >
             End Interview
           </button>
-          
-          <Link 
-            href="/dashboard"
-            className="font-sans font-medium text-[11px] uppercase tracking-widest px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-[#CFD7D0] hover:text-white hover:bg-white/10 transition-colors"
-          >
-            Return to Dashboard
-          </Link>
         </div>
       </header>
 
@@ -133,12 +126,12 @@ export function MainInterview({
                 </div>
                 
                 {currentAck && (
-                  <p className="font-editorial text-[24px] leading-[1.5] text-[#7E8B84] mb-4 italic">
+                  <p className="font-sans text-[24px] leading-[1.5] text-[#7E8B84] mb-4 italic">
                     {currentAck}
                   </p>
                 )}
                 
-                <h2 className="font-editorial font-medium text-[36px] md:text-[42px] leading-[1.25] text-white tracking-tight mb-12">
+                <h2 className="font-sans font-medium text-[36px] md:text-[42px] leading-[1.25] text-white tracking-tight mb-12">
                   {currentQuestion}
                 </h2>
               </motion.div>

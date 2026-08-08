@@ -54,7 +54,7 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#1FD16A]/15 text-lg font-bold text-[#73F0A0]">
               ✓
             </div>
-            <h3 className="text-xl font-editorial font-semibold text-[#F5F2EB]">
+            <h3 className="text-xl font-sans font-semibold text-[#F5F2EB]">
               Configuring Adaptive Session
             </h3>
             <p className="text-xs font-mono text-[#8C867A]">
@@ -67,7 +67,7 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
               <span className="mb-1 block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#1FD16A]">
                 New Session Calibration
               </span>
-              <h3 className="text-xl font-editorial font-semibold text-[#F5F2EB]">
+              <h3 className="text-xl font-sans font-semibold text-[#F5F2EB]">
                 Start Mock Interview
               </h3>
               <p className="mt-1 text-xs text-[#7E8B84]">

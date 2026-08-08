@@ -84,7 +84,7 @@ export const TargetAudience: React.FC = () => {
           <div className="pill-badge pill-badge-ice">
             <span>TAILORED EXPERIENCES</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-editorial text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans text-white tracking-tight">
             Who It&apos;s <span className="italic text-[var(--accent-ice-blue)]">Built For</span>
           </h2>
           <p className="text-base sm:text-lg text-slate-300">

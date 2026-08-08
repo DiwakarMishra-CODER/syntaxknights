@@ -108,7 +108,7 @@ export function ConversationTranscript({
           <div className="font-sans font-semibold text-[10px] uppercase tracking-widest text-[#7E8B84] mb-2">
             Q{currentQuestionIndex} · {topicTitle} · Depth {depthInfo?.depth ?? "?"}
           </div>
-          <div className="font-editorial text-[14px] leading-[1.5] text-[#F5F7F4] mb-3">
+          <div className="font-sans text-[14px] leading-[1.5] text-[#F5F7F4] mb-3">
             {e.text}
           </div>
         </div>
@@ -125,7 +125,7 @@ export function ConversationTranscript({
       // Typically we might not show acks in the transcript, but if we do:
       blockContent.push(
         <div key={e.id} className={`px-6 mb-2 transition-opacity duration-200 ${opacityClass}`}>
-          <div className="font-editorial text-[13px] text-[#7E8B84] italic">
+          <div className="font-sans text-[13px] text-[#7E8B84] italic">
             {e.text}
           </div>
         </div>

@@ -3,6 +3,8 @@
 /* The interview surface. Kept in its own file so a landing rewrite
    cannot delete it by accident — see the header there. */
 @import "./interview-theme.css";
+@custom-variant dark (&:is(.dark *));
+
 
 @custom-variant dark (&:is(.dark *));
 
@@ -57,24 +59,28 @@
 }
 
 :root {
-  /* ─── Core Palette ─── */
-  --bg-void: #050806;
-  --bg-elevated: #0B120E;
-  --bg-surface: #101813;
+  --shadow-glass: rgba(0, 0, 0, 0.05);
 
-  --surface-glass: rgba(15, 23, 18, 0.72);
-  --surface-glass-hover: rgba(20, 32, 25, 0.88);
+  --bg-void: #f8fafc;
+  --bg-elevated: #f1f5f9;
+  --bg-surface: #ffffff;
 
-  --border-glass: rgba(255, 255, 255, 0.06);
+  --surface-glass: rgba(255, 255, 255, 0.72);
+  --surface-glass-hover: rgba(255, 255, 255, 0.88);
+  --surface-glass-green: rgba(255, 255, 255, 0.8);
+
+  --border-glass: rgba(0, 0, 0, 0.06);
   --border-glass-green: rgba(31, 209, 106, 0.18);
 
-  --text-primary: #F5F7F4;
-  --text-secondary: #CFD7D0;
-  --text-muted: #7E8B84;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
 
-  --accent-green: #1FD16A;
-  --accent-lime: #73F0A0;
-  --accent-glow: #8BE28F;
+  --accent-green: #10b981;
+  --accent-lime: #34d399;
+  --accent-glow: #6ee7b7;
+
+
 
   /* ─── Motion Standards ─── */
   --motion-fast: 150ms;
@@ -100,8 +106,6 @@ html {
 }
 
 body {
-  background-color: var(--bg-void);
-  color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: hidden;
   letter-spacing: -0.01em;
@@ -174,7 +178,7 @@ body {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     inset 0 0 20px rgba(255, 255, 255, 0.03),
-    0 20px 40px rgba(0, 0, 0, 0.6);
+    0 20px 40px var(var(--shadow-glass, rgba(0,0,0,0.6)));
   transition: all var(--motion-medium) var(--ease-out-expo);
 }
 .glass-card:hover {
@@ -186,7 +190,7 @@ body {
 }
 
 .glass-card-green {
-  background: rgba(13, 22, 16, 0.65);
+  background: var(--surface-glass-green);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
   border: 1px solid rgba(31, 209, 106, 0.15);
@@ -194,7 +198,7 @@ body {
   box-shadow:
     inset 0 1px 0 rgba(31, 209, 106, 0.2),
     inset 0 0 24px rgba(31, 209, 106, 0.06),
-    0 24px 48px rgba(0, 0, 0, 0.6);
+    0 24px 48px var(--shadow-glass);
   transition: all var(--motion-medium) var(--ease-out-expo);
 }
 .glass-card-green:hover {
@@ -439,4 +443,28 @@ body {
     opacity: 1;
     transform: none;
   }
+}
+
+.dark {
+  --shadow-glass: rgba(0, 0, 0, 0.6);
+
+  --bg-void: #050806;
+  --bg-elevated: #0B120E;
+  --bg-surface: #101813;
+
+  --surface-glass: rgba(15, 23, 18, 0.72);
+  --surface-glass-hover: rgba(20, 32, 25, 0.88);
+  --surface-glass-green: rgba(13, 22, 16, 0.65);
+
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --border-glass-green: rgba(31, 209, 106, 0.18);
+
+  --text-primary: #F5F7F4;
+  --text-secondary: #CFD7D0;
+  --text-muted: #7E8B84;
+
+  --accent-green: #1FD16A;
+  --accent-lime: #73F0A0;
+  --accent-glow: #8BE28F;
+
 }

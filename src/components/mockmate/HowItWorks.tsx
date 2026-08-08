@@ -69,7 +69,7 @@ export const HowItWorks: React.FC = () => {
           <span className="text-xs font-mono font-semibold tracking-widest uppercase text-[#10B981]">
             HOW IT WORKS
           </span>
-          <h2 className="text-4xl sm:text-5xl font-editorial text-[#0F172A] tracking-tight leading-tight">
+          <h2 className="text-4xl sm:text-5xl font-sans text-[#0F172A] tracking-tight leading-tight">
             Every answer changes what <br />
             <span className="italic font-normal text-[#10B981]">comes next.</span>
           </h2>
