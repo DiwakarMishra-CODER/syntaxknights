@@ -27,7 +27,7 @@ const GlassDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
               {/* Dialog Header */}
               <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border)] bg-[var(--bg-base)]">
                 <div>
-                  <h2 className="text-base font-editorial text-[var(--ink-primary)] font-semibold">
+                  <h2 className="text-base font-sans text-[var(--ink-primary)] font-semibold">
                     Evaluation Dossier Preview
                   </h2>
                   <p className="text-xs font-mono text-[var(--ink-muted)] mt-0.5">
@@ -49,7 +49,7 @@ const GlassDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
                   <div className="p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-base)] flex items-center justify-between">
                     <div>
                       <div className="text-[11px] font-mono text-[var(--ink-muted)]">SYSTEM BOUNDARIES</div>
-                      <div className="text-lg font-editorial text-[var(--accent-emerald)] font-bold">Strong Hire</div>
+                      <div className="text-lg font-sans text-[var(--accent-emerald)] font-bold">Strong Hire</div>
                     </div>
                     <svg className="w-10 h-10 transform -rotate-90">
                       <circle cx="20" cy="20" r="16" stroke="var(--glass-border)" strokeWidth="3" fill="none" />
@@ -60,7 +60,7 @@ const GlassDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
                   <div className="p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-base)] flex items-center justify-between">
                     <div>
                       <div className="text-[11px] font-mono text-[var(--ink-muted)]">TRADE-OFF REASONING</div>
-                      <div className="text-lg font-editorial text-[var(--accent-emerald)] font-bold">Strong Hire</div>
+                      <div className="text-lg font-sans text-[var(--accent-emerald)] font-bold">Strong Hire</div>
                     </div>
                     <svg className="w-10 h-10 transform -rotate-90">
                       <circle cx="20" cy="20" r="16" stroke="var(--glass-border)" strokeWidth="3" fill="none" />
@@ -115,7 +115,7 @@ export const ActionableReport: React.FC = () => {
           <span className="text-xs font-mono text-[var(--accent-emerald)] uppercase tracking-wider font-semibold">
             Post-Interview Evaluation
           </span>
-          <h2 className="text-3xl sm:text-4xl font-editorial text-[var(--ink-primary)] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-sans text-[var(--ink-primary)] tracking-tight">
             Leave knowing <span className="italic font-normal text-[var(--accent-emerald)]">what to improve.</span>
           </h2>
           <p className="text-sm text-[var(--ink-muted)] font-normal">
@@ -134,7 +134,7 @@ export const ActionableReport: React.FC = () => {
           <div className="flex items-center justify-between border-b border-[var(--glass-border)] pb-4">
             <div>
               <div className="text-xs font-mono text-[var(--ink-muted)]">SAMPLE DOSSIER</div>
-              <div className="text-sm font-editorial text-[var(--ink-primary)] font-semibold">
+              <div className="text-sm font-sans text-[var(--ink-primary)] font-semibold">
                 System Design Evaluation
               </div>
             </div>
@@ -148,7 +148,7 @@ export const ActionableReport: React.FC = () => {
             <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--glass-border)] flex items-center justify-between">
               <div>
                 <div className="text-[10px] font-mono text-[var(--ink-muted)]">SYSTEM BOUNDARIES</div>
-                <div className="text-base font-editorial text-[var(--accent-emerald)] font-semibold">Strong</div>
+                <div className="text-base font-sans text-[var(--accent-emerald)] font-semibold">Strong</div>
               </div>
               <svg className="w-8 h-8 transform -rotate-90">
                 <circle cx="16" cy="16" r="12" stroke="var(--glass-border)" strokeWidth="2.5" fill="none" />
@@ -159,7 +159,7 @@ export const ActionableReport: React.FC = () => {
             <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--glass-border)] flex items-center justify-between">
               <div>
                 <div className="text-[10px] font-mono text-[var(--ink-muted)]">TRADE-OFF CLARITY</div>
-                <div className="text-base font-editorial text-[var(--accent-emerald)] font-semibold">Strong</div>
+                <div className="text-base font-sans text-[var(--accent-emerald)] font-semibold">Strong</div>
               </div>
               <svg className="w-8 h-8 transform -rotate-90">
                 <circle cx="16" cy="16" r="12" stroke="var(--glass-border)" strokeWidth="2.5" fill="none" />

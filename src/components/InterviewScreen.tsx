@@ -60,8 +60,6 @@ export function InterviewScreen({
   const [done, setDone] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [ending, setEnding] = useState(false);
-  // Nothing is spent until this is cleared — see the mount effect.
-  const [awaitingStart, setAwaitingStart] = useState(false);
   const router = useRouter();
 
   const started = useRef(false);
@@ -195,12 +193,9 @@ export function InterviewScreen({
       } catch {
         /* fall through and start fresh */
       }
-      // Do NOT start here. Loading this page used to fire the planner
-      // immediately, and the planner is on the model capped at 20 requests
-      // per DAY per key — so opening the page and walking away cost a real
-      // call. Four of seven sessions in one afternoon were opened and never
-      // answered. It now waits for a deliberate click.
-      setAwaitingStart(true);
+      // The pre-flight countdown in CandidateProfile already confirmed intent,
+      // so start the interview immediately without waiting for a second click.
+      void send({ candidate: candidateId });
     })();
   }, [candidateId, send, sessionId, router]);
 
@@ -212,39 +207,6 @@ export function InterviewScreen({
         <div className="absolute bottom-[-20%] right-[-10%] h-[50%] w-[50%] rounded-full bg-[#1FD16A] opacity-[0.03] mix-blend-screen blur-[120px]" />
       </div>
 
-      {awaitingStart ? (
-        /* Nothing has been spent yet. Loading the page used to fire the
-           planner, which is on the model capped at 20 requests per DAY per
-           key -- four of seven sessions in one afternoon were opened and
-           never answered. */
-        <div className="relative z-10 flex flex-1 items-center justify-center px-8">
-          <div className="max-w-[34rem] rounded-2xl border border-white/10 bg-white/5 p-10 shadow-2xl backdrop-blur-xl">
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7E8B84]">
-              Ready when you are
-            </p>
-            <p className="mt-5 font-sans text-[19px] leading-[1.6] text-[#F5F7F4]">
-              You are interviewing as {candidateName}. The questions are
-              planned from their own 31 days, and get harder or easier
-              depending on how you answer.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setAwaitingStart(false);
-                void send({ candidate: candidateId });
-              }}
-              className="mt-8 rounded-full bg-[#1FD16A] px-6 py-3 font-sans text-[13px] font-semibold text-[#050806] transition-opacity hover:opacity-90"
-            >
-              Begin interview →
-            </button>
-            <p className="mt-5 font-sans text-[11px] leading-[1.6] text-[#7E8B84]">
-              Nothing starts until you click. You can end it at any point and
-              still get your feedback.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <>
           <JourneyPanel
             data={panel}
             thinking={thinking}
@@ -272,8 +234,6 @@ export function InterviewScreen({
             activeIndex={activeIndex}
             onHoverIndex={setActiveIndex}
           />
-        </>
-      )}
 
       {ending && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#050806]/80 backdrop-blur-sm">

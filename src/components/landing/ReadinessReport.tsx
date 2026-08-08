@@ -128,8 +128,7 @@ export const ReadinessReport: React.FC = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative z-10 py-24 lg:py-32 text-[#F5F7F4]"
-      style={{ background: "linear-gradient(180deg, #050806 0%, #0B120E 100%)" }}
+      className="relative z-10 overflow-hidden py-24 lg:py-32 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-[#050806] dark:to-[#0B120E]"
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute right-0 top-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-[#1FD16A]/5 blur-[120px]" />
@@ -138,17 +137,17 @@ export const ReadinessReport: React.FC = () => {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div ref={headerRef} className="mx-auto mb-16 max-w-3xl space-y-4 text-center">
-          <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3 py-1 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
+          <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#051109] border border-[#1FD16A]/30 px-3 py-1 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
             <Award className="h-3.5 w-3.5 text-[#1FD16A]" />
-            <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
+            <span className="text-[11px] font-mono font-semibold tracking-widest uppercase text-[#1FD16A]">
               THE REPORT
             </span>
           </div>
-          <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1.05] tracking-tight text-[#F5F7F4]">
-            <span className="font-editorial text-white">An annotated transcript.</span><br />
-            <span className="font-editorial italic text-[#1FD16A]">Not a scorecard.</span>
+          <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1.05] tracking-tight text-slate-900 dark:text-[#F5F7F4]">
+            <span className="font-sans tracking-tight font-medium text-slate-900 dark:text-white">An annotated transcript.</span><br />
+            <span className="font-sans tracking-tight font-medium italic text-[#1FD16A]">Not a scorecard.</span>
           </h2>
-          <p data-reveal className="text-base font-light leading-relaxed text-[#CFD7D0]">
+          <p data-reveal className="text-base font-light leading-relaxed text-slate-600 dark:text-[#CFD7D0]">
             The report should help the judge understand why the interview landed
             the way it did, then point the candidate to the next useful days.
           </p>
@@ -169,7 +168,7 @@ export const ReadinessReport: React.FC = () => {
               </div>
 
               <div className="space-y-4 relative z-10">
-                <blockquote className="rounded-2xl bg-[#0A0A0A] p-5 text-sm leading-relaxed text-[#D6E0D9] border border-[rgba(255,255,255,0.03)]">
+                <blockquote className="rounded-2xl bg-white dark:bg-[#0A0A0A] p-5 text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9] border border-slate-200 dark:border-[rgba(255,255,255,)]">
                   &ldquo;Redid Day 23 (MCP server build), then Day 24. You passed
                   both, but on the second attempt, and the interview showed the
                   gap is in tool schema design.&rdquo;
@@ -177,27 +176,27 @@ export const ReadinessReport: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {/* Metric 1 */}
-                  <div className={`rounded-xl bg-[#101813] px-4 py-3 border transition-colors duration-300 ${pulseMetric === 0 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-[rgba(255,255,255,0.05)]"}`}>
+                  <div className={`rounded-xl bg-slate-100 dark:bg-[#101813] px-4 py-3 border transition-colors duration-300 ${pulseMetric === 0 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-slate-200 dark:border-[rgba(255,255,255,)]"}`}>
                     <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">
                       Concept
                     </div>
-                    <div className="mt-2 text-sm text-[#F5F7F4] flex items-center justify-between">
+                    <div className="mt-2 text-sm text-slate-900 dark:text-[#F5F7F4] flex items-center justify-between">
                       Strong
                       {pulseMetric === 0 && <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A]" />}
                     </div>
                   </div>
                   {/* Metric 2 */}
-                  <div className={`rounded-xl bg-[#101813] px-4 py-3 border transition-colors duration-300 ${pulseMetric === 1 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-[rgba(255,255,255,0.05)]"}`}>
+                  <div className={`rounded-xl bg-slate-100 dark:bg-[#101813] px-4 py-3 border transition-colors duration-300 ${pulseMetric === 1 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-slate-200 dark:border-[rgba(255,255,255,)]"}`}>
                     <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">
                       Communication
                     </div>
-                    <div className="mt-2 text-sm text-[#F5F7F4] flex items-center justify-between">
+                    <div className="mt-2 text-sm text-slate-900 dark:text-[#F5F7F4] flex items-center justify-between">
                       Uneven
                       {pulseMetric === 1 && <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A]" />}
                     </div>
                   </div>
                   {/* Metric 3 */}
-                  <div className={`rounded-xl bg-[#101813] px-4 py-3 col-span-2 sm:col-span-1 border transition-colors duration-300 ${pulseMetric === 2 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-[rgba(255,255,255,0.05)]"}`}>
+                  <div className={`rounded-xl bg-slate-100 dark:bg-[#101813] px-4 py-3 col-span-2 sm:col-span-1 border transition-colors duration-300 ${pulseMetric === 2 ? "border-[#1FD16A]/40 bg-[rgba(31,209,106,0.05)]" : "border-slate-200 dark:border-[rgba(255,255,255,)]"}`}>
                     <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">
                       Signal
                     </div>
@@ -210,17 +209,17 @@ export const ReadinessReport: React.FC = () => {
             </div>
 
             <div className="glass-card p-6 space-y-4 text-left group hover:border-[#1FD16A]/30 transition-colors duration-500">
-              <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[#F5F7F4] group-hover:text-[#1FD16A] transition-colors">
+              <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-slate-900 dark:text-[#F5F7F4] group-hover:text-[#1FD16A] transition-colors">
                 <FileText className="h-4 w-4 text-[#1FD16A]" />
                 Direct Transcript Evidence
               </div>
 
-              <blockquote className="rounded-2xl bg-[#0A0A0A] p-4 text-sm italic leading-relaxed text-[#D6E0D9]">
+              <blockquote className="rounded-2xl bg-white dark:bg-[#0A0A0A] p-4 text-sm italic leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                 &ldquo;Correct but generic — he is describing the diagram, not
                 the build. Pushing for a number he should know.&rdquo;
               </blockquote>
 
-              <div className="flex items-center justify-between text-xs text-[#8B968F]">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8B968F]">
                 <span>Evaluated by MockMate AI</span>
                 <span className="text-[#1FD16A] font-mono flex items-center gap-1.5">
                   Verbatim checked
@@ -230,9 +229,9 @@ export const ReadinessReport: React.FC = () => {
             </div>
           </div>
 
-          <div ref={rightColRef} className="glass-card space-y-6 p-8 text-left lg:col-span-6 border-[rgba(255,255,255,0.04)] hover:border-[#1FD16A]/20 transition-colors duration-700">
+          <div ref={rightColRef} className="glass-card space-y-6 p-8 text-left lg:col-span-6 border-slate-200 dark:border-[rgba(255,255,255,)] hover:border-[#1FD16A]/20 transition-colors duration-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-editorial text-[#F5F7F4]">
+              <h3 className="text-xl font-sans tracking-tight font-medium text-slate-900 dark:text-[#F5F7F4]">
                 Next steps, tied to curriculum days
               </h3>
               <ArrowRight className="h-5 w-5 text-[#1FD16A]" />
@@ -243,17 +242,17 @@ export const ReadinessReport: React.FC = () => {
                 <div
                   key={step.day}
                   data-step
-                  className="rounded-2xl bg-[#0A0A0A] p-5 group hover:bg-[#0E1712] hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-transparent hover:border-[#1FD16A]/20 hover:shadow-[0_4px_20px_rgba(31,209,106,0.05)]"
+                  className="rounded-2xl bg-white dark:bg-[#0A0A0A] p-5 group hover:bg-slate-50 dark:bg-[#0E1712] hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-transparent hover:border-[#1FD16A]/20 hover:shadow-[0_4px_20px_rgba(31,209,106,0.05)]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#1FD16A] group-hover:text-[#73F0A0] transition-colors duration-300">
                       {step.day}
                     </span>
-                    <span className="text-[11px] font-mono text-[#8B968F] group-hover:text-[#CFD7D0] transition-colors duration-300">
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-[#8B968F] group-hover:text-slate-600 dark:text-[#CFD7D0] transition-colors duration-300">
                       {step.title}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-[#D6E0D9]">
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                     {step.note}
                   </p>
                 </div>

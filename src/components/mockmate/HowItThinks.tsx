@@ -99,7 +99,7 @@ export const HowItThinks: React.FC = () => {
           <div className="font-mono text-xs font-semibold text-[var(--accent-emerald)] bg-[var(--accent-emerald-soft)] px-2.5 py-1 rounded-md w-fit inline-block">
             <span>COGNITIVE ARCHITECTURE</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-editorial text-[var(--ink-primary)] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans text-[var(--ink-primary)] tracking-tight">
             How MockMate <span className="italic text-[var(--accent-ice-blue)]">Thinks</span>
           </h2>
           <p className="text-base sm:text-lg text-[var(--ink-muted)]">
@@ -161,7 +161,7 @@ export const HowItThinks: React.FC = () => {
                 </span>
               </div>
 
-              <h3 className="text-2xl sm:text-3xl font-editorial text-[var(--ink-primary)] leading-snug">
+              <h3 className="text-2xl sm:text-3xl font-sans text-[var(--ink-primary)] leading-snug">
                 {step.title}: <span className="text-[var(--ink-muted)] font-normal">{step.shortDesc}</span>
               </h3>
 

@@ -2,7 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, GraduationCap, Clock, CheckCircle, AlertTriangle, ShieldAlert, ChevronRight } from "lucide-react";
+import { useTheme } from "next-themes";
+import { 
+  ArrowLeft, 
+  Briefcase, 
+  GraduationCap, 
+  Clock, 
+  CheckCircle2, 
+  AlertTriangle, 
+  ShieldAlert, 
+  ChevronRight, 
+  Sun, 
+  Moon, 
+  Sparkles, 
+  Activity, 
+  Award,
+  Calendar,
+  Layers,
+  ArrowUpRight
+} from "lucide-react";
 
 type Candidate = {
   member: {
@@ -23,9 +41,15 @@ type Candidate = {
 
 export default function CandidateProfile({ candidate }: { candidate: Candidate }) {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (countdown === null) return;
@@ -45,182 +69,300 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 font-editorial relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-[#1FD16A] transition-colors duration-300">
+      
       {/* Ambient Background Glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[20%] w-[40%] h-[40%] bg-[#1FD16A] opacity-[0.04] blur-[120px] rounded-full mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[50%] bg-[#1FD16A] opacity-[0.03] blur-[100px] rounded-full mix-blend-screen" />
+        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#1FD16A]/5 dark:bg-[#1FD16A]/8 blur-[160px] rounded-full" />
       </div>
 
-      <main className="max-w-4xl mx-auto px-6 py-12 relative z-10">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-sm font-medium text-slate-400 hover:text-slate-50 transition-colors group mb-12"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
-          Back to Directory
-        </button>
-
-        <header className="mb-12 border-b border-white/10 pb-12">
-          <div className="flex items-center gap-6 mb-6">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold bg-white/5 border border-white/10 text-white shadow-lg shadow-[#1FD16A]/10">
-              {candidate.member.name.charAt(0)}
-            </div>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2">Welcome, {candidate.member.name}</h1>
-              <p className="text-xl text-slate-400 font-sans">{candidate.member.id} • {candidate.member.status}</p>
-            </div>
+      {/* Console Top Navigation Bar */}
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-white/5 bg-white/70 dark:bg-[#080D0A]/80 backdrop-blur-xl">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-[#1FD16A] transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="font-sans">Dashboard</span>
+            </button>
+            <span className="text-slate-300 dark:text-slate-700">/</span>
+            <span className="text-xs font-mono text-emerald-600 dark:text-[#1FD16A] font-medium">
+              Candidate {candidate.member.id}
+            </span>
           </div>
 
-          <div className="flex flex-wrap gap-6 font-sans">
-            <div className="flex items-center gap-3 bg-white/5 px-4 py-2.5 rounded-xl border border-white/5">
-              <Briefcase className="w-5 h-5 text-[#1FD16A]" />
-              <span className="text-slate-300 font-medium">{candidate.member.jobRole}</span>
-            </div>
-            <div className="flex items-center gap-3 bg-white/5 px-4 py-2.5 rounded-xl border border-white/5">
-              <GraduationCap className="w-5 h-5 text-[#1FD16A]" />
-              <span className="text-slate-300 font-medium">{candidate.member.yearsExperience} Years Exp</span>
-            </div>
-            <div className="flex items-center gap-3 bg-white/5 px-4 py-2.5 rounded-xl border border-white/5">
-              <Clock className="w-5 h-5 text-[#1FD16A]" />
-              <span className="text-slate-300 font-medium">{candidate.signals.commitDays} Commit Days</span>
-            </div>
-          </div>
-        </header>
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F1712] text-slate-600 dark:text-[#D6E0D9] hover:bg-slate-100 dark:hover:bg-[#16221B] transition-colors shadow-sm"
+              title="Toggle Theme"
+              aria-label="Toggle Theme"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-[#73F0A0]" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
+          )}
+        </div>
+      </header>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-            <CheckCircle className="w-6 h-6 text-[#1FD16A]" />
-            Curriculum Progress
-          </h2>
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl font-sans">
-            <div className="flex justify-between items-end mb-4">
-              <span className="text-sm font-semibold uppercase tracking-wider text-slate-400">Total Missions Completed</span>
-              <span className="text-2xl font-bold text-white">
-                {candidate.signals.missionsCompleted} <span className="text-slate-500 text-lg">/ 31</span>
-              </span>
-            </div>
-            <div className="h-3 w-full rounded-full overflow-hidden bg-white/10 mb-8">
-              <div 
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-[#1FD16A] shadow-[0_0_10px_rgba(31,209,106,0.5)]"
-                style={{ width: `${(candidate.signals.missionsCompleted / 31) * 100}%` }}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-                <h4 className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-2">First Try Success</h4>
-                <p className="text-3xl font-bold text-white">{candidate.signals.missionsFirstTry}</p>
+      {/* Main Container */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10 space-y-8">
+        
+        {/* Candidate Profile Header Card */}
+        <section className="p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#0B120E]/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/10 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 mb-6 border-b border-slate-100 dark:border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-sans font-bold bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white shadow-sm">
+                {candidate.member.name.charAt(0)}
               </div>
-              <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-                <h4 className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-2">Current Status</h4>
-                <p className="text-3xl font-bold text-[#1FD16A] capitalize">{candidate.member.status}</p>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-mono font-medium text-emerald-600 dark:text-[#1FD16A]">
+                    {candidate.member.id}
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-[#1FD16A] border border-emerald-200/60 dark:border-[#1FD16A]/20">
+                    {candidate.member.status}
+                  </span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-sans font-bold tracking-tight text-slate-900 dark:text-[#F5F7F4]">
+                  {candidate.member.name}
+                </h1>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-sans font-semibold text-xs uppercase tracking-wider bg-[#1FD16A] text-[#050806] hover:bg-[#73F0A0] transition-all shadow-[0_0_20px_rgba(31,209,106,0.3)] self-start sm:self-auto active:scale-95"
+            >
+              <span>Launch Mock Session</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70">
+              <Briefcase className="w-4 h-4 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] font-mono uppercase text-slate-400">Target Role</div>
+                <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{candidate.member.jobRole}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70">
+              <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] font-mono uppercase text-slate-400">Background</div>
+                <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{candidate.member.yearsExperience} Yrs Exp • {candidate.member.education}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70">
+              <Calendar className="w-4 h-4 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] font-mono uppercase text-slate-400">Activity</div>
+                <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{candidate.signals.commitDays} Commit Days</div>
               </div>
             </div>
           </div>
         </section>
 
-        <div className="flex justify-center mt-16">
-          <button
-            onClick={() => setShowModal(true)}
-            className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-slate-950 bg-[#1FD16A] rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(31,209,106,0.3)] hover:shadow-[0_0_50px_rgba(31,209,106,0.5)]"
-          >
-            <span className="relative z-10 flex items-center text-lg tracking-wide uppercase">
-              Initialize Interview
-              <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
-            </span>
-            <div className="absolute inset-0 h-full w-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out" />
-          </button>
-        </div>
+        {/* Telemetry Matrix */}
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800/80 shadow-sm">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-1">Missions Completed</span>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
+              {candidate.signals.missionsCompleted} <span className="text-xs font-normal text-slate-400">/ 31</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-3">
+              <div
+                className="h-full rounded-full bg-emerald-500 dark:bg-[#1FD16A]"
+                style={{ width: `${(candidate.signals.missionsCompleted / 31) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800/80 shadow-sm">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-1">Clean First-Try Submissions</span>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
+              {candidate.signals.missionsFirstTry} <span className="text-xs font-normal text-slate-400">missions</span>
+            </div>
+            <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 mt-2">
+              High code precision
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800/80 shadow-sm">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-1">Evaluation Readiness</span>
+            <div className="text-2xl font-sans font-bold text-emerald-600 dark:text-[#1FD16A] flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5" />
+              Calibrated
+            </div>
+            <div className="text-[11px] font-mono text-slate-400 mt-2">
+              Telemetry synched
+            </div>
+          </div>
+        </section>
+
+        {/* Mission Evaluation History */}
+        {candidate.missions && candidate.missions.length > 0 && (
+          <section className="p-6 rounded-2xl bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800/80 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Sample Mission Checkpoints</h2>
+              <span className="text-xs font-mono text-slate-400">Day by Day Highlights</span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {candidate.missions.map((m: any, idx: number) => (
+                <div 
+                  key={idx}
+                  className="p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 flex items-center justify-between text-xs"
+                >
+                  <div className="flex items-center gap-2.5 truncate mr-2">
+                    <span className="font-mono font-semibold text-emerald-600 dark:text-[#1FD16A]">D{m.day}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{m.title}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {m.passed && (
+                      <span className="text-[10px] font-mono text-emerald-600 dark:text-[#1FD16A] bg-emerald-50 dark:bg-[#1FD16A]/10 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-[#1FD16A]/20">
+                        {m.attempts} {m.attempts === 1 ? 'try' : 'tries'}
+                      </span>
+                    )}
+                    {m.skipped && (
+                      <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                        Skipped
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
+      {/* Full-screen Launch Overlay (shown during countdown) */}
+      {countdown !== null && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-50 dark:bg-[#050806] overflow-hidden transition-colors duration-300">
+          {/* Ambient Glows */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-400/5 dark:bg-[#1FD16A]/8 blur-[180px] rounded-full" />
+            <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-emerald-300/5 dark:bg-[#73F0A0]/4 blur-[120px] rounded-full" />
+          </div>
+
+          {/* Pulsing Ring */}
+          <div className="relative flex items-center justify-center mb-12">
+            <div className="absolute w-48 h-48 rounded-full border border-emerald-400/30 dark:border-[#1FD16A]/20 animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="absolute w-36 h-36 rounded-full border border-emerald-400/40 dark:border-[#1FD16A]/30 animate-ping" style={{ animationDuration: '1.5s', animationDelay: '0.25s' }} />
+            <div className="absolute w-24 h-24 rounded-full border border-emerald-400/50 dark:border-[#1FD16A]/40 animate-ping" style={{ animationDuration: '1s', animationDelay: '0.5s' }} />
+            
+            {/* Center Countdown */}
+            <div className="relative w-32 h-32 rounded-full bg-white dark:bg-[#0B120E] border border-emerald-300 dark:border-[#1FD16A]/30 flex items-center justify-center shadow-[0_0_60px_rgba(31,209,106,0.12)] dark:shadow-[0_0_60px_rgba(31,209,106,0.15)]">
+              <span className="text-6xl font-mono font-bold text-slate-900 dark:text-white tabular-nums">
+                {countdown}
+              </span>
+            </div>
+          </div>
+
+          {/* Candidate Info */}
+          <div className="relative z-10 flex flex-col items-center gap-3 text-center px-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-[#1FD16A] border border-emerald-200 dark:border-[#1FD16A]/25 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#1FD16A] animate-pulse" />
+              Launching Session
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-sans font-bold text-slate-900 dark:text-white tracking-tight">
+              {candidate.member.name}
+            </h2>
+            <p className="text-sm font-mono text-slate-500 dark:text-[#8B968F]">
+              {candidate.member.id} · {candidate.member.jobRole}
+            </p>
+
+            <div className="mt-6 text-xs font-mono uppercase tracking-[0.2em] text-slate-400 dark:text-[#8B968F]">
+              {countdown === 3 && "Calibrating adaptive question engine…"}
+              {countdown === 2 && "Loading candidate telemetry signals…"}
+              {countdown === 1 && "Entering evaluation room…"}
+              {countdown === 0 && "Starting now…"}
+            </div>
+          </div>
+
+          {/* Bottom fade */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-50 dark:from-[#050806] to-transparent pointer-events-none" />
+        </div>
+      )}
+
       {/* Pre-Flight Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300 font-sans">
-          <div className="w-full max-w-xl bg-slate-900 border border-slate-700 shadow-2xl rounded-3xl overflow-hidden relative">
+      {showModal && countdown === null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200 font-sans">
+          <div className="w-full max-w-lg bg-white dark:bg-[#0B120E] border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden relative">
             
             {/* Modal Header */}
-            <div className="px-8 py-6 border-b border-slate-800 bg-slate-900/50 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center">
-                <ShieldAlert className="w-5 h-5" />
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <ShieldAlert className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">Interview Pre-flight Check</h3>
-                <p className="text-sm text-slate-400">Please review the rules before proceeding.</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Interview Pre-flight Check</h3>
+                <p className="text-xs font-mono uppercase tracking-wider text-slate-400 dark:text-[#7E8B84]">Candidate Protocol</p>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="p-8">
-              {countdown !== null ? (
-                /* Countdown State */
-                <div className="flex flex-col items-center justify-center py-12">
-                  <span className="text-sm font-semibold uppercase tracking-widest text-[#1FD16A] mb-8">Deploying Environment</span>
-                  <span className="text-8xl font-editorial font-bold text-white animate-pulse shadow-xl">
-                    {countdown}
-                  </span>
-                </div>
-              ) : (
-                /* Rules State */
-                <>
-                  <div className="space-y-6 mb-8">
-                    <div className="flex gap-4">
-                      <AlertTriangle className="w-6 h-6 text-yellow-500 shrink-0" />
-                      <div>
-                        <h4 className="text-white font-semibold mb-1">No External Assistance</h4>
-                        <p className="text-sm text-slate-400 leading-relaxed">
-                          You are prohibited from using AI assistants (like ChatGPT or Copilot), search engines, or consulting with other individuals during the interview.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <AlertTriangle className="w-6 h-6 text-yellow-500 shrink-0" />
-                      <div>
-                        <h4 className="text-white font-semibold mb-1">Active Proctoring</h4>
-                        <p className="text-sm text-slate-400 leading-relaxed">
-                          Your screen focus, tab switching, and typing patterns will be monitored to ensure academic integrity.
-                        </p>
-                      </div>
-                    </div>
+            <div className="p-6">
+              <div className="space-y-3 mb-5">
+                <div className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Independent Execution</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-[#8B968F] mt-0.5 leading-relaxed">
+                      AI assistants are restricted. Questions adapt to real-time candidate code signals.
+                    </p>
                   </div>
+                </div>
+                <div className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
+                  <Activity className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Real-Time Telemetry</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-[#8B968F] mt-0.5 leading-relaxed">
+                      Code edits and technical reasoning will be streamed into the scoring rubric.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                  <label className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={confirmed}
-                      onChange={(e) => setConfirmed(e.target.checked)}
-                      className="mt-1 w-5 h-5 rounded border-slate-600 text-[#1FD16A] focus:ring-[#1FD16A] focus:ring-offset-slate-900 bg-slate-800"
-                    />
-                    <span className="text-sm text-slate-300 font-medium select-none">
-                      I confirm that I understand the rules and agree to take this interview without external assistance.
-                    </span>
-                  </label>
-                </>
-              )}
+              <label className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 cursor-pointer hover:border-emerald-500/50 dark:hover:border-[#1FD16A]/30 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 bg-white dark:bg-slate-900"
+                />
+                <span className="text-xs text-slate-700 dark:text-slate-300 select-none font-medium leading-relaxed">
+                  I understand the rules and agree to begin the evaluation session.
+                </span>
+              </label>
             </div>
 
             {/* Modal Footer */}
-            {countdown === null && (
-              <div className="px-8 py-6 border-t border-slate-800 bg-slate-900/50 flex justify-end gap-4">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleStartProcess}
-                  disabled={!confirmed}
-                  className={`px-8 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
-                    confirmed 
-                      ? 'bg-[#1FD16A] text-slate-950 hover:bg-[#1FD16A]/90 shadow-[0_0_15px_rgba(31,209,106,0.2)]' 
-                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                  }`}
-                >
-                  Confirm & Start
-                </button>
-              </div>
-            )}
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex justify-end gap-2.5">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleStartProcess}
+                disabled={!confirmed}
+                className={`px-5 py-2 rounded-lg text-xs font-sans font-semibold uppercase tracking-wider transition-all ${
+                  confirmed 
+                    ? 'bg-[#1FD16A] text-[#050806] hover:bg-[#73F0A0] shadow-[0_0_16px_rgba(31,209,106,0.3)]' 
+                    : 'bg-slate-200 dark:bg-white/5 text-slate-400 dark:text-[#7E8B84] cursor-not-allowed'
+                }`}
+              >
+                Start Session
+              </button>
+            </div>
           </div>
         </div>
       )}

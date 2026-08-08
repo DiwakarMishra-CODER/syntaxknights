@@ -104,8 +104,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenStartModal }) => {
   return (
     <section
       ref={sectionRef}
-      className="relative z-10 overflow-hidden pt-32 pb-20 lg:pt-40 lg:pb-28"
-      style={{ background: "linear-gradient(180deg, #050806 0%, #0B120E 100%)" }}
+      className="relative z-10 overflow-hidden pt-32 pb-20 lg:pt-40 lg:pb-28 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-[#050806] dark:to-[#0B120E]"
     >
       {/* Ambient background effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -120,9 +119,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenStartModal }) => {
           {/* Left — Editorial Content */}
           <div className="lg:col-span-6 space-y-7 text-left">
             {/* Eyebrow pill */}
-            <div className="inline-flex items-center gap-2.5 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3.5 py-1.5 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
+            <div className="inline-flex items-center gap-2.5 rounded-full bg-white dark:bg-[#051109] border border-[#1FD16A]/30 px-3.5 py-1.5 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#1FD16A]" />
-              <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
+              <span className="text-[11px] font-mono font-semibold tracking-widest uppercase text-[#1FD16A]">
                 PROBES BEYOND THE SURFACE
               </span>
             </div>
@@ -130,16 +129,16 @@ export const Hero: React.FC<HeroProps> = ({ onOpenStartModal }) => {
             {/* Headline */}
             <h1
               ref={headlineRef}
-              className="max-w-md text-[clamp(3rem,6vw,5.5rem)] leading-[1] tracking-tight text-[#F5F7F4]"
+              className="max-w-md text-[clamp(3rem,6vw,5.5rem)] leading-[1] tracking-tight text-slate-900 dark:text-[#F5F7F4]"
             >
-              <span className="font-sans font-medium text-white">Your adaptive</span><br />
-              <span className="font-pixel text-transparent bg-clip-text bg-gradient-to-r from-[#F5F7F4] to-[#73F0A0]">AI Interviewer</span>
+              <span className="font-sans font-medium text-slate-900 dark:text-white">Your adaptive</span><br />
+              <span className="font-sans font-medium text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-emerald-600 dark:from-[#F5F7F4] dark:to-[#73F0A0]">AI Interviewer</span>
             </h1>
 
             {/* Subtitle */}
             <p
               ref={subtextRef}
-              className="max-w-sm text-base sm:text-[17px] font-sans font-light leading-relaxed text-[#CFD7D0]"
+              className="max-w-sm text-base sm:text-[17px] font-sans font-light leading-relaxed text-slate-600 dark:text-[#CFD7D0]"
             >
               Master your next technical interview. MockMate analyzes your 31-Day AI Cohort journey, adapts to your answers, and uncovers the true depth of your experience.
             </p>
@@ -155,7 +154,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenStartModal }) => {
                 href="#how-it-works"
                 className="btn-secondary flex items-center gap-2"
               >
-                <Play className="h-3.5 w-3.5 fill-current text-[#F5F7F4]" />
+                <Play className="h-3.5 w-3.5 fill-current text-slate-900 dark:text-[#F5F7F4]" />
                 See how it works
               </a>
             </div>
@@ -163,7 +162,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenStartModal }) => {
             {/* Proof points */}
             <div
               ref={proofRef}
-              className="flex flex-wrap items-center gap-5 pt-3 text-xs text-[#A9B6AF]"
+              className="flex flex-wrap items-center gap-5 pt-3 text-xs text-slate-500 dark:text-[#A9B6AF]"
             >
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-[#1FD16A]" />

@@ -12,7 +12,7 @@ export const PhilosophyQuote: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-3xl sm:text-5xl md:text-6xl font-editorial text-[var(--ink-primary)] tracking-tight leading-[1.15] text-balance"
+          className="text-3xl sm:text-5xl md:text-6xl font-sans text-[var(--ink-primary)] tracking-tight leading-[1.15] text-balance"
         >
           Every answer changes <br />
           <span className="italic font-normal text-[var(--accent-champagne)]">

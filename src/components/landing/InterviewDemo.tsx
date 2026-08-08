@@ -134,8 +134,7 @@ export const InterviewDemo: React.FC = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative z-10 py-24 lg:py-32 text-[#F5F7F4]"
-      style={{ background: "linear-gradient(180deg, #0B120E 0%, #050806 100%)" }}
+      className="relative z-10 overflow-hidden py-24 lg:py-32 bg-gradient-to-b from-slate-100 to-slate-50 dark:from-[#0B120E] dark:to-[#050806]"
     >
       {/* Ambient */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -145,17 +144,17 @@ export const InterviewDemo: React.FC = () => {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div ref={headerRef} className="mx-auto mb-16 max-w-3xl space-y-4 text-center">
-          <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3 py-1 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
+          <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#051109] border border-[#1FD16A]/30 px-3 py-1 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
             <BookOpen className="h-3.5 w-3.5 text-[#1FD16A]" />
-            <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
+            <span className="text-[11px] font-mono font-semibold tracking-widest uppercase text-[#1FD16A]">
               THE PLAYGROUND
             </span>
           </div>
-          <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1] tracking-tight text-[#F5F7F4]">
-            <span className="font-sans font-light text-[#CFD7D0]">Live interview</span><br />
+          <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1] tracking-tight text-slate-900 dark:text-[#F5F7F4]">
+            <span className="font-sans font-light text-slate-600 dark:text-[#CFD7D0]">Live interview</span><br />
             <span className="font-sans font-black uppercase text-[#1FD16A] tracking-tighter">Environment.</span>
           </h2>
-          <p data-reveal className="text-base font-light leading-relaxed text-[#CFD7D0]">
+          <p data-reveal className="text-base font-light leading-relaxed text-slate-600 dark:text-[#CFD7D0]">
             If the answer is shallow, the trace rises. If the answer holds,
             MockMate digs. The conversation and the reasoning panel stay linked
             the whole time.
@@ -176,7 +175,7 @@ export const InterviewDemo: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-4 rounded-2xl bg-[#0A0A0A] p-5 relative overflow-hidden">
+            <div className="space-y-4 rounded-2xl bg-white dark:bg-[#0A0A0A] p-5 relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[rgba(31,209,106,0.1)]">
                 <div className="h-8 w-full bg-[#1FD16A] shadow-[0_0_8px_#1FD16A] animate-[scanline_3s_linear_infinite]" />
               </div>
@@ -184,7 +183,7 @@ export const InterviewDemo: React.FC = () => {
                 <div className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#73F0A0]">
                   Interviewer
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-[#F5F7F4]">
+                <p className="mt-2 text-sm leading-relaxed text-slate-900 dark:text-[#F5F7F4]">
                   Walk me through what happens when someone asks your chatbot
                   about their coverage.
                 </p>
@@ -194,15 +193,15 @@ export const InterviewDemo: React.FC = () => {
                 <div className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#1FD16A]">
                   Tyler
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-[#D6E0D9]">
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                   It searches the vector database and sends what it finds to the
                   LLM.
                 </p>
               </div>
 
-              <div className="ml-4 rounded-xl bg-[#101813] px-4 py-3 relative overflow-hidden border border-[rgba(31,209,106,0.1)]">
+              <div className="ml-4 rounded-xl bg-slate-100 dark:bg-[#101813] px-4 py-3 relative overflow-hidden border border-[rgba(31,209,106,0.1)]">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(31,209,106,0.05)] to-transparent -translate-x-full animate-[scanline_2s_ease-in-out_infinite_alternate]" />
-                <p className="text-xs leading-relaxed text-[#D6E0D9] font-mono animate-typewriter whitespace-nowrap overflow-hidden">
+                <p className="text-xs leading-relaxed text-slate-600 dark:text-[#D6E0D9] font-mono animate-typewriter whitespace-nowrap overflow-hidden">
                   &ldquo;Correct but generic — he is describing the diagram, not
                   the build.&rdquo;
                 </p>
@@ -213,14 +212,14 @@ export const InterviewDemo: React.FC = () => {
               {CLAIMS.map((claim, i) => (
                 <div
                   key={claim.tag}
-                  className={`space-y-2 rounded-xl bg-[#101813] px-4 py-3 border border-[rgba(31,209,106,0.15)] transition-all duration-300 ${
+                  className={`space-y-2 rounded-xl bg-slate-100 dark:bg-[#101813] px-4 py-3 border border-[rgba(31,209,106,0.15)] transition-all duration-300 ${
                     i === activeLadderIndex % 3 ? "animate-data-pulse bg-[rgba(31,209,106,0.05)]" : ""
                   }`}
                 >
                   <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB2A7]">
                     {claim.tag}
                   </div>
-                  <p className="text-xs leading-relaxed text-[#D6E0D9]">
+                  <p className="text-xs leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                     {claim.text}
                   </p>
                 </div>
@@ -245,7 +244,7 @@ export const InterviewDemo: React.FC = () => {
                     key={step.depth}
                     data-ladder
                     className={`flex items-start gap-4 rounded-xl px-4 py-3 transition-all duration-500 ${
-                      isActive ? "bg-[#0E1712] border border-[rgba(31,209,106,0.2)] shadow-[0_0_15px_rgba(31,209,106,0.08)]" : "bg-[#0A0A0A] border border-transparent"
+                      isActive ? "bg-slate-50 dark:bg-[#0E1712] border border-[rgba(31,209,106,0.2)] shadow-[0_0_15px_rgba(31,209,106,0.08)]" : "bg-white dark:bg-[#0A0A0A] border border-transparent"
                     }`}
                   >
                     <div
@@ -253,17 +252,17 @@ export const InterviewDemo: React.FC = () => {
                         isActive
                           ? "bg-[#1FD16A] text-[#050806] shadow-[0_0_12px_rgba(31,209,106,0.6)]"
                           : isPassed
-                          ? "bg-[#101813] border border-[#1FD16A]/40 text-[#1FD16A]"
-                          : "bg-[#101813] text-[#7E8B84]"
+                          ? "bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/40 text-[#1FD16A]"
+                          : "bg-slate-100 dark:bg-[#101813] text-[#7E8B84]"
                       }`}
                     >
                       {step.depth}
                     </div>
                     <div className="space-y-1">
-                      <div className={`text-sm font-semibold transition-colors duration-300 ${isActive ? "text-[#1FD16A]" : "text-[#F5F7F4]"}`}>
+                      <div className={`text-sm font-semibold transition-colors duration-300 ${isActive ? "text-[#1FD16A]" : "text-slate-900 dark:text-[#F5F7F4]"}`}>
                         {step.label}
                       </div>
-                      <p className="text-xs leading-relaxed text-[#A9B6AF]">
+                      <p className="text-xs leading-relaxed text-slate-500 dark:text-[#A9B6AF]">
                         {step.note}
                       </p>
                     </div>
@@ -272,7 +271,7 @@ export const InterviewDemo: React.FC = () => {
               })}
             </div>
 
-            <div className="rounded-xl bg-[#101813] px-4 py-4 border border-[rgba(31,209,106,0.1)] relative overflow-hidden">
+            <div className="rounded-xl bg-slate-100 dark:bg-[#101813] px-4 py-4 border border-[rgba(31,209,106,0.1)] relative overflow-hidden">
               <div className="absolute top-0 right-0 p-2">
                  <span className="flex h-2 w-2 rounded-full bg-[#1FD16A] animate-pulse" />
               </div>
@@ -280,7 +279,7 @@ export const InterviewDemo: React.FC = () => {
                 <GitBranch className="h-4 w-4" />
                 Claim ledger updating
               </div>
-              <p className="mt-3 text-xs leading-relaxed text-[#D6E0D9]">
+              <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                 Every claim is filtered against what the candidate actually said.
                 The report only keeps what can be defended.
               </p>

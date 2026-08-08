@@ -47,7 +47,7 @@ export const ReadinessAssessment: React.FC = () => {
             WHAT YOU GET
           </span>
           
-          <h2 className="text-4xl sm:text-5xl font-editorial text-[#0F172A] tracking-tight leading-tight">
+          <h2 className="text-4xl sm:text-5xl font-sans text-[#0F172A] tracking-tight leading-tight">
             A clear map of your <br />
             <span className="italic font-normal text-[#10B981]">readiness.</span>
           </h2>
@@ -83,10 +83,10 @@ export const ReadinessAssessment: React.FC = () => {
                   Overall Readiness
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl sm:text-5xl font-editorial font-bold text-white tracking-tight">
+                  <span className="text-4xl sm:text-5xl font-sans font-bold text-white tracking-tight">
                     {readinessScore}
                   </span>
-                  <span className="text-lg font-editorial text-slate-400">/ 100</span>
+                  <span className="text-lg font-sans text-slate-400">/ 100</span>
                 </div>
                 <span className="inline-block px-2.5 py-0.5 rounded text-xs font-mono font-semibold text-[#10B981] bg-[#10B981]/10 mt-1">
                   Strong

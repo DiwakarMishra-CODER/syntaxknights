@@ -54,7 +54,7 @@ export const ProductMoments: React.FC = () => {
           <span className="text-xs font-mono text-[var(--ink-muted)] uppercase tracking-wider font-semibold">
             Behavior
           </span>
-          <h2 className="text-3xl sm:text-4xl font-editorial text-[var(--ink-primary)] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-sans text-[var(--ink-primary)] tracking-tight">
             How intelligence behaves
           </h2>
         </motion.div>
@@ -77,7 +77,7 @@ export const ProductMoments: React.FC = () => {
                 <span className="font-mono text-xs font-semibold text-[var(--accent-emerald)] bg-[var(--accent-emerald-soft)] px-2.5 py-1 rounded-md w-fit inline-block">
                   {moment.numeral}
                 </span>
-                <h3 className="text-lg font-editorial text-[var(--ink-primary)]">
+                <h3 className="text-lg font-sans text-[var(--ink-primary)]">
                   {moment.title}
                 </h3>
                 <p className="text-[var(--ink-muted)] text-xs font-normal leading-relaxed">

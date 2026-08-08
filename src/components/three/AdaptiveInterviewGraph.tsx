@@ -64,9 +64,9 @@ export const AdaptiveInterviewGraph: React.FC<AdaptiveInterviewGraphProps> = ({
               className={cn(
                 "text-xs transition-colors duration-500",
                 isCurrent
-                  ? "text-[#F5F7F4] font-medium"
+                  ? "text-slate-900 dark:text-[#F5F7F4] font-medium"
                   : isActive
-                  ? "text-[#F5F7F4]/90"
+                  ? "text-slate-900 dark:text-[#F5F7F4]/90"
                   : "text-[#7E8B84]"
               )}
             >

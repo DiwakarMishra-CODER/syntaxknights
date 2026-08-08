@@ -33,7 +33,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenStartModal }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-editorial text-white tracking-tight leading-[1.05]"
+            className="text-5xl sm:text-6xl lg:text-7xl font-sans text-white tracking-tight leading-[1.05]"
           >
             An interviewer <br />
             that <span className="italic text-[#10B981] font-normal">thinks.</span>

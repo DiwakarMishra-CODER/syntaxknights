@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -12,6 +13,12 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,22 +38,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
           className={cn(
             "flex items-center justify-between rounded-2xl px-5 py-3.5 transition-all duration-500 md:px-6",
             scrolled
-              ? "glass-card bg-[#050806]/92 shadow-2xl border-[rgba(31,209,106,0.08)]"
+              ? "bg-white/80 dark:bg-[#050806]/92 backdrop-blur-xl shadow-2xl border-slate-200 dark:border-[rgba(31,209,106,0.08)]"
               : "bg-transparent border border-transparent"
           )}
         >
           {/* Left: MockMate Logo */}
           <a href="#" className="group flex items-center gap-2.5 text-left">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#101813] border border-[rgba(31,209,106,0.2)] text-sm font-bold text-[#F5F7F4] shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-[rgba(31,209,106,0.4)] group-hover:shadow-[0_0_16px_rgba(31,209,106,0.15)] font-editorial">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-[#101813] border border-slate-200 dark:border-[rgba(31,209,106,0.2)] text-sm font-bold text-slate-900 dark:text-[#F5F7F4] shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-emerald-400 dark:group-hover:border-[rgba(31,209,106,0.4)] group-hover:shadow-[0_0_16px_rgba(31,209,106,0.15)] font-sans tracking-tight">
               M
             </div>
-            <span className="text-base font-semibold tracking-tight text-[#F5F7F4] font-editorial">
+            <span className="text-base tracking-tight text-slate-900 dark:text-[#F5F7F4] font-sans font-medium">
               MockMate
             </span>
           </a>
 
           {/* Center: Essential Nav Links */}
-          <ul className="hidden items-center gap-8 text-[13px] tracking-wide text-[#CFD7D0] md:flex">
+          <ul className="hidden items-center gap-8 text-[13px] tracking-wide text-slate-600 dark:text-[#CFD7D0] md:flex">
             {[
               { href: "#comparison", label: "Comparison" },
               { href: "#how-it-works", label: "How it Works" },
@@ -56,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
               <li key={link.href}>
                 <a
                   href={link.href}
-                  className="relative py-1 transition-colors hover:text-[#F5F7F4] group"
+                  className="relative py-1 transition-colors hover:text-emerald-600 dark:hover:text-[#F5F7F4] group"
                 >
                   {link.label}
                   <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#1FD16A] transition-all duration-300 group-hover:w-full" />
@@ -65,8 +72,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
             ))}
           </ul>
 
-          {/* Right: Start Interview CTA */}
-          <div className="hidden items-center md:flex">
+          {/* Right: Start Interview CTA & Theme Toggle */}
+          <div className="hidden items-center gap-3 md:flex">
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                aria-label="Toggle Theme"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            )}
             <button
               onClick={onOpenStartModal}
               className="btn-primary text-xs h-10 px-5 rounded-xl"
@@ -79,7 +95,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
           {/* Mobile Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-full p-2 text-[#CFD7D0] transition-colors hover:text-[#F5F7F4] md:hidden"
+            className="rounded-full p-2 text-slate-600 dark:text-[#CFD7D0] transition-colors hover:text-slate-900 dark:text-[#F5F7F4] md:hidden"
             aria-label="Toggle menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -118,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="glass-card-green mt-2 space-y-4 rounded-2xl p-5 md:hidden"
             >
-              <ul className="flex flex-col gap-4 text-sm text-[#CFD7D0]">
+              <ul className="flex flex-col gap-4 text-sm text-slate-600 dark:text-[#CFD7D0]">
                 {[
                   { href: "#comparison", label: "Comparison" },
                   { href: "#how-it-works", label: "How it Works" },
@@ -129,22 +145,36 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStartModal }) => {
                     <a
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="hover:text-[#F5F7F4] transition-colors"
+                      className="hover:text-slate-900 dark:text-[#F5F7F4] transition-colors"
                     >
                       {link.label}
                     </a>
                   </li>
                 ))}
               </ul>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenStartModal();
-                }}
-                className="btn-primary w-full py-3 text-sm"
-              >
-                Start Practice →
-              </button>
+              <div className="flex items-center gap-4 pt-2">
+                {mounted && (
+                  <button
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                  >
+                    {theme === 'dark' ? (
+                      <><Sun className="w-4 h-4" /> Light Mode</>
+                    ) : (
+                      <><Moon className="w-4 h-4" /> Dark Mode</>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenStartModal();
+                  }}
+                  className="btn-primary flex-[2] py-3 text-sm"
+                >
+                  Start Practice →
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

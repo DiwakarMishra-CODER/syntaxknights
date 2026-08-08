@@ -25,7 +25,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenStartModal }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6 }}
-              className="text-4xl sm:text-5xl font-editorial text-white tracking-tight leading-tight"
+              className="text-4xl sm:text-5xl font-sans text-white tracking-tight leading-tight"
             >
               Your next interview <br />
               shouldn&apos;t be your <span className="italic text-[#10B981] font-normal">first real one.</span>

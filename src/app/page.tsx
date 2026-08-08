@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
@@ -14,26 +14,45 @@ import { Preloader } from "@/components/mockmate/Preloader";
 
 export default function Home() {
   const [startModalOpen, setStartModalOpen] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(false);
 
   const router = useRouter();
 
-  // Straight into the live interview. The calibration modal it used to open
-  // ends in a fake "Configuring Adaptive Session" screen and never reaches
-  // the API — the interview is planned from a real cohort record.
+  useEffect(() => {
+    // Only show preloader if not already shown in this session
+    const alreadyShown =
+      typeof window !== "undefined" &&
+      Boolean(
+        (window as any).__MOCKMATE_LOADED__ ||
+        sessionStorage.getItem("mockmate_preloader_shown") === "true"
+      );
+
+    if (!alreadyShown) {
+      setShowPreloader(true);
+    }
+  }, []);
+
   const handleStartPracticing = () => router.push("/dashboard");
 
   const handlePreloaderComplete = useCallback(() => {
-    setLoaded(true);
+    if (typeof window !== "undefined") {
+      (window as any).__MOCKMATE_LOADED__ = true;
+      try {
+        sessionStorage.setItem("mockmate_preloader_shown", "true");
+      } catch {
+        // ignore
+      }
+    }
+    setShowPreloader(false);
   }, []);
 
   return (
     <>
-      {/* Preloader overlay */}
-      {!loaded && <Preloader onComplete={handlePreloaderComplete} />}
+      {/* Preloader overlay - only rendered on the very first visit */}
+      {showPreloader && <Preloader onComplete={handlePreloaderComplete} />}
 
       {/* Main page content - always visible under preloader */}
-      <div className="relative min-h-screen overflow-x-hidden bg-[#050806] text-[#F5F7F4] selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">
+      <div className="relative min-h-screen overflow-x-hidden selection:bg-[#1FD16A]/25 selection:text-[#1FD16A]">
         {/* Navbar */}
         <Navbar onOpenStartModal={handleStartPracticing} />
 

@@ -18,7 +18,7 @@ export const WhyDifferent: React.FC = () => {
           <span className="text-xs font-mono text-[var(--accent-ice)] uppercase tracking-wider font-semibold">
             Contrast
           </span>
-          <h2 className="text-3xl sm:text-4xl font-editorial text-[var(--ink-primary)] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-sans text-[var(--ink-primary)] tracking-tight">
             Not another <span className="italic font-normal">question bank.</span>
           </h2>
         </motion.div>
@@ -40,7 +40,7 @@ export const WhyDifferent: React.FC = () => {
                     Static Prep
                   </span>
                 </div>
-                <h3 className="text-xl font-editorial text-[var(--ink-primary)]">
+                <h3 className="text-xl font-sans text-[var(--ink-primary)]">
                   Linear Question Lists
                 </h3>
                 <p className="text-[var(--ink-muted)] text-sm font-normal leading-relaxed">
@@ -69,7 +69,7 @@ export const WhyDifferent: React.FC = () => {
                     MockMate Engine
                   </span>
                 </div>
-                <h3 className="text-xl font-editorial text-[var(--ink-primary)]">
+                <h3 className="text-xl font-sans text-[var(--ink-primary)]">
                   Adaptive Dialogue
                 </h3>
                 <p className="text-[var(--ink-muted)] text-sm font-normal leading-relaxed">

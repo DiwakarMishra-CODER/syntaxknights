@@ -47,8 +47,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenStartModal }) => {
   return (
     <section
       ref={sectionRef}
-      className="relative z-10 overflow-hidden py-24 lg:py-32 text-[#F5F7F4]"
-      style={{ background: "linear-gradient(180deg, #0B120E 0%, #050806 100%)" }}
+      className="relative z-10 overflow-hidden py-24 lg:py-32 bg-gradient-to-b from-slate-100 to-slate-50 dark:from-[#0B120E] dark:to-[#050806]"
     >
       {/* Ambient effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -59,19 +58,19 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenStartModal }) => {
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
         <div ref={contentRef} className="mx-auto max-w-3xl space-y-8">
-          <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-[#051109] border border-[#1FD16A]/30 px-3.5 py-1.5 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
+          <div data-reveal className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#051109] border border-[#1FD16A]/30 px-3.5 py-1.5 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
             <Sparkles className="w-3.5 h-3.5 text-[#1FD16A]" />
-            <span className="text-[11px] font-pixel uppercase tracking-widest text-[#1FD16A]">
+            <span className="text-[11px] font-mono font-semibold tracking-widest uppercase text-[#1FD16A]">
               START PRACTICING TODAY
             </span>
           </div>
 
-          <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1.05] tracking-tight text-[#F5F7F4]">
-            <span className="font-sans font-light text-white">Every other mock interview guesses from your CV.</span><br />
+          <h2 data-reveal className="text-[clamp(2.5rem,5vw,4rem)] leading-[1.05] tracking-tight text-slate-900 dark:text-[#F5F7F4]">
+            <span className="font-sans font-light text-slate-900 dark:text-white">Every other mock interview guesses from your CV.</span><br />
             <span className="font-mono text-[#1FD16A] uppercase tracking-tighter font-semibold">This one knows.</span>
           </h2>
 
-          <p data-reveal className="text-base font-light leading-relaxed text-[#CFD7D0] sm:text-lg">
+          <p data-reveal className="text-base font-light leading-relaxed text-slate-600 dark:text-[#CFD7D0] sm:text-lg">
             Start with Tyler&apos;s recorded session or open the modal and choose
             another candidate. The point is the same: a real interview, not a
             generic practice flow.

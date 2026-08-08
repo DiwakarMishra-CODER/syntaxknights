@@ -7,11 +7,33 @@ interface PreloaderProps {
 }
 
 export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
+  // Check immediately if we've already displayed the preloader in this session
+  const [shouldRender, setShouldRender] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const alreadyShown =
+      (window as any).__MOCKMATE_LOADED__ ||
+      sessionStorage.getItem("mockmate_preloader_shown") === "true";
+    return !alreadyShown;
+  });
+
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"loading" | "reveal" | "done">("loading");
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!shouldRender) {
+      onComplete();
+      return;
+    }
+
+    // Mark as shown globally right away
+    (window as any).__MOCKMATE_LOADED__ = true;
+    try {
+      sessionStorage.setItem("mockmate_preloader_shown", "true");
+    } catch {
+      // ignore
+    }
+
     // Fast 1-second loading progress simulation
     const interval = setInterval(() => {
       setProgress((prev) => {
@@ -25,9 +47,11 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
     }, 30);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [shouldRender, onComplete]);
 
   useEffect(() => {
+    if (!shouldRender) return;
+
     if (progress >= 100 && phase === "loading") {
       const t1 = setTimeout(() => setPhase("reveal"), 150);
       const t2 = setTimeout(() => {
@@ -39,9 +63,9 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
         clearTimeout(t2);
       };
     }
-  }, [progress, phase, onComplete]);
+  }, [progress, phase, onComplete, shouldRender]);
 
-  if (phase === "done") return null;
+  if (!shouldRender || phase === "done") return null;
 
   return (
     <div
@@ -74,7 +98,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
             }}
           >
             <span
-              className="text-3xl font-bold font-editorial text-[#F5F7F4]"
+              className="text-3xl font-bold font-sans text-[#F5F7F4]"
               style={{
                 textShadow: `0 0 ${10 + progress * 0.3}px rgba(31,209,106,${progress * 0.006})`,
               }}
@@ -99,7 +123,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
         {/* Brand name */}
         <div className="text-center">
           <h1
-            className="text-2xl font-editorial font-bold tracking-tight text-[#F5F7F4]"
+            className="text-2xl font-sans font-bold tracking-tight text-[#F5F7F4]"
             style={{
               animation: "preloader-text-reveal 0.8s ease-out 0.2s both",
             }}

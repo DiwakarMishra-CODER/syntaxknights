@@ -46,7 +46,7 @@ export const FAQSection: React.FC = () => {
           <div className="pill-badge pill-badge-emerald">
             <span>FREQUENTLY ASKED QUESTIONS</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-editorial text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-sans text-white tracking-tight">
             Everything You Need <span className="italic text-[var(--accent-emerald)]">To Know</span>
           </h2>
         </div>
