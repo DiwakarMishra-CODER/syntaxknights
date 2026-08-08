@@ -1,43 +1,26 @@
 "use client";
 
-import { RUNG_LABEL } from "@/lib/depth";
-
 import {
-  HEIGHT,
-  PAD_L,
-  PAD_R,
-  PAD_Y,
-  penPosition,
-  ROW,
+  BANDS,
   segmentPath,
   segments,
-  traceStep,
+  traceHeight,
+  PAD_X,
+  PAD_Y,
+  penPosition,
+  COL_WIDTH,
   traceWidth,
   traceX,
   traceY,
-  type TracePoint,
 } from "./traceGeometry";
 
-export type { TracePoint };
-
-/**
- * The signature element: a chart-recorder strip plotting interview depth.
- *
- * This is the only thing on screen that SHOWS adaptation rather than
- * asserting it. A judge watching a chat window has to take our word for
- * it; a judge watching this line respond does not.
- *
- * The line is drawn in SEGMENTS, one per topic, with a gap between them.
- * `reanchorDepth` opens every new topic a rung back on purpose, so a single
- * continuous line rendered that reset as a fall — the chart's most dramatic
- * feature was a collapse that never happened.
- *
- * Geometry lives in traceGeometry.ts so it can be tested directly.
- */
-
-/** Room under the axis for question numbers and topic labels. */
-const AXIS_H = 34;
-const CHART_H = HEIGHT + AXIS_H;
+export interface TracePoint {
+  depth: number;
+  day: number | null;
+  measured: boolean;
+  /** The area this question was about. */
+  title?: string | null;
+}
 
 export function DepthTrace({
   points,
@@ -50,190 +33,168 @@ export function DepthTrace({
   activeIndex: number | null;
   onHoverIndex?: (i: number | null) => void;
 }) {
-  // One step for the whole chart: stretched for a short interview, tight for
-  // a long one. Everything positional derives from it.
-  const step = traceStep(points.length);
-  const width = traceWidth(points.length);
-  const x = (i: number) => traceX(i, step);
+  const width = traceWidth();
+  const height = traceHeight(points.length);
+  const x = traceX;
   const y = traceY;
   const last = points.length - 1;
-  const { x: penX, y: penY } = penPosition(points, thinking, step);
+  const { x: penX, y: penY } = penPosition(points, thinking);
+
+  // One run per topic — a new topic opens a rung lower by design, so one
+  // continuous line draws that reset as the candidate collapsing.
   const segs = segments(points);
 
   return (
-    <div className="overflow-x-auto" aria-label="Interview depth over time">
-      <svg
-        width={width}
-        height={CHART_H}
-        viewBox={`0 0 ${width} ${CHART_H}`}
-        className="block"
-        role="img"
-      >
-        <title>{`Depth trace: ${points.map((p) => p.depth).join(", ") || "no measurements yet"}`}</title>
-
-        {/* Gridlines are muted hard — the trace is the subject, not the paper. */}
-        {RUNG_LABEL.map((label, i) => {
+    <div className="w-full overflow-hidden flex flex-col items-center">
+      {/* Top Labels - 1D Representation */}
+      {/* Positioned from the SAME geometry as the plot. As a flex row these
+          drifted: five equal cells centre at 54/110/166/222/278 while the
+          points sit at 26/96/166/236/306, so only the middle column lined up
+          and every label pointed at the wrong column. */}
+      <div className="relative mb-2 h-[26px] w-full" style={{ maxWidth: width }}>
+        {BANDS.map((label, i) => {
           const depth = i + 1;
+          const isCurrent = points.length > 0 && Math.round(points[last].depth) === depth;
           return (
-            <g key={label}>
-              <line
-                x1={PAD_L}
-                x2={width - PAD_R}
-                y1={y(depth)}
-                y2={y(depth)}
-                stroke="var(--color-rule)"
-                strokeOpacity={depth === 1 || depth === 5 ? 0.7 : 0.35}
-                strokeWidth={1}
-                strokeDasharray={depth === 1 || depth === 5 ? undefined : "1 7"}
-              />
-              <text
-                x={PAD_L - 10}
-                y={y(depth) + 3.5}
-                textAnchor="end"
-                className="font-apparatus"
-                fontSize={9.5}
-                letterSpacing="0.04em"
-                fill="var(--color-graphite-35)"
-              >
-                {depth} {label}
-              </text>
-            </g>
+            <div
+              key={label}
+              className={`absolute text-center font-sans text-[8.5px] font-semibold uppercase leading-[1.25] tracking-[0.06em] transition-colors duration-500 ${
+                isCurrent ? "text-[#16A34A]" : "text-[#7E8B84]"
+              }`}
+              style={{
+                left: x(depth),
+                width: COL_WIDTH,
+                transform: "translateX(-50%)",
+              }}
+            >
+              {label}
+            </div>
           );
         })}
+      </div>
 
-        {/* The turn under the cursor, marked on the paper. */}
-        {activeIndex !== null && points[activeIndex] && (
-          <line
-            x1={x(activeIndex)}
-            x2={x(activeIndex)}
-            y1={PAD_Y - 6}
-            y2={HEIGHT - PAD_Y + 6}
-            stroke="var(--color-graphite-35)"
-            strokeWidth={1}
-          />
-        )}
-
-        {segs.map((seg) => {
-          const d = segmentPath(seg, step);
-          if (!d) return null;
-          // The newest segment keeps the drawing animation; earlier ones are
-          // settled and drawn at full weight so they stay legible on a
-          // shared screen.
-          const isHead = seg.end === last && points.length > 1;
-          return (
-            <path
-              key={`seg-${seg.start}`}
-              d={d}
-              className={isHead ? "trace-draw" : undefined}
-              style={
-                isHead ? ({ ["--dash" as string]: "400" } as React.CSSProperties) : undefined
-              }
-              fill="none"
-              stroke="var(--color-trace)"
-              strokeWidth={3}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          );
-        })}
-
-        {points.map((p, i) => (
-          <circle
-            key={i}
-            cx={x(i)}
-            cy={y(p.depth)}
-            r={i === last ? 4.5 : 3}
-            fill={i === last && p.measured ? "var(--color-trace)" : "var(--color-paper)"}
-            stroke="var(--color-trace)"
-            strokeOpacity={p.measured ? 1 : 0.4}
-            strokeWidth={2}
-            strokeDasharray={p.measured ? undefined : "1.5 1.5"}
-            onMouseEnter={() => onHoverIndex?.(i)}
-            onMouseLeave={() => onHoverIndex?.(null)}
-            className="cursor-default"
+      <div className="relative w-full flex justify-center">
+        {/* We fix the height so it doesn't jump too much, or let it scroll if long */}
+        <div className="w-full overflow-hidden" style={{ height: Math.max(height, 80) }}>
+          <svg
+            width={width}
+            height={Math.max(height, 80)}
+            viewBox={`0 0 ${width} ${Math.max(height, 80)}`}
+            className="block"
+            role="img"
           >
             <title>
-              {p.measured
-                ? `Question ${i + 1}: depth ${p.depth} of 5`
-                : `Question ${i + 1}: depth ${p.depth} of 5 — planned, not yet measured`}
+              {`Depth trace: ${points.map((p) => p.depth).join(", ") || "no measurements yet"}`}
             </title>
-          </circle>
-        ))}
 
-        {/* Question numbers, so a dot can be matched to what was said. */}
-        {points.map((_, i) => (
-          <text
-            key={`n-${i}`}
-            x={x(i)}
-            y={HEIGHT + 12}
-            textAnchor="middle"
-            className="font-apparatus"
-            fontSize={9}
-            fill={activeIndex === i ? "var(--color-graphite)" : "var(--color-graphite-35)"}
-          >
-            {i + 1}
-          </text>
-        ))}
+            {/* Vertical grid lines for each depth band */}
+            {BANDS.map((_, i) => {
+              const depth = i + 1;
+              return (
+                <line
+                  key={`grid-${depth}`}
+                  x1={x(depth)}
+                  x2={x(depth)}
+                  y1={PAD_Y}
+                  y2={Math.max(height, 80) - PAD_Y}
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth={1}
+                  strokeDasharray="2 4"
+                />
+              );
+            })}
 
-        {/* One label per topic, centred under its own segment. */}
-        {segs.map((seg) => {
-          if (!seg.title) return null;
-          const mid = (x(seg.start) + x(seg.end)) / 2;
-          const room = Math.max(x(seg.end) - x(seg.start) + 30, 46);
-          return (
-            <text
-              key={`t-${seg.start}`}
-              x={mid}
-              y={HEIGHT + 26}
-              textAnchor="middle"
-              className="font-apparatus"
-              fontSize={9}
-              letterSpacing="0.03em"
-              fill="var(--color-graphite-60)"
+            {/* Horizontal timeline cursor */}
+            {activeIndex !== null && points[activeIndex] && (
+              <line
+                x1={PAD_X - 20}
+                x2={width - PAD_X + 20}
+                y1={y(activeIndex)}
+                y2={y(activeIndex)}
+                stroke="#7E8B84"
+                strokeWidth={1}
+                strokeDasharray="2 2"
+              />
+            )}
+
+            {segs.map((seg) => {
+              const d = segmentPath(seg);
+              if (!d) return null;
+              const isHead = seg.end === last && points.length > 1;
+              return (
+                <path
+                  key={`seg-${seg.start}`}
+                  d={d}
+                  className={isHead ? "trace-draw" : undefined}
+                  style={
+                    isHead
+                      ? ({ ["--dash" as string]: "400" } as React.CSSProperties)
+                      : undefined
+                  }
+                  fill="none"
+                  stroke={isHead ? "#16A34A" : "#7E8B84"}
+                  strokeOpacity={isHead ? 1 : 0.45}
+                  strokeWidth={isHead ? 2 : 1.75}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              );
+            })}
+
+            {points.map((p, i) => {
+              const isActive = activeIndex === i;
+              const isLast = i === last;
+              return (
+                <circle
+                  key={i}
+                  cx={x(p.depth)}
+                  cy={y(i)}
+                  r={isLast ? 4 : isActive ? 3 : 2}
+                  /* The opening line's depth is PLANNED by the blueprint,
+                     not measured from an answer. */
+                  fill={
+                    (isLast || isActive) && p.measured
+                      ? "#16A34A"
+                      : "rgba(255,255,255,0.05)"
+                  }
+                  stroke={isLast || isActive ? "#16A34A" : "#7E8B84"}
+                  strokeOpacity={p.measured ? (isLast || isActive ? 1 : 0.6) : 0.35}
+                  strokeDasharray={p.measured ? undefined : "1.5 1.5"}
+                  strokeWidth={1.5}
+                  onMouseEnter={() => onHoverIndex?.(i)}
+                  onMouseLeave={() => onHoverIndex?.(null)}
+                  className="cursor-pointer transition-all duration-300"
+                />
+              );
+            })}
+
+            {/* The pen: hovering while a measurement settles, resting otherwise. */}
+            <g
+              transform={`translate(${penX}, ${penY})`}
+              className={thinking ? "pen-drift" : undefined}
             >
-              {truncate(topicLabel(seg.title), Math.floor(room / 5.2))}
-            </text>
-          );
-        })}
-
-        {/* The pen: hovering while a measurement settles, resting otherwise. */}
-        <g
-          transform={`translate(${penX}, ${penY})`}
-          className={thinking ? "pen-drift" : undefined}
-        >
-          {thinking && (
-            <line
-              x1={0}
-              x2={0}
-              y1={-ROW * 5}
-              y2={ROW * 5}
-              stroke="var(--color-trace)"
-              strokeOpacity={0.14}
-              strokeWidth={1}
-            />
-          )}
-          <circle
-            r={thinking ? 3.5 : 0}
-            fill="none"
-            stroke="var(--color-trace)"
-            strokeWidth={1.5}
-          />
-        </g>
-      </svg>
+              {thinking && (
+                <line
+                  x1={-width}
+                  x2={width}
+                  y1={0}
+                  y2={0}
+                  stroke="#16A34A"
+                  strokeOpacity={0.2}
+                  strokeWidth={1}
+                  strokeDasharray="4 4"
+                />
+              )}
+              <circle
+                r={thinking ? 4.5 : 0}
+                fill="none"
+                stroke="#16A34A"
+                strokeWidth={1.5}
+              />
+            </g>
+          </svg>
+        </div>
+      </div>
     </div>
   );
-}
-
-/**
- * "The Retrieval & Matching Engine" truncated to "The Retrieval & M…" — the
- * leading article ate the room the distinguishing words needed.
- */
-function topicLabel(title: string): string {
-  return title.replace(/^The\s+/i, "");
-}
-
-/** SVG has no text-overflow, so the ellipsis has to be computed. */
-function truncate(text: string, max: number): string {
-  if (max < 4) return "";
-  return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
 }

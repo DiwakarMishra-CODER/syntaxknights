@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Composer } from "./Composer";
-import { Conversation, type Entry } from "./Conversation";
-import { Panel, type PanelData } from "./Panel";
+import { type Entry } from "./ConversationTranscript";
+import { JourneyPanel } from "./JourneyPanel";
+import { MainInterview } from "./MainInterview";
+import { type PanelData } from "./Panel";
+import { SignalPanel } from "./SignalPanel";
 
 /** The deliberate beat between acknowledgement and question. */
 const BEAT_MS = 600;
@@ -20,6 +22,18 @@ const BEAT_MS = 600;
  * is the safe failure.
  */
 function splitReply(reply: string): { ack: string | null; question: string } {
+  // The server joins reaction and question with a blank line, so normally
+  // there is nothing to guess.
+  const seam = reply.indexOf("\n\n");
+  if (seam > 0) {
+    const ack = reply.slice(0, seam).trim();
+    const question = reply.slice(seam + 2).trim();
+    if (ack && question) return { ack, question };
+  }
+
+  // Sessions recorded before the seam existed, where the two were joined
+  // with a space. Deliberately conservative: a short leading sentence only,
+  // because everything longer is more likely to be part of the question.
   const m = reply.match(/^([^.?!]{1,28}[.!])\s+([\s\S]+)$/);
   if (!m) return { ack: null, question: reply };
   const words = m[1].trim().split(/\s+/).length;
@@ -191,100 +205,83 @@ export function InterviewScreen({
   }, [candidateId, send, sessionId, router]);
 
   return (
-    <main className="interview-root flex h-screen overflow-hidden">
-      <div className="paper-grid flex min-h-0 min-w-0 flex-1 flex-col bg-paper">
-        {awaitingStart ? (
-          <div className="flex flex-1 items-center justify-center px-10">
-            <div className="max-w-[30rem]">
-              <p className="font-apparatus text-[10.5px] uppercase tracking-[0.14em] text-graphite-35">
-                Ready when you are
-              </p>
-              <p className="mt-4 font-question text-[19px] font-light leading-[1.6] text-graphite">
-                You are interviewing as {candidateName}. The questions are
-                planned from their own 31 days, and get harder or easier
-                depending on how you answer.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setAwaitingStart(false);
-                  void send({ candidate: candidateId });
-                }}
-                className="font-apparatus mt-6 border border-graphite px-5 py-[9px] text-[10.5px] uppercase tracking-[0.12em] text-graphite transition-colors hover:bg-graphite hover:text-paper"
-              >
-                Begin interview →
-              </button>
-              <p className="font-apparatus mt-4 text-[10.5px] leading-[1.6] text-graphite-35">
-                Nothing starts until you click. You can end it at any point and
-                still get your feedback.
-              </p>
-            </div>
-          </div>
-        ) : (
-          entries.length === 0 &&
-          !thinking && (
-            <div className="flex flex-1 items-center justify-center">
-              <p className="font-apparatus text-[10.5px] uppercase tracking-[0.14em] text-graphite-35">
-                opening
-              </p>
-            </div>
-          )
-        )}
+    <main className="relative flex h-screen gap-4 overflow-hidden bg-[#050806] p-4 text-[#F5F7F4]">
+      {/* Their ambient glows. */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-[-10%] top-[-20%] h-[50%] w-[50%] rounded-full bg-[#1FD16A] opacity-[0.03] mix-blend-screen blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] h-[50%] w-[50%] rounded-full bg-[#1FD16A] opacity-[0.03] mix-blend-screen blur-[120px]" />
+      </div>
 
-        {/* Once the report is up it becomes the primary scroll region; the
-            transcript keeps its own and shrinks rather than fighting it. */}
-        <div className="flex min-h-0 flex-1 flex-col">
-          <Conversation
+      {awaitingStart ? (
+        /* Nothing has been spent yet. Loading the page used to fire the
+           planner, which is on the model capped at 20 requests per DAY per
+           key -- four of seven sessions in one afternoon were opened and
+           never answered. */
+        <div className="relative z-10 flex flex-1 items-center justify-center px-8">
+          <div className="max-w-[34rem] rounded-2xl border border-white/10 bg-white/5 p-10 shadow-2xl backdrop-blur-xl">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7E8B84]">
+              Ready when you are
+            </p>
+            <p className="mt-5 font-sans text-[19px] leading-[1.6] text-[#F5F7F4]">
+              You are interviewing as {candidateName}. The questions are
+              planned from their own 31 days, and get harder or easier
+              depending on how you answer.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setAwaitingStart(false);
+                void send({ candidate: candidateId });
+              }}
+              className="mt-8 rounded-full bg-[#1FD16A] px-6 py-3 font-sans text-[13px] font-semibold text-[#050806] transition-opacity hover:opacity-90"
+            >
+              Begin interview →
+            </button>
+            <p className="mt-5 font-sans text-[11px] leading-[1.6] text-[#7E8B84]">
+              Nothing starts until you click. You can end it at any point and
+              still get your feedback.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <JourneyPanel
+            data={panel}
+            thinking={thinking}
+            activeIndex={activeIndex}
+            onHoverIndex={setActiveIndex}
+          />
+          <MainInterview
+            entries={entries}
+            thinking={thinking}
+            panelData={panel}
+            onSubmit={(text) => void send({ message: text }, text)}
+            done={done}
+            status={thinking ? "measuring…" : status}
+            activeIndex={activeIndex}
+            onHoverIndex={setActiveIndex}
+            /* Their Exit was a stub: it fabricated an empty feedback object
+               and showed a blank screen. This writes the closing turn, marks
+               the session done and routes to the real report. */
+            onExit={() => void endInterview()}
+          />
+          <SignalPanel
+            data={panel}
             entries={entries}
             thinking={thinking}
             activeIndex={activeIndex}
             onHoverIndex={setActiveIndex}
           />
+        </>
+      )}
+
+      {ending && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#050806]/80 backdrop-blur-sm">
+          <p className="font-sans text-[13px] text-[#7E8B84]">
+            writing your report…
+          </p>
         </div>
-
-        {awaitingStart ? null : done ? (
-          <div className="border-t border-rule bg-paper-raised">
-            <div className="mx-auto flex max-w-[46rem] items-center justify-between gap-4 px-10 py-6">
-              <p className="font-apparatus text-[11.5px] text-graphite-60">
-                This interview is finished.
-              </p>
-              <a
-                href={`/report/${sessionId}`}
-                className="font-apparatus border border-graphite px-4 py-[7px] text-[10.5px] uppercase tracking-[0.12em] text-graphite transition-colors hover:bg-graphite hover:text-paper"
-              >
-                Read your report →
-              </a>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <Composer
-              onSubmit={(text) => void send({ message: text }, text)}
-              disabled={thinking || done}
-              status={thinking ? "measuring…" : status}
-            />
-            <div className="border-t border-rule bg-paper-raised">
-              <div className="mx-auto flex max-w-[46rem] justify-end px-10 pb-4">
-                <button
-                  type="button"
-                  onClick={() => void endInterview()}
-                  disabled={thinking || ending || done}
-                  className="font-apparatus text-[10.5px] uppercase tracking-[0.12em] text-graphite-35 underline underline-offset-4 transition-colors hover:text-graphite disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
-                >
-                  {ending ? "writing your report…" : "End interview"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <Panel
-        data={panel}
-        thinking={thinking}
-        activeIndex={activeIndex}
-        onHoverIndex={setActiveIndex}
-      />
+      )}
     </main>
   );
 }

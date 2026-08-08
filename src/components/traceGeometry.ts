@@ -1,77 +1,50 @@
-/**
- * Pure geometry for the depth trace, kept out of the component so it can
- * be tested directly rather than by asserting on rendered markup.
- */
+import { RUNG_LABEL } from "@/lib/depth";
 
-export interface TracePoint {
-  depth: number;
-  day: number | null;
-  measured: boolean;
-  /** The area this question was about, for the segment label. */
-  title?: string | null;
+import { TracePoint } from "./DepthTrace";
+
+/**
+ * The axis, in words a visitor can read cold.
+ *
+ * These were hardcoded here as ["Recall","Explain","Apply","Analyze",
+ * "Redesign"] and had drifted from the ladder the interview actually climbs:
+ * rung 2 is "application", 3 is "tradeoff", 4 is "edge case". The chart named
+ * three things the interview never asks. Sourced from lib/depth now, which is
+ * where the prompt gets its ladder too, so they cannot drift again.
+ */
+export const BANDS = RUNG_LABEL;
+
+/**
+ * Sized so traceWidth() fits the side panel without scaling, and so the
+ * edge labels -- centred on their columns -- do not hang off either end.
+ * Keep PAD_X >= COL_WIDTH / 2.
+ */
+export const PAD_X = 36;
+export const PAD_Y = 30;
+export const COL_WIDTH = 65;
+export const ROW_HEIGHT = 40;
+
+export const clampDepth = (d: number) => Math.min(Math.max(Math.round(d), 1), 5);
+
+// Depth is X (1 to 5)
+export const traceX = (depth: number) => PAD_X + COL_WIDTH * (clampDepth(depth) - 1);
+// Time is Y (0 to N)
+export const traceY = (i: number) => PAD_Y + ROW_HEIGHT * i;
+
+export function traceHeight(pointCount: number): number {
+  return PAD_Y * 2 + ROW_HEIGHT * Math.max(pointCount - 1, 0);
 }
 
-// One ladder, one source: the trace legend and the interviewer prompt are
-// literally the same five strings, so they cannot drift apart.
-import { clampDepth, DEPTH_BANDS } from "@/lib/depth";
-
-export { DEPTH_BANDS as BANDS, clampDepth };
-
-/**
- * Room for the y-axis labels, plus breathing space.
- *
- * "2 how you used it" is the widest. At exactly its own width the label ends
- * ~7px from the panel edge, which reads as clipped even though it is not —
- * every other block in the panel is inset 20px.
- */
-export const PAD_L = 116;
-export const PAD_R = 22;
-export const PAD_Y = 16;
-export const ROW = 30;
-export const HEIGHT = PAD_Y * 2 + ROW * 4;
-/** Drawable width of the panel column the chart sits in. */
-export const PANEL_W = 458;
-/** Tight enough for a long interview to still fit before it scrolls. */
-export const STEP_MIN = 34;
-/** Loose enough that three questions do not huddle in the left third. */
-export const STEP_MAX = 120;
-
-/**
- * Horizontal room per question, fitted to how many there are.
- *
- * A fixed step got this wrong at both ends: reserving ten slots left seven
- * questions in two thirds of the width, and fitting exactly left three
- * questions crammed into the left third of a 460px panel with dead space
- * beside them. The step stretches for a short interview and bottoms out at
- * STEP_MIN for a long one, which then scrolls horizontally.
- */
-export function traceStep(pointCount: number): number {
-  const available = PANEL_W - PAD_L - PAD_R;
-  // count + 0.5, not count: traceX offsets the first point by half a step,
-  // so dividing by the count alone overshoots by that half and pushes the
-  // chart just past the panel edge — a horizontal scrollbar for nothing.
-  const raw = available / (Math.max(pointCount, 1) + 0.5);
-  return Math.max(STEP_MIN, Math.min(STEP_MAX, raw));
-}
-
-/** Depth 5 sits at the top of the paper, depth 1 at the bottom. */
-export const traceY = (depth: number) => PAD_Y + ROW * (5 - clampDepth(depth));
-export const traceX = (i: number, step: number) => PAD_L + step * i + step / 2;
-
-export function traceWidth(pointCount: number): number {
-  const step = traceStep(pointCount);
-  // Never narrower than the panel, so the gridlines reach both edges and the
-  // chart does not read as a half-drawn thing floating in white space.
-  return Math.max(PANEL_W, PAD_L + PAD_R + step * (pointCount + 0.5));
+export function traceWidth(): number {
+  return PAD_X * 2 + COL_WIDTH * 4;
 }
 
 /**
  * Runs of consecutive questions on the same topic.
  *
- * The line MUST break between them. `reanchorDepth` opens every new topic one
- * rung back by design, so a bridged line renders a deliberate reset as a
- * fall — and the legend then reads it out as struggling. Segmenting is what
- * makes the caption true.
+ * The line MUST break between them. A new topic deliberately opens one rung
+ * lower, so a bridged line renders that reset as the candidate collapsing,
+ * and any caption then reads it out as struggling. Orientation-independent:
+ * this groups by topic; the path builder decides where the points sit.
  *
  * A null day (the closing line) never joins a run.
  */
@@ -101,18 +74,31 @@ export function segments(points: TracePoint[]): TraceSegment[] {
   return out;
 }
 
-/** The path for one segment. A single-point segment draws no line. */
-export function segmentPath(seg: TraceSegment, step: number): string {
+/** One segment, vertical: depth across, question index down. */
+export function segmentPath(seg: TraceSegment): string {
   if (seg.points.length < 2) return "";
   return seg.points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${traceX(seg.start + i, step)},${traceY(p.depth)}`)
+    .map((p, i) => `${i === 0 ? "M" : "L"}${traceX(p.depth)},${traceY(seg.start + i)}`)
     .join(" ");
 }
 
-export function penPosition(points: TracePoint[], thinking: boolean, step: number) {
+export function settledPath(points: TracePoint[]): string {
+  return points
+    .slice(0, -1)
+    .map((p, i) => `${i === 0 ? "M" : "L"}${traceX(p.depth)},${traceY(i)}`)
+    .join(" ");
+}
+
+export function headPath(points: TracePoint[]): string {
+  if (points.length < 2) return "";
+  const last = points.length - 1;
+  return `M${traceX(points[last - 1].depth)},${traceY(last - 1)} L${traceX(points[last].depth)},${traceY(last)}`;
+}
+
+export function penPosition(points: TracePoint[], thinking: boolean) {
   const last = points.length - 1;
   return {
-    x: thinking ? traceX(points.length, step) : traceX(Math.max(last, 0), step),
-    y: points.length ? traceY(points[last].depth) : traceY(2),
+    x: points.length ? traceX(points[last].depth) : traceX(2),
+    y: thinking ? traceY(points.length) : traceY(Math.max(last, 0)),
   };
 }

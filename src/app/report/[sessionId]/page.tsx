@@ -139,7 +139,7 @@ export default async function ReportPage({
           Practice again →
         </Link>
         <Link
-          href="/candidates"
+          href="/dashboard"
           className="font-apparatus text-[10.5px] uppercase tracking-[0.12em] text-graphite-35 underline underline-offset-4 transition-colors hover:text-graphite"
         >
           Interview someone else

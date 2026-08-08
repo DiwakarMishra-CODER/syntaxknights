@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
 import { AdaptiveFlow } from "@/components/landing/AdaptiveFlow";
@@ -15,9 +16,12 @@ export default function Home() {
   const [startModalOpen, setStartModalOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const handleStartPracticing = () => {
-    setStartModalOpen(true);
-  };
+  const router = useRouter();
+
+  // Straight into the live interview. The calibration modal it used to open
+  // ends in a fake "Configuring Adaptive Session" screen and never reaches
+  // the API — the interview is planned from a real cohort record.
+  const handleStartPracticing = () => router.push("/dashboard");
 
   const handlePreloaderComplete = useCallback(() => {
     setLoaded(true);

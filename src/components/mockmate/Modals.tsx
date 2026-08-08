@@ -29,11 +29,11 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
     // to be mapped to one hardcoded candidate id here, which silently decided
     // who you were; every graduate has a different 31-day record and the
     // interview is planned from it, so that choice belongs to the person
-    // making it.
+    // making it. The dashboard is the roster.
     setTimeout(() => {
       setIsSubmitted(false);
       onClose();
-      router.push("/candidates");
+      router.push("/dashboard");
     }, 1800);
   };
 

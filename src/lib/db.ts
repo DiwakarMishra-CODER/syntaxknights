@@ -141,6 +141,15 @@ export async function findCachedBlueprint(
       .select("blueprint")
       .eq("candidate->member->>id", candidateId)
       .not("blueprint", "is", null)
+      // ONLY sessions that were really planned. Without this the cache
+      // learns from test fixtures: scripts/conformance.ts creates a session
+      // for CAND-017 on every run with a placeholder blueprint whose
+      // openingLine is literally "o", and being the most recent row it won
+      // -- so a real interview with Tyler opened with the letter "o".
+      // A whitelist, not a blacklist: `ui-` is minted by /interview and
+      // `warm-` by scripts/warm-blueprints.ts. Any new fixture prefix is
+      // ignored by default rather than silently trusted.
+      .or("id.like.ui-%,id.like.warm-%")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

@@ -243,8 +243,17 @@ async function continueSession(sessionId: string, rawMessage: unknown) {
     );
   }
 
-  const reaction = directive.omitReaction ? "" : (decision.reaction ?? "").trim();
-  const text = [reaction, decision.question].filter(Boolean).join(" ").trim();
+  // The "vary it, stay quiet sometimes" rule is computed BEFORE the answer
+  // is read, so it cannot know the reply will turn out to be a non-answer.
+  // Acknowledging one of those is not optional -- silence there is exactly
+  // what made this read as a form -- so it outranks the variety rule.
+  const mustAcknowledge = decision.substantive === false;
+  const reaction =
+    directive.omitReaction && !mustAcknowledge ? "" : (decision.reaction ?? "").trim();
+  // Joined with a blank line, not a space, so the client can separate the
+  // reaction from the question exactly instead of guessing with a regex.
+  // `reply` stays a plain string -- the frozen contract is untouched.
+  const text = [reaction, decision.question].filter(Boolean).join("\n\n").trim();
 
   const ending = shouldEnd(state, decision);
   const recorded = recordTurn(state, decision, blueprint, directive);

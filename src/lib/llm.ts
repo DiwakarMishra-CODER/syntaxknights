@@ -57,10 +57,15 @@ export const ROLE_CONFIG: Record<Role, RoleConfig> = {
     thinkingLevel: "medium",
     maxOutputTokens: 8192,
   },
-  // 1 call per interview.
+  // 1 call per interview, and the slowest call the app makes: measured at
+  // 18-63s on "high", which is the whole of a cold start. The plan is a
+  // selection from the candidate's own mission record, not a reasoning
+  // problem, so the extra thinking bought latency rather than quality.
+  // maxOutputTokens stays well above the observed thought+output peak --
+  // that ceiling is a truncation guard, not a cost.
   planner: {
     model: "gemini-3.6-flash",
-    thinkingLevel: "high",
+    thinkingLevel: "medium",
     maxOutputTokens: 16384,
   },
   // 1 call per interview.
