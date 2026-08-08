@@ -50,8 +50,8 @@ export function DepthTrace({
           return (
             <div
               key={label}
-              className={`font-apparatus text-[10.5px] uppercase tracking-widest transition-colors duration-500 ${
-                isCurrent ? "text-accent-emerald font-bold" : "text-graphite-35"
+              className={`font-sans font-semibold text-[10px] uppercase tracking-widest transition-colors duration-500 ${
+                isCurrent ? "text-[#16A34A]" : "text-[#7E8B84]"
               }`}
               style={{ flex: 1, textAlign: "center" }}
             >
@@ -85,7 +85,7 @@ export function DepthTrace({
                   x2={x(depth)}
                   y1={PAD_Y}
                   y2={Math.max(height, 80) - PAD_Y}
-                  stroke="var(--color-rule)"
+                  stroke="rgba(255,255,255,0.1)"
                   strokeWidth={1}
                   strokeDasharray="2 4"
                 />
@@ -99,7 +99,7 @@ export function DepthTrace({
                 x2={width - PAD_X + 20}
                 y1={y(activeIndex)}
                 y2={y(activeIndex)}
-                stroke="var(--color-graphite-35)"
+                stroke="#7E8B84"
                 strokeWidth={1}
                 strokeDasharray="2 2"
               />
@@ -109,7 +109,7 @@ export function DepthTrace({
               <path
                 d={settledPath}
                 fill="none"
-                stroke="var(--color-trace)"
+                stroke="#7E8B84"
                 strokeOpacity={0.45}
                 strokeWidth={1.75}
                 strokeLinejoin="round"
@@ -124,7 +124,7 @@ export function DepthTrace({
                 className="trace-draw"
                 style={{ ["--dash" as string]: "200" }}
                 fill="none"
-                stroke="var(--color-accent-emerald)"
+                stroke="#16A34A"
                 strokeWidth={2}
                 strokeLinecap="round"
               />
@@ -139,8 +139,8 @@ export function DepthTrace({
                   cx={x(p.depth)}
                   cy={y(i)}
                   r={isLast ? 4 : isActive ? 3 : 2}
-                  fill={isLast || isActive ? "var(--color-accent-emerald)" : "var(--color-paper)"}
-                  stroke={isLast || isActive ? "var(--color-accent-emerald)" : "var(--color-trace)"}
+                  fill={isLast || isActive ? "#16A34A" : "rgba(255,255,255,0.05)"}
+                  stroke={isLast || isActive ? "#16A34A" : "#7E8B84"}
                   strokeOpacity={isLast || isActive ? 1 : 0.6}
                   strokeWidth={1.5}
                   onMouseEnter={() => onHoverIndex?.(i)}
@@ -161,7 +161,7 @@ export function DepthTrace({
                   x2={width}
                   y1={0}
                   y2={0}
-                  stroke="var(--color-accent-emerald)"
+                  stroke="#16A34A"
                   strokeOpacity={0.2}
                   strokeWidth={1}
                   strokeDasharray="4 4"
@@ -170,7 +170,7 @@ export function DepthTrace({
               <circle
                 r={thinking ? 4.5 : 0}
                 fill="none"
-                stroke="var(--color-accent-emerald)"
+                stroke="#16A34A"
                 strokeWidth={1.5}
               />
             </g>

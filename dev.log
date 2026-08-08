@@ -1,0 +1,17 @@
+
+> ai-interview-agent@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.23
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.33:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1146ms
+ ✓ Compiled /dashboard in 376ms (621 modules)
+ GET /dashboard 200 in 589ms
+ ✓ Compiled /interview in 294ms (668 modules)
+ GET /interview?candidateId=CAND-001 200 in 411ms
+ ✓ Compiled in 356ms (281 modules)
+ ✓ Compiled in 148ms (282 modules)
