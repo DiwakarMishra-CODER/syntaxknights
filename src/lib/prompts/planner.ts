@@ -55,7 +55,7 @@ ARC.
 warmup lets them get comfortable on something they did well. build goes deeper into the system. stress applies real pressure on the strongest material. land closes on something they can end feeling good about. The four numbers must sum to targetQuestions.
 
 OPENING LINE.
-The first thing the candidate reads. Warm, specific to them, and it should name something real they built. No "Tell me about yourself."`;
+The first thing the candidate reads. Warm, specific to them, and it should name something real they built. NEVER mention day numbers (e.g. do NOT say "Day 10" or "on Day 22") — say "your retrieval engine", "your healthcare chatbot", "your agent pipeline". No "Tell me about yourself."`;
 
 export const PLANNER_SCHEMA = {
   type: "object",

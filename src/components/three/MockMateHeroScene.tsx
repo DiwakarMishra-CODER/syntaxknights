@@ -310,7 +310,7 @@ export const MockMateHeroScene: React.FC = () => {
             <div className="glass-card-green px-6 py-4 rounded-xl flex items-center gap-3">
               <span className="text-[#1FD16A]">📚</span>
               <div className="flex flex-col">
-                <span className="text-sm font-mono text-[10px] font-semibold tracking-widest uppercase tracking-widest text-slate-900 dark:text-[#F5F7F4]">31-DAY AI COHORT</span>
+                 <span className="text-sm font-display tracking-widest text-[#F5F7F4]">31-DAY AI COHORT</span>
                 <span className="text-[10px] font-mono text-[#7E8B84]">Extracting Missions & Signals</span>
               </div>
             </div>
@@ -455,7 +455,7 @@ export const MockMateHeroScene: React.FC = () => {
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
             </div>
-            <h2 className="text-3xl text-center font-mono text-[10px] font-semibold tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r from-slate-800 dark:from-white to-[#73F0A0] tracking-wider drop-shadow-lg mb-2">
+            <h2 className="text-3xl text-center font-display text-transparent bg-clip-text bg-gradient-to-r from-white to-[#73F0A0] tracking-wider drop-shadow-lg mb-2">
               INTERVIEW READY
             </h2>
             <div className="mt-2 flex gap-2 w-full justify-center">
