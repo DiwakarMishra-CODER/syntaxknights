@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 
 import { type Entry } from "./ConversationTranscript";
 import { MainInterview } from "./MainInterview";
 import { type PanelData } from "./Panel";
 import { sound } from "@/lib/sound";
+import { ProctorEngine } from "./ProctorEngine";
 
 function formatInterviewerReply(reply: string): string {
   const seam = reply.indexOf("\n\n");
@@ -169,13 +170,12 @@ export function InterviewScreen({
     })();
   }, [candidateId, send, sessionId, router]);
 
+
   return (
-    <main className="relative flex h-screen w-full flex-col justify-between overflow-hidden bg-[var(--app-bg)] text-[var(--app-fg)]">
-      {/* Background ambient glows blending seamlessly */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-[-10%] h-[700px] w-[1000px] -translate-x-1/2 rounded-full bg-[var(--app-accent)] opacity-[0.05] mix-blend-screen blur-[150px]" />
-        <div className="absolute bottom-[-15%] right-[-10%] h-[600px] w-[600px] rounded-full bg-[var(--app-accent)] opacity-[0.04] mix-blend-screen blur-[130px]" />
-      </div>
+    <main className="relative flex h-screen w-full flex-col justify-between overflow-hidden bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans selection:bg-[#1FD16A]/25 selection:text-[#1FD16A] transition-colors duration-300">
+      <ProctorEngine onForceEnd={endInterview} />
+      
+
 
       {/* Full Bleed Seamless Chat Interface */}
       <div className="relative z-10 flex-1 flex flex-col w-full h-screen">
@@ -199,10 +199,10 @@ export function InterviewScreen({
       </div>
 
       {ending && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--app-overlay)] backdrop-blur-lg">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50/80 dark:bg-[#050806]/80 backdrop-blur-lg">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-9 w-9 rounded-full border-2 border-[var(--app-accent)] border-t-transparent animate-spin" />
-            <p className="font-sans text-sm font-medium text-[var(--app-muted)]">
+            <div className="h-9 w-9 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+            <p className="font-sans text-sm font-medium text-slate-500">
               Generating technical interview report...
             </p>
           </div>

@@ -19,7 +19,9 @@ import {
   Award,
   Calendar,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  Maximize,
+  EyeOff
 } from "lucide-react";
 
 type Candidate = {
@@ -64,6 +66,11 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
 
   const handleStartProcess = () => {
     if (confirmed) {
+      try {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      } catch (e) {}
       setCountdown(3);
     }
   };
@@ -309,22 +316,33 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
 
             {/* Modal Body */}
             <div className="p-6">
-              <div className="space-y-3 mb-5">
-                <div className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-3 mb-6">
+                <div className="flex gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
+                  <Maximize className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Independent Execution</h4>
+                    <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Fullscreen Required</h4>
                     <p className="text-[11px] text-slate-500 dark:text-[#8B968F] mt-0.5 leading-relaxed">
-                      AI assistants are restricted. Questions adapt to real-time candidate code signals.
+                      This interview runs in a strictly proctored fullscreen environment. Starting the session will request fullscreen access.
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
-                  <Activity className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                
+                <div className="flex gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
+                  <EyeOff className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Tab & Focus Monitoring (3 Strikes)</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-[#8B968F] mt-0.5 leading-relaxed">
+                      Navigating away from the interview tab or losing window focus is tracked. 3 violations will result in automatic termination of the interview.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
+                  <Activity className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Real-Time Telemetry</h4>
                     <p className="text-[11px] text-slate-500 dark:text-[#8B968F] mt-0.5 leading-relaxed">
-                      Code edits and technical reasoning will be streamed into the scoring rubric.
+                      Your responses and technical reasoning are actively streamed into the scoring rubric. AI assistants are restricted.
                     </p>
                   </div>
                 </div>
@@ -338,7 +356,7 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
                   className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 bg-white dark:bg-slate-900"
                 />
                 <span className="text-xs text-slate-700 dark:text-slate-300 select-none font-medium leading-relaxed">
-                  I understand the rules and agree to begin the evaluation session.
+                  I understand the rules and agree to begin the proctored evaluation session.
                 </span>
               </label>
             </div>

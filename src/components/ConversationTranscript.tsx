@@ -140,10 +140,15 @@ export function ConversationTranscript({
       {transcriptBlocks}
       
       {thinking && (
-        <div className="px-6 mt-4">
-          <span className="font-sans font-medium text-[10px] uppercase tracking-[0.14em] text-[var(--app-muted)] animate-pulse">
-            Considering...
-          </span>
+        <div className="px-6 mt-6 mb-8 transition-opacity duration-300">
+          <div className="font-sans font-semibold text-[10px] uppercase tracking-widest text-[var(--app-muted)] mb-3 animate-pulse">
+            Generating Question...
+          </div>
+          <div className="space-y-3">
+            <div className="h-3 bg-[var(--app-glass-2)] rounded-full w-3/4 animate-pulse"></div>
+            <div className="h-3 bg-[var(--app-glass-2)] rounded-full w-full animate-pulse delay-75"></div>
+            <div className="h-3 bg-[var(--app-glass-2)] rounded-full w-5/6 animate-pulse delay-150"></div>
+          </div>
         </div>
       )}
       

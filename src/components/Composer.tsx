@@ -23,7 +23,7 @@ export function Composer({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full bg-[var(--app-glass-2)] border border-[var(--app-border)] focus-within:border-[var(--app-accent-border)] focus-within:shadow-[0_0_15px_rgba(31,209,106,0.10)] rounded-xl p-3 transition-all duration-300 shadow-sm backdrop-blur-sm">
+      <div className="w-full bg-slate-50 dark:bg-[#111726] border border-slate-200 dark:border-slate-800 focus-within:border-emerald-500/50 dark:focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/50 rounded-xl p-3 transition-all duration-200 shadow-sm">
         <label htmlFor="answer" className="sr-only">
           Your response
         </label>
@@ -41,30 +41,32 @@ export function Composer({
                 submit();
               }
             }}
-            rows={2}
+            rows={3}
             spellCheck
             placeholder={
               disabled
-                ? "Interviewer is typing..."
-                : "Type your response... (Press Enter to send, Shift+Enter for new line)"
+                ? "Interviewer is preparing..."
+                : "Type your response here... (Press Enter to send, Shift+Enter for new line)"
             }
-            className="w-full resize-none bg-transparent font-sans text-sm leading-relaxed text-[var(--app-fg)] placeholder:text-[var(--app-muted)] focus:outline-none disabled:opacity-50 transition-opacity"
+            className="w-full resize-none bg-transparent font-sans text-[15px] leading-relaxed text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:opacity-50 transition-opacity"
           />
         </div>
 
-        <div className="mt-2 flex items-center justify-between border-t border-[var(--app-border)] pt-2">
-          <span className="font-mono text-[11px] text-[var(--app-muted)]">
-            {status ?? `${value.length} characters`}
-          </span>
+        <div className="mt-2 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-3">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[11px] text-slate-500">
+              {status ?? `${value.length} characters`}
+            </span>
+          </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={submit}
               disabled={disabled || value.trim().length === 0}
-              className="flex items-center gap-1.5 font-sans font-semibold text-xs uppercase tracking-wider text-[#050806] bg-[var(--app-accent)] hover:opacity-90 px-4 py-1.5 rounded-lg transition-all disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed shadow-[0_0_12px_rgba(31,209,106,0.3)] hover:shadow-[0_0_20px_rgba(31,209,106,0.5)] active:scale-95"
+              className="flex items-center gap-1.5 font-sans font-semibold text-xs uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-500 px-5 py-2 rounded-lg transition-all disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed active:scale-95 shadow-sm"
             >
-              <span>Send</span>
+              <span>Submit</span>
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
