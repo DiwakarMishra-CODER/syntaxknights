@@ -29,7 +29,7 @@ const CLAIMS = [
     tag: "number worth testing",
   },
   {
-    text: "Correct but generic — he is describing the diagram, not the build.",
+    text: "Correct but generic — that describes the diagram, not the build.",
     tag: "reasoning note",
   },
 ];
@@ -85,7 +85,7 @@ export function InterviewDemo() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-                  <span className="text-[10px] text-[#73F0A0]">Processing</span>
+                  <span className="text-[10px] text-accent-soft">Processing</span>
                 </div>
               </div>
 
@@ -94,7 +94,7 @@ export function InterviewDemo() {
                   <div className="h-8 w-full animate-[scanline_3s_linear_infinite] bg-primary shadow-[0_0_8px_#1FD16A]" />
                 </div>
                 <div className="pl-4">
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-[#73F0A0]">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-accent-soft">
                     Interviewer
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-foreground">
@@ -115,7 +115,7 @@ export function InterviewDemo() {
 
                 <div className="ml-4 overflow-hidden rounded-xl border border-primary/10 bg-secondary px-4 py-3">
                   <p className="whitespace-nowrap text-xs leading-relaxed text-[#D6E0D9]">
-                    &ldquo;Correct but generic — he is describing the diagram,
+                    &ldquo;Correct but generic — that describes the diagram,
                     not the build.&rdquo;
                   </p>
                 </div>
@@ -197,7 +197,7 @@ export function InterviewDemo() {
                 <div className="absolute right-0 top-0 p-2">
                   <span className="flex h-2 w-2 animate-pulse rounded-full bg-primary" />
                 </div>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-[#73F0A0]">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-accent-soft">
                   <GitBranch className="h-4 w-4" />
                   Claim ledger updating
                 </div>

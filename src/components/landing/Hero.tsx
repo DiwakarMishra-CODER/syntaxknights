@@ -106,7 +106,7 @@ export function Hero({ onOpenStartModal }: HeroProps) {
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                No API calls
+                Adapts to your answers
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
@@ -130,7 +130,7 @@ export function Hero({ onOpenStartModal }: HeroProps) {
                     <ShieldCheck className="h-4 w-4" />
                     Live session
                   </span>
-                  <span className="flex items-center gap-1.5 text-[#73F0A0]">
+                  <span className="flex items-center gap-1.5 text-accent-soft">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                     Adaptive
                   </span>

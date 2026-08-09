@@ -41,7 +41,10 @@ function ScoreBar({ pct, color }: { pct: number; color: string }) {
 /** Calculates overall interview performance grade using super simple, clear friendly terms */
 function calculatePerformance(turns: Turn[]) {
   const scored = turns.filter((t) => t.role === "candidate" && t.rubric);
-  if (scored.length === 0) return { pct: 80, grade: "Strong Builder ⭐", level: "Great Start" };
+  // No scored answers means no evidence. Returning 80% "Strong Builder"
+  // invents a grade out of nothing, which is exactly what the verbatim and
+  // claim guards exist to prevent elsewhere. null hides the block instead.
+  if (scored.length === 0) return null;
 
   let totalScore = 0;
   let count = 0;
@@ -73,9 +76,18 @@ function extractQAPairs(turns: Turn[], focusDays: FocusDay[]) {
     targetDay: number | null;
     depth: number | null;
     topicTitle: string;
+    /** Why this question followed the previous answer. Null for the opener,
+     *  which reacted to nothing. */
+    rationale: string | null;
   }> = [];
 
-  let lastQuestion: { text: string; targetDay: number | null; depth: number | null; turnNumber: number } | null = null;
+  let lastQuestion: {
+    text: string;
+    targetDay: number | null;
+    depth: number | null;
+    turnNumber: number;
+    rationale: string | null;
+  } | null = null;
 
   turns.forEach((t) => {
     if (t.role === "interviewer") {
@@ -84,6 +96,12 @@ function extractQAPairs(turns: Turn[], focusDays: FocusDay[]) {
         targetDay: t.targetDay,
         depth: t.depth,
         turnNumber: t.turnNumber,
+        // The opening line's "rationale" is a fixed blueprint string, not a
+        // reaction to anything the candidate said.
+        rationale:
+          t.rubric === null && t.rationale === "opening line from the blueprint"
+            ? null
+            : t.rationale,
       };
     } else if (t.role === "candidate" && lastQuestion) {
       const dayFocus = focusDays.find((f) => f.day === lastQuestion?.targetDay);
@@ -95,6 +113,7 @@ function extractQAPairs(turns: Turn[], focusDays: FocusDay[]) {
         targetDay: lastQuestion.targetDay,
         depth: lastQuestion.depth,
         topicTitle: dayFocus?.title ?? "AI Project Topic",
+        rationale: lastQuestion.rationale,
       });
       lastQuestion = null;
     }
@@ -141,7 +160,7 @@ export function Report({
       {/* Header Banner */}
       <header className="space-y-4 border-b border-white/10 pb-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-[#1FD16A]/10 text-[#1FD16A] border border-[#1FD16A]/30">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-[#1FD16A]/10 text-accent border border-[#1FD16A]/30">
             <span className="w-2 h-2 rounded-full bg-[#1FD16A] animate-pulse" />
             Practice Completed!
           </div>
@@ -171,18 +190,21 @@ export function Report({
             )}
           </div>
 
-          {/* Overall Score Badge */}
+          {/* Overall Score Badge — hidden when nothing was answered, rather than
+              showing a grade that nothing supports. */}
+          {perf && (
           <div className="shrink-0 p-5 rounded-2xl bg-[#1FD16A]/10 border border-[#1FD16A]/30 shadow-[0_0_20px_rgba(31,209,106,0.15)] space-y-1 text-center min-w-[200px]">
             <div className="text-[10px] font-mono uppercase tracking-widest text-[#7E8B84]">
               Overall Score
             </div>
-            <div className="text-3xl font-bold text-[#1FD16A] tracking-tight font-mono">
+            <div className="text-3xl font-bold text-accent tracking-tight font-mono">
               {perf.pct}%
             </div>
             <div className="text-xs font-semibold text-white">
               {perf.grade}
             </div>
           </div>
+          )}
         </div>
       </header>
 
@@ -297,7 +319,7 @@ export function Report({
                   <div key={t.day} className="space-y-2 p-4 rounded-xl bg-white/[0.02] border border-white/5">
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="text-white font-semibold truncate pr-2">{t.title}</span>
-                      <span className="text-[#1FD16A] font-bold">Good Understanding</span>
+                      <span className="text-accent font-bold">Good Understanding</span>
                     </div>
                     <p className="text-xs text-[#8B968F] leading-relaxed">{t.finding}</p>
                     <ScoreBar pct={Math.min(100, (t.day / 31) * 100)} color="#8B5CF6" />
@@ -342,7 +364,7 @@ export function Report({
         >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[#1FD16A]" />
+              <MessageSquare className="w-5 h-5 text-accent" />
               Check All Questions &amp; Your Answers
             </h2>
             <span className="text-xs font-mono text-[#7E8B84]">
@@ -379,7 +401,7 @@ export function Report({
                     className="w-full p-5 flex items-center justify-between gap-4 text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-[#1FD16A]/10 border border-[#1FD16A]/30 flex items-center justify-center font-mono font-bold text-xs text-[#1FD16A]">
+                      <div className="w-7 h-7 rounded-lg bg-[#1FD16A]/10 border border-[#1FD16A]/30 flex items-center justify-center font-mono font-bold text-xs text-accent">
                         Q{qa.turnNumber}
                       </div>
                       <div>
@@ -414,7 +436,7 @@ export function Report({
                     <div className="px-5 pb-5 pt-2 border-t border-white/5 space-y-4">
                       {/* Interviewer Question */}
                       <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-[#1FD16A] font-semibold">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-accent font-semibold">
                           Interviewer Question
                         </div>
                         <p className="text-sm text-white leading-relaxed">
@@ -431,6 +453,31 @@ export function Report({
                           "{qa.answer}"
                         </p>
                       </div>
+
+                      {/* Why this question was asked.
+
+                          Generated on every turn and stored, but only ever visible on screen
+
+                          DURING the interview -- where it told the candidate exactly what was
+
+                          being probed. Here the interview is over. */}
+
+                      {qa.rationale && (
+
+                        <div className="p-4 rounded-xl bg-violet-500/5 border border-violet-500/20 space-y-1">
+
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-violet-400 font-semibold">
+
+                            Why you were asked this
+
+                          </div>
+
+                          <p className="text-sm text-[#CFD7D0] leading-relaxed">{qa.rationale}</p>
+
+                        </div>
+
+                      )}
+
 
                       {/* Simple Turn Assessment */}
                       {qa.rubric && (
@@ -584,7 +631,7 @@ export function Report({
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                <Zap className="w-4 h-4 text-[#1FD16A]" />
+                <Zap className="w-4 h-4 text-accent" />
                 Simple Next Steps for You
               </h2>
             </div>
@@ -596,10 +643,10 @@ export function Report({
                   className="p-5 rounded-2xl border border-emerald-500/20 bg-emerald-950/20 space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-[#1FD16A]">
+                    <span className="text-xs font-mono font-bold text-accent">
                       STEP 0{i + 1}
                     </span>
-                    <Sparkles className="w-3.5 h-3.5 text-[#1FD16A]" />
+                    <Sparkles className="w-3.5 h-3.5 text-accent" />
                   </div>
                   <p className="text-sm text-[#C5D0C8] leading-relaxed">
                     {step}

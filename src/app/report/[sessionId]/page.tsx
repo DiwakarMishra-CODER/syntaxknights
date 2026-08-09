@@ -26,14 +26,14 @@ function Shell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#080D0A]/85 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-xl bg-[#1FD16A]/10 border border-[#1FD16A]/30 flex items-center justify-center text-[#1FD16A] font-bold text-sm shadow-[0_0_15px_rgba(31,209,106,0.15)] group-hover:scale-105 transition-all">
+            <div className="w-8 h-8 rounded-xl bg-[#1FD16A]/10 border border-[#1FD16A]/30 flex items-center justify-center text-accent font-bold text-sm shadow-[0_0_15px_rgba(31,209,106,0.15)] group-hover:scale-105 transition-all">
               M
             </div>
             <span className="font-bold text-base text-white tracking-tight">
               MockMate
             </span>
           </Link>
-          <span className="text-xs font-mono uppercase tracking-widest text-[#1FD16A] px-3 py-1 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
+          <span className="text-xs font-mono uppercase tracking-widest text-accent px-3 py-1 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
             Interview Performance Report
           </span>
         </div>
@@ -57,7 +57,7 @@ function Notice({
     <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 py-20 flex flex-col items-center text-center gap-6">
       <div className="w-14 h-14 rounded-2xl bg-[#1FD16A]/10 border border-[#1FD16A]/20 flex items-center justify-center">
         <svg
-          className="w-6 h-6 text-[#1FD16A]"
+          className="w-6 h-6 text-accent"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

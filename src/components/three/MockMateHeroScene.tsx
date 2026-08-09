@@ -308,7 +308,7 @@ export const MockMateHeroScene: React.FC = () => {
             className="absolute z-10 flex flex-col items-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           >
             <div className="glass-card-green px-6 py-4 rounded-xl flex items-center gap-3">
-              <span className="text-[#1FD16A]">📚</span>
+              <span className="text-accent">📚</span>
               <div className="flex flex-col">
                  <span className="text-sm font-display tracking-widest text-[#F5F7F4]">31-DAY AI COHORT</span>
                 <span className="text-[10px] font-mono text-[#7E8B84]">Extracting Missions & Signals</span>
@@ -317,7 +317,7 @@ export const MockMateHeroScene: React.FC = () => {
             <div className="h-6 w-[1px] bg-[#1FD16A]/50 my-2" />
             <div className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
-              <span className="text-[10px] font-mono text-[#73F0A0]">MAPPING CURRICULUM</span>
+              <span className="text-[10px] font-mono text-accent-soft">MAPPING CURRICULUM</span>
             </div>
           </motion.div>
         )}
@@ -335,7 +335,7 @@ export const MockMateHeroScene: React.FC = () => {
             {nodePositions.map((pos, idx) => (
               <div
                 key={idx}
-                className={`absolute text-[10px] font-mono text-[#73F0A0] bg-slate-100 dark:bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "opacity-50 scale-95" : "opacity-100 scale-100"}`}
+                className={`absolute text-[10px] font-mono text-accent-soft bg-slate-100 dark:bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "opacity-50 scale-95" : "opacity-100 scale-100"}`}
                 style={{
                   left: pos.x,
                   top: pos.y,
@@ -351,7 +351,7 @@ export const MockMateHeroScene: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white dark:bg-[#0A0A0A] border border-[rgba(31,209,106,0.3)] px-3 py-1.5 rounded text-[9px] text-slate-600 dark:text-[#D6E0D9] whitespace-nowrap flex items-center gap-1.5"
                   >
-                    Module 4 <span className="text-[#1FD16A]">→</span> Day 22
+                    Module 4 <span className="text-accent">→</span> Day 22
                   </motion.div>
                 )}
 
@@ -360,7 +360,7 @@ export const MockMateHeroScene: React.FC = () => {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1FD16A]/10 border border-[#1FD16A] px-2 py-1 rounded text-[9px] text-[#1FD16A] whitespace-nowrap shadow-[0_0_10px_rgba(31,209,106,0.4)] transition-opacity duration-1000`}
+                    className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1FD16A]/10 border border-[#1FD16A] px-2 py-1 rounded text-[9px] text-accent whitespace-nowrap shadow-[0_0_10px_rgba(31,209,106,0.4)] transition-opacity duration-1000`}
                   >
                     Signal: 3 Attempts (Struggled)
                   </motion.div>
@@ -384,7 +384,7 @@ export const MockMateHeroScene: React.FC = () => {
               transform: "translate(-110%, -50%)"
             }}
           >
-            <div className="text-[10px] font-mono text-[#73F0A0] mb-2 uppercase">Day 22 Probe</div>
+            <div className="text-[10px] font-mono text-accent-soft mb-2 uppercase">Day 22 Probe</div>
             <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;I see you took three attempts to pass the Multi-Agent Orchestration module. Walk me through the race condition you hit.&rdquo;
             </p>
@@ -405,7 +405,7 @@ export const MockMateHeroScene: React.FC = () => {
               transform: "translate(10%, -50%)"
             }}
           >
-            <div className="text-[10px] font-mono text-[#1FD16A] mb-2 uppercase flex items-center gap-2">
+            <div className="text-[10px] font-mono text-accent mb-2 uppercase flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
               Adaptive Reaction
             </div>
@@ -459,10 +459,10 @@ export const MockMateHeroScene: React.FC = () => {
               INTERVIEW READY
             </h2>
             <div className="mt-2 flex gap-2 w-full justify-center">
-              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-[#73F0A0] whitespace-nowrap">
+              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-accent-soft whitespace-nowrap">
                 Context Loaded
               </span>
-              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-[#73F0A0] whitespace-nowrap">
+              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-accent-soft whitespace-nowrap">
                 Agent Calibrated
               </span>
             </div>

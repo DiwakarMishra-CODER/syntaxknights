@@ -90,7 +90,7 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
               <span className="font-sans">Dashboard</span>
             </button>
             <span className="text-slate-300 dark:text-slate-700">/</span>
-            <span className="text-xs font-mono text-emerald-600 dark:text-[#1FD16A] font-medium">
+            <span className="text-xs font-mono text-emerald-600 dark:text-accent font-medium">
               Candidate {candidate.member.id}
             </span>
           </div>
@@ -120,11 +120,11 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-mono font-medium text-emerald-600 dark:text-[#1FD16A]">
+                  <span className="text-xs font-mono font-medium text-emerald-600 dark:text-accent">
                     {candidate.member.id}
                   </span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-[#1FD16A] border border-emerald-200/60 dark:border-[#1FD16A]/20">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/60 dark:border-[#1FD16A]/20">
                     {candidate.member.status}
                   </span>
                 </div>
@@ -145,21 +145,21 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70">
-              <Briefcase className="w-4 h-4 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+              <Briefcase className="w-4 h-4 text-emerald-600 dark:text-accent shrink-0" />
               <div className="min-w-0">
                 <div className="text-[10px] font-mono uppercase text-slate-400">Target Role</div>
                 <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{candidate.member.jobRole}</div>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70">
-              <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+              <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-accent shrink-0" />
               <div className="min-w-0">
                 <div className="text-[10px] font-mono uppercase text-slate-400">Background</div>
                 <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{candidate.member.yearsExperience} Yrs Exp • {candidate.member.education}</div>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70">
-              <Calendar className="w-4 h-4 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+              <Calendar className="w-4 h-4 text-emerald-600 dark:text-accent shrink-0" />
               <div className="min-w-0">
                 <div className="text-[10px] font-mono uppercase text-slate-400">Activity</div>
                 <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{candidate.signals.commitDays} Commit Days</div>
@@ -195,7 +195,7 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
 
           <div className="p-5 rounded-2xl bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800/80 shadow-sm">
             <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-1">Evaluation Readiness</span>
-            <div className="text-2xl font-sans font-bold text-emerald-600 dark:text-[#1FD16A] flex items-center gap-2">
+            <div className="text-2xl font-sans font-bold text-emerald-600 dark:text-accent flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               Calibrated
             </div>
@@ -220,12 +220,12 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
                   className="p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2.5 truncate mr-2">
-                    <span className="font-mono font-semibold text-emerald-600 dark:text-[#1FD16A]">D{m.day}</span>
+                    <span className="font-mono font-semibold text-emerald-600 dark:text-accent">D{m.day}</span>
                     <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{m.title}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {m.passed && (
-                      <span className="text-[10px] font-mono text-emerald-600 dark:text-[#1FD16A] bg-emerald-50 dark:bg-[#1FD16A]/10 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-[#1FD16A]/20">
+                      <span className="text-[10px] font-mono text-emerald-600 dark:text-accent bg-emerald-50 dark:bg-[#1FD16A]/10 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-[#1FD16A]/20">
                         {m.attempts} {m.attempts === 1 ? 'try' : 'tries'}
                       </span>
                     )}
@@ -267,7 +267,7 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
 
           {/* Candidate Info */}
           <div className="relative z-10 flex flex-col items-center gap-3 text-center px-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-[#1FD16A] border border-emerald-200 dark:border-[#1FD16A]/25 mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200 dark:border-[#1FD16A]/25 mb-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#1FD16A] animate-pulse" />
               Launching Session
             </div>

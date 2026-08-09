@@ -84,7 +84,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
               onClick={() => router.push("/dashboard")}
               className="flex items-center gap-2.5 group"
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-[#1FD16A]/10 border border-emerald-200 dark:border-[#1FD16A]/30 flex items-center justify-center text-emerald-600 dark:text-[#1FD16A] font-mono font-bold text-sm shadow-sm transition-transform group-hover:scale-105">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-[#1FD16A]/10 border border-emerald-200 dark:border-[#1FD16A]/30 flex items-center justify-center text-emerald-600 dark:text-accent font-mono font-bold text-sm shadow-sm transition-transform group-hover:scale-105">
                 M
               </div>
               <span className="font-sans font-bold text-base tracking-tight text-slate-900 dark:text-white">
@@ -92,7 +92,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
               </span>
             </button>
             <span className="text-slate-300 dark:text-white/20">/</span>
-            <span className="text-xs font-mono text-emerald-600 dark:text-[#1FD16A] font-medium">
+            <span className="text-xs font-mono text-emerald-600 dark:text-accent font-medium">
               All Candidates
             </span>
           </div>
@@ -131,7 +131,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
         {/* Page Heading */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-[#1FD16A] border border-emerald-200/80 dark:border-[#1FD16A]/25 mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/80 dark:border-[#1FD16A]/25 mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
               Evaluation Portal
             </div>
@@ -214,7 +214,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                         {candidate.member.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <span className="text-[11px] font-mono font-medium text-emerald-600 dark:text-[#1FD16A] block">
+                        <span className="text-[11px] font-mono font-medium text-emerald-600 dark:text-accent block">
                           {candidate.member.id}
                         </span>
                         <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-accent transition-colors truncate">
@@ -222,7 +222,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                         </h3>
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-[#1FD16A] border border-emerald-200/60 dark:border-[#1FD16A]/20 shrink-0 ml-1">
+                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/60 dark:border-[#1FD16A]/20 shrink-0 ml-1">
                       {candidate.member.status}
                     </span>
                   </div>
@@ -230,11 +230,11 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                   {/* Meta Info */}
                   <div className="space-y-1.5 mb-4 text-xs text-slate-600 dark:text-[#C5D0C8]">
                     <div className="flex items-center gap-2">
-                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-accent shrink-0" />
                       <span className="truncate">{candidate.member.jobRole}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-[#1FD16A] shrink-0" />
+                      <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-accent shrink-0" />
                       <span>{candidate.member.yearsExperience} yrs exp · {candidate.signals.commitDays} commit days</span>
                     </div>
                   </div>
@@ -257,7 +257,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-[#1FD16A] group-hover:gap-1.5 transition-all">
+                  <div className="flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-accent group-hover:gap-1.5 transition-all">
                     <span>View Profile</span>
                     <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>

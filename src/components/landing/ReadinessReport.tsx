@@ -52,8 +52,8 @@ export function ReadinessReport() {
             <span className="text-gradient-green italic">Not a scorecard.</span>
           </h2>
           <p className="text-base font-light leading-relaxed text-muted-foreground">
-            The report should help the judge understand why the interview landed
-            the way it did, then point the candidate to the next useful days.
+            It shows you why the interview went the way it did, quotes you back
+            to yourself, and names the days worth redoing.
             </p>
           </div>
         </Reveal>
@@ -68,7 +68,7 @@ export function ReadinessReport() {
                     <Activity className="h-4 w-4" />
                     Live Evidence summary
                   </span>
-                  <span className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-[#73F0A0]">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-accent-soft">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                     Analyzing
                   </span>
@@ -119,7 +119,7 @@ export function ReadinessReport() {
                 </div>
 
                 <blockquote className="rounded-2xl bg-[#0A0A0A] p-4 text-sm italic leading-relaxed text-[#D6E0D9]">
-                  &ldquo;Correct but generic — he is describing the diagram, not
+                  &ldquo;Correct but generic — that describes the diagram, not
                   the build. Pushing for a number he should know.&rdquo;
                 </blockquote>
 

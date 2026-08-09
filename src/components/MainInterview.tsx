@@ -62,13 +62,13 @@ export function MainInterview({
       {/* Top Navbar */}
       <header className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-[#050806]/85 backdrop-blur-xl shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#1FD16A]/30 bg-[#1FD16A]/10 font-bold text-xs text-[#1FD16A] shadow-[0_0_12px_rgba(31,209,106,0.15)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#1FD16A]/30 bg-[#1FD16A]/10 font-bold text-xs text-accent shadow-[0_0_12px_rgba(31,209,106,0.15)]">
             M
           </div>
           <div>
             <div className="font-semibold text-xs text-white tracking-tight flex items-center gap-2">
               MockMate
-              <span className="text-[9px] uppercase font-mono font-medium text-[#1FD16A] px-2 py-0.5 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
+              <span className="text-[9px] uppercase font-mono font-medium text-accent px-2 py-0.5 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
                 Live Practice
               </span>
             </div>
@@ -81,10 +81,10 @@ export function MainInterview({
         {/* Center Topic & Progress */}
         <div className="flex items-center gap-2.5">
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium text-[#7E8B84] bg-white/5 border border-white/10">
-            <Sparkles className="w-3 h-3 text-[#1FD16A]" />
+            <Sparkles className="w-3 h-3 text-accent" />
             {currentTopic}
           </span>
-          <div className="font-mono text-[11px] font-semibold text-[#1FD16A] bg-[#1FD16A]/10 border border-[#1FD16A]/30 px-3 py-0.5 rounded-full shadow-inner">
+          <div className="font-mono text-[11px] font-semibold text-accent bg-[#1FD16A]/10 border border-[#1FD16A]/30 px-3 py-0.5 rounded-full shadow-inner">
             Q{questionCount} {targetQuestions ? `/ ${targetQuestions}` : ""}
           </div>
         </div>
@@ -100,7 +100,7 @@ export function MainInterview({
               {muted ? (
                 <VolumeX className="w-3.5 h-3.5 text-rose-400" />
               ) : (
-                <Volume2 className="w-3.5 h-3.5 text-[#1FD16A]" />
+                <Volume2 className="w-3.5 h-3.5 text-accent" />
               )}
             </button>
           )}
@@ -163,7 +163,7 @@ export function MainInterview({
                       className="flex items-start gap-3"
                     >
                       {/* Interviewer Avatar */}
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#1FD16A]/30 bg-[#1FD16A]/10 font-bold text-[11px] text-[#1FD16A] shadow-[0_0_10px_rgba(31,209,106,0.15)] mt-0.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#1FD16A]/30 bg-[#1FD16A]/10 font-bold text-[11px] text-accent shadow-[0_0_10px_rgba(31,209,106,0.15)] mt-0.5">
                         AI
                       </div>
 
@@ -172,7 +172,7 @@ export function MainInterview({
                           <span className="font-semibold text-[11px] text-white">
                             Interviewer
                           </span>
-                          <span className="font-mono text-[9px] text-[#1FD16A] px-2 py-0.5 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
+                          <span className="font-mono text-[9px] text-accent px-2 py-0.5 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
                             Q{currentQuestionNum} • {topicTitle}
                           </span>
                         </div>

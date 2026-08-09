@@ -10,13 +10,13 @@ const DIVERGENCE = [
   {
     name: "Diane Foster",
     completed: "31/31",
-    firstTry: "100%",
+    firstTry: "100% first try",
     story: "Nothing left to prove.",
   },
   {
     name: "Tyler Brooks",
     completed: "31/31",
-    firstTry: "3%",
+    firstTry: "3% first try",
     story: "Got there, but ground it out.",
   },
 ];
@@ -30,7 +30,7 @@ const MOMENTS = [
   {
     step: "02",
     title: "Interviews you",
-    body: "A weak answer pushes the depth line upward or sideways. A strong answer earns pressure. The replay makes the adaptation visible instead of asking the judge to trust a summary.",
+    body: "A weak answer pulls the next question back. A strong one earns pressure. You can watch the difficulty move rather than take our word for it.",
   },
   {
     step: "03",
@@ -84,7 +84,7 @@ export function AdaptiveFlow() {
                         {person.name}
                       </h3>
                     </div>
-                    <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#73F0A0]">
+                    <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-accent-soft">
                       {person.firstTry}
                     </span>
                   </div>
@@ -125,8 +125,8 @@ export function AdaptiveFlow() {
               <span className="text-gradient-green">Report.</span>
             </h2>
             <p className="text-base font-light leading-relaxed text-muted-foreground">
-              Those are the three things the page needs to prove. Everything else
-              is just helping the judge understand the sequence quickly.
+              Three steps, in that order. Nothing is asked before your record
+              has been read.
             </p>
           </div>
 

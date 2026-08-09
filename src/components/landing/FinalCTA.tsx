@@ -34,8 +34,8 @@ export function FinalCTA({ onOpenStartModal }: FinalCTAProps) {
           </h2>
 
           <p className="text-base font-light leading-relaxed text-muted-foreground sm:text-lg">
-            Start with Tyler&apos;s recorded session or open the modal and choose
-            another candidate. The point is the same: a real interview, not a
+            Start with Tyler&apos;s recorded session, or pick anyone else from the
+            candidate list. The point is the same: a real interview, not a
             generic practice flow.
           </p>
 
@@ -53,8 +53,8 @@ export function FinalCTA({ onOpenStartModal }: FinalCTAProps) {
 
           <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-[#8B968F]">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-[#73F0A0]" />
-              No credit card required
+              <ShieldCheck className="h-3.5 w-3.5 text-accent-soft" />
+              Quotes you back
             </span>
             <span>Recorded replay</span>
             <span>Real interview logic</span>
