@@ -4,7 +4,7 @@ import { worthReporting } from "./orchestrator";
 import { degradeReport, type ReportContext } from "./prompts/reporter";
 import { deriveSignals } from "./signals";
 import { compareToRecord, topicsReached } from "./summary";
-import type { Blueprint, Candidate, Feedback, SessionState, Turn } from "./types";
+import type { Blueprint, Candidate, Claim, Feedback, SessionState, Turn } from "./types";
 
 /**
  * Builds the end-of-interview report.
@@ -22,8 +22,12 @@ export async function buildReport(args: {
 }): Promise<Feedback> {
   const { sessionId, candidate, blueprint, state, endedEarly } = args;
 
-  const transcript: Turn[] = await getRecentTurns(sessionId, 400);
-  const claimLedger = await getClaimLedger(sessionId);
+  // Independent reads. They were sequential here while route.ts already ran
+  // the same pair in parallel.
+  const [transcript, claimLedger]: [Turn[], Claim[]] = await Promise.all([
+    getRecentTurns(sessionId, 400),
+    getClaimLedger(sessionId),
+  ]);
 
   const rubrics = transcript
     .filter((t) => t.role === "interviewer" && t.rubric)

@@ -89,3 +89,17 @@ describe("the reaction reflects rather than grades", () => {
     expect(TURN_SYSTEM).toMatch(/reaction field must be an empty string/);
   });
 });
+
+describe("the rubric has anchors, so 3 is not the default", () => {
+  it("says outright that 3 must be earned", () => {
+    // Observed live: a content-free answer scored 3 across the board, and the
+    // report then printed "Good Answer (3/5)" under it.
+    expect(TURN_SYSTEM).toMatch(/3 IS NOT THE DEFAULT/);
+    expect(TURN_SYSTEM).toMatch(/Length is not evidence/);
+  });
+
+  it("anchors the bottom of the knowledge scale on the real failure shape", () => {
+    expect(TURN_SYSTEM).toMatch(/we set it up properly/);
+    expect(TURN_SYSTEM).toMatch(/a term with no content behind it/);
+  });
+});

@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   compareToRecord,
+  levelFor,
   questionTimeline,
   explanationSignal,
   topicFindings,
   topicsReached,
   unjustifiedClaims,
+  type TopicReach,
 } from "./summary";
 import type { Claim, FocusDay, Turn, TurnRubric } from "./types";
 
@@ -42,6 +44,66 @@ const focusDays: FocusDay[] = [
   { day: 10, title: "The Retrieval & Matching Engine", reason: "r", startDepth: 2, strategy: "verify_depth" },
   { day: 28, title: "Docker & Kubernetes Deployment", reason: "r", startDepth: 2, strategy: "probe_gap" },
 ];
+
+describe("topicsReached — answer scores, and the off-by-one that hides them", () => {
+  const rubric = (knowledge: number): TurnRubric => ({
+    knowledge,
+    communication: knowledge,
+    specificity: knowledge,
+    objectivesHit: [],
+  });
+
+  it("scores an answer against the topic of the question it ANSWERED", () => {
+    // The trap: an interviewer turn carries the rubric for the answer BEFORE
+    // it and the targetDay of the question AFTER it. Reading a turn's own
+    // rubric against its own targetDay files every score under the wrong
+    // topic. Here day 10 is asked, answered badly, then the interviewer moves
+    // to day 28 — so the 1/5 belongs to day 10, not day 28.
+    const rows = topicsReached(
+      [
+        iTurn(1, 10, 2, { rubric: null }),
+        answer(2),
+        iTurn(3, 28, 2, { rubric: rubric(1) }),
+        answer(4),
+        iTurn(5, 28, 3, { rubric: rubric(5) }),
+      ],
+      focusDays
+    );
+
+    const retrieval = rows.find((r) => r.day === 10)!;
+    const docker = rows.find((r) => r.day === 28)!;
+    expect(retrieval.knowledgeAvg).toBe(1);
+    expect(docker.knowledgeAvg).toBe(5);
+  });
+
+  it("leaves knowledgeAvg null when a topic's answers were never scored", () => {
+    // substantive:false answers are stored with a null rubric. A topic where
+    // the candidate only ever typed filler must not average to anything.
+    const rows = topicsReached(
+      [iTurn(1, 10, 2, { rubric: null }), answer(2), iTurn(3, 10, 2, { rubric: null })],
+      focusDays
+    );
+    expect(rows[0].knowledgeAvg).toBeNull();
+    expect(rows[0].answered).toBe(0);
+    // ...but the questions still happened, and that is still reported.
+    expect(rows[0].questionsAsked).toBe(2);
+  });
+
+  it("orders by how well each topic was explained, not how hard it was asked", () => {
+    const rows = topicsReached(
+      [
+        iTurn(1, 10, 5, { rubric: null }),
+        answer(2),
+        iTurn(3, 28, 2, { rubric: rubric(1) }), // day 10, asked at depth 5, answered 1
+        answer(4),
+        iTurn(5, 28, 2, { rubric: rubric(4) }), // day 28, asked at depth 2, answered 4
+      ],
+      focusDays
+    );
+    // Day 10 got the deepest question; day 28 got the better answer.
+    expect(rows[0].day).toBe(28);
+  });
+});
 
 describe("topicsReached", () => {
   it("reports the deepest rung reached per topic", () => {
@@ -124,8 +186,8 @@ describe("compareToRecord", () => {
     struggledDays: [3, 7, 8, 10],
     abilityEstimate: 2.4,
     topics: [
-      { day: 20, title: "Conversation Memory", questionsAsked: 5, depthReached: 4, band: "edge case" },
-      { day: 10, title: "Retrieval Engine", questionsAsked: 3, depthReached: 2, band: "application" },
+      { day: 20, title: "Conversation Memory", questionsAsked: 5, depthReached: 4, band: "edge case", answered: 5, knowledgeAvg: 4 },
+      { day: 10, title: "Retrieval Engine", questionsAsked: 3, depthReached: 2, band: "application", answered: 3, knowledgeAvg: 2 },
     ],
   };
 
@@ -148,21 +210,43 @@ describe("compareToRecord", () => {
     );
   });
 
-  it("names the ends of the range without naming a rung", () => {
+  it("names the ends of the range by how well each was EXPLAINED", () => {
+    // This line sits under a heading reading "How You Performed Today". It
+    // used to be built from depthReached — the rung the INTERVIEWER's
+    // questions sat on — so it reported the interview, not the candidate.
     const c = compareToRecord(base)!;
     expect(c.interview).toBe(
-      "You went furthest on Conversation Memory, and least far on Retrieval Engine."
+      "You explained Conversation Memory best, and Retrieval Engine least."
     );
   });
 
-  it("does not say 'least far' when every area got equally far", () => {
-    // "least far on X" is a comparison. With a tie there is nothing to
-    // compare, and naming one of them would invent a ranking.
+  it("does not rank areas that were explained about equally", () => {
+    // Naming one of them would invent a ranking that the scores do not support.
     const tied = compareToRecord({
       ...base,
-      topics: base.topics.map((t) => ({ ...t, depthReached: 3, band: "tradeoff" })),
+      topics: base.topics.map((t) => ({ ...t, knowledgeAvg: 3 })),
     })!;
-    expect(tied.interview).toBe("You covered 2 areas and got about as far in each.");
+    expect(tied.interview).toBe("You covered 2 areas and explained them about equally.");
+  });
+
+  it("never announces a top result off the back of hard QUESTIONS", () => {
+    // The old code said "You reached the deepest level in all N areas."
+    // whenever depthReached was >= 4, however badly it was answered.
+    const deepQuestionsBadAnswers = compareToRecord({
+      ...base,
+      topics: base.topics.map((t) => ({ ...t, depthReached: 5, knowledgeAvg: 1 })),
+    })!;
+    expect(deepQuestionsBadAnswers.interview).toBe(
+      "None of the 2 areas got a full explanation."
+    );
+  });
+
+  it("says so plainly when nothing could be scored", () => {
+    const unscored = compareToRecord({
+      ...base,
+      topics: base.topics.map((t) => ({ ...t, answered: 0, knowledgeAvg: null })),
+    })!;
+    expect(unscored.interview).toBe("Nothing you said in this session could be scored.");
   });
 
   it("does not compare a single area against itself", () => {
@@ -206,8 +290,8 @@ const RUNG_WORDS = /\b(recall|application|tradeoff|edge case|redesign)\b/i;
 
 describe("no rung names in candidate-facing copy", () => {
   const topics = [
-    { day: 10, title: "Retrieval", questionsAsked: 3, depthReached: 5, band: "redesign" },
-    { day: 20, title: "Prompting", questionsAsked: 2, depthReached: 3, band: "tradeoff" },
+    { day: 10, title: "Retrieval", questionsAsked: 3, depthReached: 5, band: "redesign", answered: 3, knowledgeAvg: 4.5 },
+    { day: 20, title: "Prompting", questionsAsked: 2, depthReached: 3, band: "tradeoff", answered: 2, knowledgeAvg: 3 },
   ];
 
   it("keeps them out of the comparison, at every depth", () => {
@@ -239,13 +323,16 @@ describe("no rung names in candidate-facing copy", () => {
       expect(f.finding).not.toMatch(RUNG_WORDS);
       expect(f.finding).toMatch(/— \d+ questions?/);
     }
-    expect(findings[0].finding).toMatch(/redesigned it under pressure/);
+    // The finding states what was ASKED, because depthReached is a fact about
+    // the questions. What the candidate did with them is `level`, scored
+    // separately — see the topicFindings suite below.
+    expect(findings[0].finding).toMatch(/Asked how you would rebuild it/);
     expect(findings[0].finding).toMatch(/strongest area/);
     expect(findings[1].finding).not.toMatch(/strongest area/);
   });
 
-  it("says plainly when every area reached the top", () => {
-    const both5 = compareToRecord({
+  it("says plainly when every area was explained well", () => {
+    const bothStrong = compareToRecord({
       firstTryRate: 1,
       coverage: 1,
       missionsCompleted: 31,
@@ -254,12 +341,11 @@ describe("no rung names in candidate-facing copy", () => {
       failedDays: [],
       struggledDays: [],
       abilityEstimate: 4.5,
-      topics: topics.map((t) => ({ ...t, depthReached: 5 })),
+      topics: topics.map((t) => ({ ...t, knowledgeAvg: 4.5 })),
     })!;
-    // "About as far in each" reported the best possible result as a flat line.
-    expect(both5.interview).toBe("You reached the deepest level in all 2 areas.");
+    expect(bothStrong.interview).toBe("You explained all 2 areas well.");
 
-    const both2 = compareToRecord({
+    const bothMiddling = compareToRecord({
       firstTryRate: 1,
       coverage: 1,
       missionsCompleted: 31,
@@ -268,9 +354,9 @@ describe("no rung names in candidate-facing copy", () => {
       failedDays: [],
       struggledDays: [],
       abilityEstimate: 2,
-      topics: topics.map((t) => ({ ...t, depthReached: 2 })),
+      topics: topics.map((t) => ({ ...t, knowledgeAvg: 3 })),
     })!;
-    expect(both2.interview).toMatch(/about as far in each/);
+    expect(bothMiddling.interview).toMatch(/explained them about equally/);
   });
 
   it("covers every rung, so no depth falls through to a blank", () => {
@@ -284,8 +370,70 @@ describe("no rung names in candidate-facing copy", () => {
     // One topic has nothing to be strongest against.
     expect(topicFindings([topics[0]])[0].finding).not.toMatch(/strongest/);
     // A tie at the top would make two areas both "strongest".
-    const tied = topicFindings(topics.map((t) => ({ ...t, depthReached: 4 })));
+    const tied = topicFindings(topics.map((t) => ({ ...t, knowledgeAvg: 4 })));
     for (const f of tied) expect(f.finding).not.toMatch(/strongest/);
+  });
+});
+
+/**
+ * The topic row must report the CANDIDATE, not the interviewer.
+ *
+ * `depthReached` is max(question.depth) over interviewer turns — it never
+ * reads an answer. The report used to print a hardcoded "Good Understanding"
+ * beside it and size a progress bar by the curriculum day number, so a
+ * session of pure gibberish still rendered as a good result.
+ */
+describe("topic level comes from the answers, not the questions", () => {
+  const topic = (over: Partial<TopicReach> = {}): TopicReach => ({
+    day: 10,
+    title: "Retrieval",
+    questionsAsked: 3,
+    depthReached: 5,
+    band: "redesign",
+    answered: 3,
+    knowledgeAvg: 4.5,
+    ...over,
+  });
+
+  it("reports a hard question set answered badly as not explained", () => {
+    const [f] = topicFindings([topic({ knowledgeAvg: 1.2 })]);
+    expect(f.level).toBe("Not explained yet");
+    expect(f.finding).not.toMatch(/strongest/);
+  });
+
+  it("gives no level at all when nothing on the topic was scored", () => {
+    const [f] = topicFindings([topic({ answered: 0, knowledgeAvg: null })]);
+    expect(f.level).toBeNull();
+    expect(f.knowledgeAvg).toBeNull();
+    expect(f.finding).toMatch(/No answer here was scored/);
+  });
+
+  it("never crowns a strongest area out of uniformly weak answers", () => {
+    const findings = topicFindings([
+      topic({ day: 10, knowledgeAvg: 2 }),
+      topic({ day: 20, title: "Prompting", knowledgeAvg: 1 }),
+    ]);
+    for (const f of findings) expect(f.finding).not.toMatch(/strongest/);
+  });
+
+  it("sorts unscored topics last so they cannot lead the section", () => {
+    const sorted = topicFindings([
+      topic({ day: 10, knowledgeAvg: null, answered: 0 }),
+      topic({ day: 20, title: "Prompting", knowledgeAvg: 2 }),
+    ]);
+    // topicFindings preserves order; topicsReached is what sorts. Assert the
+    // level mapping stays correct either way.
+    expect(sorted.map((f) => f.level)).toEqual([null, "Not explained yet"]);
+  });
+
+  it("maps the bands at their boundaries", () => {
+    expect(levelFor(5)).toBe("Explained well");
+    expect(levelFor(4)).toBe("Explained well");
+    expect(levelFor(3.9)).toBe("Partly explained");
+    expect(levelFor(3)).toBe("Partly explained");
+    expect(levelFor(2.9)).toBe("Not explained yet");
+    expect(levelFor(1)).toBe("Not explained yet");
+    expect(levelFor(null)).toBeNull();
   });
 });
 

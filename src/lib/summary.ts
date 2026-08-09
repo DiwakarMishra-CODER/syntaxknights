@@ -19,15 +19,61 @@ export interface TopicReach {
   day: number;
   title: string;
   questionsAsked: number;
-  /** Deepest rung reached on this topic. */
+  /** Deepest rung reached on this topic. A property of the QUESTIONS. */
   depthReached: number;
   band: string;
+  /** Answers on this topic that were actually scored. */
+  answered: number;
+  /** Mean knowledge across those answers, or null if none were scored. */
+  knowledgeAvg: number | null;
 }
 
 /**
- * One row per area actually discussed, ordered by how far the candidate got.
- * Reads the interviewer turns, which carry the day and the depth the question
- * actually sat on.
+ * Mean knowledge score per day, from answers correctly paired to their score.
+ *
+ * The pairing is the whole point and it is off-by-one in the obvious reading:
+ * an interviewer turn carries the rubric for the answer BEFORE it and the
+ * targetDay of the question AFTER it. Attributing a turn's own rubric to its
+ * own targetDay scores every answer against the wrong topic.
+ *
+ * Answers the model marked non-substantive have a null rubric and contribute
+ * nothing — a topic where the candidate only ever typed filler ends with an
+ * empty list, which is why `knowledgeAvg` is nullable rather than defaulted.
+ */
+function knowledgeByDay(turns: Turn[]): Map<number, number[]> {
+  const out = new Map<number, number[]>();
+  let questionDay: number | null = null;
+  let awaitingDay: number | null = null;
+
+  for (const t of turns) {
+    if (t.role === "interviewer") {
+      if (awaitingDay !== null && t.rubric) {
+        const scores = out.get(awaitingDay) ?? [];
+        scores.push(t.rubric.knowledge);
+        out.set(awaitingDay, scores);
+      }
+      awaitingDay = null;
+      questionDay = t.targetDay;
+    } else if (t.role === "candidate" && questionDay !== null) {
+      awaitingDay = questionDay;
+      questionDay = null;
+    }
+  }
+
+  return out;
+}
+
+/**
+ * One row per area actually discussed, ordered by how well the candidate
+ * explained it.
+ *
+ * It used to be ordered — and labelled — by `depthReached`, which is the
+ * deepest rung the INTERVIEWER's questions sat on. That measures the
+ * interview, not the candidate: a topic where every answer was gibberish
+ * still reported the depth of the questions asked about it, and the report
+ * rendered that as an achievement. Depth is still carried, because "we never
+ * got past the basics here" is worth saying — but it no longer decides the
+ * order, the label, or the bar.
  */
 export function topicsReached(turns: Turn[], focusDays: FocusDay[] = []): TopicReach[] {
   const byDay = new Map<number, { count: number; max: number }>();
@@ -44,18 +90,34 @@ export function topicsReached(turns: Turn[], focusDays: FocusDay[] = []): TopicR
     byDay.set(t.targetDay, entry);
   }
 
+  const scores = knowledgeByDay(turns);
+
   const titleFor = (day: number) =>
     focusDays.find((f) => f.day === day)?.title ?? findDay(day)?.title ?? `Day ${day}`;
 
   return [...byDay.entries()]
-    .map(([day, { count, max }]) => ({
-      day,
-      title: titleFor(day),
-      questionsAsked: count,
-      depthReached: max,
-      band: bandFor(max),
-    }))
-    .sort((a, b) => b.depthReached - a.depthReached || b.questionsAsked - a.questionsAsked);
+    .map(([day, { count, max }]) => {
+      const marks = scores.get(day) ?? [];
+      return {
+        day,
+        title: titleFor(day),
+        questionsAsked: count,
+        depthReached: max,
+        band: bandFor(max),
+        answered: marks.length,
+        knowledgeAvg: marks.length
+          ? marks.reduce((s, n) => s + n, 0) / marks.length
+          : null,
+      };
+    })
+    // Best-explained first. An unscored topic sorts last: it is not a strong
+    // result and must never be presented as one.
+    .sort(
+      (a, b) =>
+        (b.knowledgeAvg ?? -1) - (a.knowledgeAvg ?? -1) ||
+        b.depthReached - a.depthReached ||
+        b.questionsAsked - a.questionsAsked
+    );
 }
 
 /**
@@ -70,21 +132,42 @@ export function topicsReached(turns: Turn[], focusDays: FocusDay[] = []): TopicR
  * The names stay in the panel, where all five are drawn as a scale and the
  * context carries them.
  */
+/**
+ * These describe what the QUESTIONS went after, and are phrased that way.
+ *
+ * They used to be phrased as achievements — "Explained the trade-offs" — while
+ * still being keyed on question depth. Asking a trade-off question and getting
+ * silence produced "Explained the trade-offs". The rung is a fact about the
+ * interview, so the sentence now states the interview; how the candidate did
+ * is a separate, separately-measured field.
+ */
 const FINDING: Record<number, string> = {
-  1: "Named the pieces",
-  2: "Explained how you built it",
-  3: "Explained the trade-offs",
-  4: "Explained the trade-offs and where it breaks",
-  5: "Explained the trade-offs and redesigned it under pressure",
+  1: "Asked what the pieces were",
+  2: "Asked how you built it",
+  3: "Asked about the trade-offs",
+  4: "Asked where it breaks",
+  5: "Asked how you would rebuild it",
 };
+
+/** Answer quality on a topic, in a word. Null when nothing there was scored. */
+export function levelFor(knowledgeAvg: number | null): string | null {
+  if (knowledgeAvg === null) return null;
+  if (knowledgeAvg >= 4) return "Explained well";
+  if (knowledgeAvg >= 3) return "Partly explained";
+  return "Not explained yet";
+}
 
 export interface TopicFinding {
   day: number;
   title: string;
   finding: string;
   questionsAsked: number;
-  /** The rung reached, 1-5. For a progress bar that means something. */
+  /** The rung reached, 1-5 — what the questions demanded. */
   depthReached: number;
+  /** Mean knowledge on this topic, or null if no answer here was scored. */
+  knowledgeAvg: number | null;
+  /** The one-word verdict, or null when there is nothing to base one on. */
+  level: string | null;
 }
 
 /**
@@ -96,17 +179,29 @@ export interface TopicFinding {
  * under both — which is why it says what did not happen rather than why.
  */
 export function topicFindings(topics: TopicReach[]): TopicFinding[] {
-  const top = Math.max(0, ...topics.map((t) => t.depthReached));
-  // "Your strongest area" is comparative, so it needs something to compare
-  // against AND a clear winner. One topic, or a tie at the top, gets nothing.
+  // "Your strongest area" is a claim about the CANDIDATE, so it is decided by
+  // the answer scores. Keyed on depthReached it crowned whichever topic the
+  // interviewer happened to push one rung further, even if every answer there
+  // scored 1/5.
+  const scored = topics.filter((t) => t.knowledgeAvg !== null);
+  const top = scored.length ? Math.max(...scored.map((t) => t.knowledgeAvg!)) : null;
+  // Comparative, so it needs something to compare against AND a clear winner.
+  // One topic, a tie at the top, or nothing scored at all gets no label. It
+  // also has to be a result worth naming — "strongest" among answers that were
+  // all weak is a ranking, not a strength.
   const soleLeader =
-    topics.length > 1 && topics.filter((t) => t.depthReached === top).length === 1;
+    top !== null &&
+    top >= 3 &&
+    scored.length > 1 &&
+    scored.filter((t) => t.knowledgeAvg === top).length === 1;
 
   return topics.map((t) => ({
     day: t.day,
     title: t.title,
     questionsAsked: t.questionsAsked,
     depthReached: t.depthReached,
+    knowledgeAvg: t.knowledgeAvg,
+    level: levelFor(t.knowledgeAvg),
     // Terse on purpose. Two areas reached at the same rung genuinely ARE the
     // same finding, and depth plus question count are the only honest inputs
     // here — so the line is short enough to read as a table row rather than as
@@ -115,7 +210,8 @@ export function topicFindings(topics: TopicReach[]): TopicFinding[] {
     finding:
       (FINDING[t.depthReached] ?? FINDING[1]) +
       ` — ${t.questionsAsked} question${t.questionsAsked === 1 ? "" : "s"}` +
-      (soleLeader && t.depthReached === top ? ". Your strongest area." : ""),
+      (t.answered === 0 ? ". No answer here was scored." : "") +
+      (soleLeader && t.knowledgeAvg === top ? ". Your strongest area." : ""),
   }));
 }
 
@@ -355,19 +451,31 @@ export function compareToRecord(input: {
 
   const record = recordLine(input);
 
-  // Topics are sorted deepest-first, so these are the ends of the range.
-  const deepest = input.topics[0];
-  const shallowest = input.topics[input.topics.length - 1];
-  const interview =
-    input.topics.length === 1
-      ? `Your interview centred on ${deepest.title}.`
-      : deepest.depthReached === shallowest.depthReached
-        ? deepest.depthReached >= 4
-          // Reaching the top of the ladder everywhere is the best possible
-          // result. "Got about as far in each" reported it as a flat line.
-          ? `You reached the deepest level in all ${input.topics.length} areas.`
-          : `You covered ${input.topics.length} areas and got about as far in each.`
-        : `You went furthest on ${deepest.title}, and least far on ${shallowest.title}.`;
+  // This sits under a heading that reads "How You Performed Today", so it has
+  // to be about the answers. It used to be built from depthReached and would
+  // announce "You reached the deepest level in all 4 areas" whenever the
+  // INTERVIEWER had asked hard questions, however they were answered.
+  //
+  // Topics are sorted best-explained-first, so these are the ends of the range.
+  const scored = input.topics.filter((t) => t.knowledgeAvg !== null);
+  const best = scored[0];
+  const worst = scored[scored.length - 1];
+
+  let interview: string;
+  if (scored.length === 0) {
+    interview = `Nothing you said in this session could be scored.`;
+  } else if (scored.length === 1) {
+    interview = `Your interview centred on ${best.title}.`;
+  } else if (best.knowledgeAvg! - worst.knowledgeAvg! < 0.5) {
+    interview =
+      best.knowledgeAvg! >= 4
+        ? `You explained all ${scored.length} areas well.`
+        : best.knowledgeAvg! >= 3
+          ? `You covered ${scored.length} areas and explained them about equally.`
+          : `None of the ${scored.length} areas got a full explanation.`;
+  } else {
+    interview = `You explained ${best.title} best, and ${worst.title} least.`;
+  }
 
   const note =
     alignment === "consistent"

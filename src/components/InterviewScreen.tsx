@@ -27,6 +27,9 @@ function formatInterviewerReply(reply: string): string {
 let uid = 0;
 const nextId = () => `e${uid++}`;
 
+/** Long enough to read the interviewer's closing line before the report loads. */
+const CLOSING_BEAT_MS = 2200;
+
 export function InterviewScreen({
   sessionId,
   candidateId,
@@ -106,6 +109,19 @@ export function InterviewScreen({
 
         if (data.done) {
           setDone(true);
+          // The report is written and persisted BEFORE markDone (route.ts),
+          // so by the time done:true arrives it is already in the DB and this
+          // navigation lands on a finished page.
+          //
+          // Without this the interview simply stopped: the End button
+          // early-returns once `done` is true, so nothing navigated and the
+          // only way to the report was remounting the page. The report had
+          // been generated, sent, and thrown away.
+          //
+          // The delay is for the closing beat — it is the interviewer's last
+          // line and yanking the page away mid-sentence reads as a crash.
+          setTimeout(() => router.push(`/report/${sessionId}`), CLOSING_BEAT_MS);
+          return;
         }
         void refreshPanel();
       } catch {
@@ -113,11 +129,17 @@ export function InterviewScreen({
         setStatus("Connection lost. Send again to continue.");
       }
     },
-    [refreshPanel, speak]
+    [refreshPanel, speak, router, sessionId]
   );
 
   const endInterview = useCallback(async () => {
-    if (ending || thinking || done) return;
+    if (ending || thinking) return;
+    // Already finished naturally: the report exists, so go straight to it
+    // rather than posting an end for a session that is already done.
+    if (done) {
+      router.push(`/report/${sessionId}`);
+      return;
+    }
     setEnding(true);
     try {
       await fetch(`/api/session/${sessionId}/end`, { method: "POST" });

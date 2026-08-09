@@ -253,7 +253,10 @@ describe("degradeReport — never return nothing", () => {
     expect(verifyReport(out, transcript).ok).toBe(true);
   });
 
-  it("emits one honest unquoted line when every strength fails", () => {
+  it("leaves strengths EMPTY when every one fails, rather than inventing a consolation", () => {
+    // This used to backfill "You worked through all 9 questions ... and
+    // stayed with each one". A candidate who explained nothing read that as
+    // the headline of their report and concluded they had done fine.
     const feedback: Feedback = {
       summary: "A solid conversation.",
       strengths: ['Bad — "we drain connections before terminating the pod".'],
@@ -263,10 +266,16 @@ describe("degradeReport — never return nothing", () => {
 
     const { feedback: out, degradation } = degradeReport(feedback, ctx);
 
-    expect(out.strengths).toHaveLength(1);
-    expect(out.strengths[0]).toContain("9 questions");
-    expect(out.strengths[0]).not.toContain('"');
-    expect(degradation.strengthsBackfilled).toBe(true);
+    expect(out.strengths).toEqual([]);
+    expect(degradation.droppedStrengths).toHaveLength(1);
+    expect(degradation.strengthsBackfilled).toBe(false);
+  });
+
+  it("never credits turning up as a strength, on any path", () => {
+    const { feedback } = degradeReport(null, ctx);
+    const praiseForEffort =
+      /worked through|stayed with|showed up|turned up|engaged throughout|gave \d+ answers?/i;
+    for (const s of feedback.strengths) expect(s).not.toMatch(praiseForEffort);
   });
 
   it("keeps unquoted gaps but drops fabricated ones", () => {
@@ -301,7 +310,7 @@ describe("degradeReport — never return nothing", () => {
     expect(out.summary).not.toContain("benchmarked");
   });
 
-  it("always returns a contract-shaped object with non-empty strengths and next", () => {
+  it("always returns a contract-shaped object, strengths possibly empty", () => {
     const wreckage: Feedback = {
       summary: 'All bad — "I benchmarked three vector stores".',
       strengths: ['Bad — "we drain connections before terminating the pod".'],
@@ -313,14 +322,15 @@ describe("degradeReport — never return nothing", () => {
 
     expect(typeof out.summary).toBe("string");
     expect(out.summary.length).toBeGreaterThan(0);
-    expect(out.strengths.length).toBeGreaterThan(0);
+    // strengths MAY be empty — that is the honest answer when nothing the
+    // candidate said survived validation. `next` still must not be, because
+    // there is always something they can go and do.
+    expect(Array.isArray(out.strengths)).toBe(true);
     expect(Array.isArray(out.gaps)).toBe(true);
     expect(out.next.length).toBeGreaterThan(0);
 
-    // The invariant for degraded output is NOT verifyReport().ok — the
-    // backfilled strength is deliberately unquoted, which that gate
-    // rejects by design. What must hold is that no fabricated quote
-    // survives: everything invented has been removed.
+    // What must hold is that no fabricated quote survives: everything
+    // invented has been removed.
     expect(verifyReport(out, transcript).fabricated).toEqual([]);
   });
 
@@ -382,10 +392,12 @@ describe("writeReport never throws", () => {
     expect(feedback).toBeDefined();
     expect(typeof feedback.summary).toBe("string");
     expect(feedback.summary.length).toBeGreaterThan(0);
-    expect(feedback.strengths.length).toBeGreaterThan(0);
+    expect(Array.isArray(feedback.strengths)).toBe(true);
     expect(feedback.next.length).toBeGreaterThan(0);
-    // built from state alone, so it quotes nothing and invents nothing
+    // built from state alone, so it quotes nothing and invents nothing —
+    // including inventing a strength for a session it knows nothing about
     expect(feedback.summary).toContain("10 questions");
+    expect(feedback.strengths).toEqual([]);
     vi.doUnmock("../llm");
     vi.resetModules();
   });
@@ -393,7 +405,7 @@ describe("writeReport never throws", () => {
   it("degrades a null report into the contract shape", () => {
     const { feedback } = degradeReport(null, ctx);
     expect(feedback.summary).toContain("10 questions");
-    expect(feedback.strengths).toHaveLength(1);
+    expect(feedback.strengths).toEqual([]);
     expect(feedback.gaps).toEqual([]);
     expect(feedback.next).toHaveLength(1);
   });
@@ -450,18 +462,19 @@ describe("the report does not overstate what happened", () => {
       expect(line).not.toMatch(/\ball (the )?\d+ questions\b/i);
       expect(line).not.toMatch(/\b(completed|finished) the interview\b/i);
     }
-    expect(feedback.strengths.join(" ")).toMatch(/before ending the session/);
   });
 
-  it("keeps the normal-path wording exactly as it was", () => {
-    // The inertness half: endedEarly is opt-in, so an interview that ran to
-    // the end must read byte-for-byte the way it did before the flag existed.
+  it("manufactures no strength on the normal path either", () => {
+    // This used to assert the opposite — that a full-length session was
+    // credited with "You worked through all 9 questions". Running to the end
+    // is not something the candidate explained, so it is not a strength; the
+    // panel is simply hidden when there is nothing evidenced to put in it.
     const { feedback } = degradeReport(null, {
       ...base,
       daysCovered: [3, 10, 22, 28],
       questionCount: 9,
     });
-    expect(feedback.strengths[0]).toContain("You worked through all 9 questions");
+    expect(feedback.strengths).toEqual([]);
   });
 
   it("frames an early end only when it was one", () => {

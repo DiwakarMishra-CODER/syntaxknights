@@ -17,8 +17,13 @@ import {
   History,
   AlertOctagon,
 } from "lucide-react";
-import { findDay } from "@/lib/curriculum";
 import { topicFindings } from "@/lib/summary";
+import {
+  assessmentCriteria,
+  calculatePerformance,
+  extractQAPairs,
+  rung,
+} from "@/lib/report-view";
 import { deriveSignals } from "@/lib/signals";
 import type { Candidate, Feedback, FocusDay, Turn } from "@/lib/types";
 import type { PanelData } from "./Panel";
@@ -37,162 +42,6 @@ function ScoreBar({ pct, color }: { pct: number; color: string }) {
       />
     </div>
   );
-}
-
-/** Calculates overall interview performance grade using super simple, clear friendly terms */
-function calculatePerformance(turns: Turn[]) {
-  const scored = answerRubrics(turns);
-  // No scored answers means no evidence. Returning 80% "Strong Builder"
-  // invents a grade out of nothing, which is exactly what the verbatim and
-  // claim guards exist to prevent elsewhere. null hides the block instead.
-  if (scored.length === 0) return null;
-
-  let totalScore = 0;
-  let count = 0;
-
-  scored.forEach((r) => {
-    totalScore += (r.knowledge + r.communication + r.specificity) / 3;
-    count++;
-  });
-
-  const avgScore = count > 0 ? totalScore / count : 3;
-  const pct = Math.round((avgScore / 5) * 100);
-
-  if (pct >= 85) return { pct, grade: "Top Star Builder ⭐", level: "Super Strong" };
-  if (pct >= 70) return { pct, grade: "Strong System Builder 👍", level: "Great Job" };
-  if (pct >= 55) return { pct, grade: "Good Start, Keep Building 🛠️", level: "Getting Better" };
-  return { pct, grade: "Learning & Growing 🌱", level: "Keep Practicing" };
-}
-
-/**
- * The assessment criteria, each from something actually measured.
- *
- * These were previously derived from the single overall percentage by
- * arithmetic offset -- criterion 2 was `pct + 10`, criterion 4 was `pct - 5`
- * -- so five separately-labelled bars all moved together and none of them
- * measured what its label claimed. The rubric already scores three distinct
- * dimensions on every answer, and the blueprint already lists the objectives
- * each day was meant to cover, so the labels can be backed by real numbers.
- *
- * Returns null when nothing was scored, for the same reason
- * calculatePerformance does.
- */
-function assessmentCriteria(turns: Turn[], focusDays: FocusDay[]) {
-  const scored = answerRubrics(turns);
-  if (scored.length === 0) return null;
-
-  const mean = (pick: (r: NonNullable<Turn["rubric"]>) => number) =>
-    scored.reduce((sum, r) => sum + pick(r), 0) / scored.length;
-
-  const knowledge = mean((r) => r.knowledge);
-  const communication = mean((r) => r.communication);
-  const specificity = mean((r) => r.specificity);
-
-  // Objectives the candidate actually spoke to, counted once each however
-  // many times they came up, against everything the blueprint planned to ask.
-  const hit = new Set<string>();
-  for (const r of scored) for (const o of r.objectivesHit ?? []) hit.add(o);
-  const planned = focusDays.reduce(
-    (n, d) => n + (findDay(d.day)?.objectives.length ?? 0),
-    0
-  );
-
-  const asPct = (v: number) => Math.round((v / 5) * 100);
-
-  return {
-    // How many answers carry a score, which is not always how many were given:
-    // an answer at the very end has no following turn to grade it.
-    scoredCount: scored.length,
-    knowledge,
-    communication,
-    specificity,
-    objectivesHit: hit.size,
-    objectivesPlanned: planned,
-    knowledgePct: asPct(knowledge),
-    communicationPct: asPct(communication),
-    specificityPct: asPct(specificity),
-    objectivesPct: planned > 0 ? Math.round((hit.size / planned) * 100) : 0,
-  };
-}
-
-/** One decimal, so a 2.5 average does not read as a flat 3. */
-const rung = (v: number) => `${Math.round(v * 10) / 10}/5`;
-
-/** Turns raw turns into Q&A pairs for replay view */
-function extractQAPairs(turns: Turn[], focusDays: FocusDay[]) {
-  const pairs: Array<{
-    turnNumber: number;
-    question: string;
-    answer: string;
-    rubric: Turn["rubric"];
-    targetDay: number | null;
-    depth: number | null;
-    topicTitle: string;
-    /** Why this question followed the previous answer. Null for the opener,
-     *  which reacted to nothing. */
-    rationale: string | null;
-  }> = [];
-
-  let lastQuestion: {
-    text: string;
-    targetDay: number | null;
-    depth: number | null;
-    turnNumber: number;
-    rationale: string | null;
-  } | null = null;
-
-  turns.forEach((t) => {
-    if (t.role === "interviewer") {
-      // This turn's rubric grades the answer just before it.
-      const awaiting = pairs[pairs.length - 1];
-      if (awaiting && awaiting.rubric === null && t.rubric) awaiting.rubric = t.rubric;
-      lastQuestion = {
-        text: t.content,
-        targetDay: t.targetDay,
-        depth: t.depth,
-        turnNumber: t.turnNumber,
-        // The opening line's "rationale" is a fixed blueprint string, not a
-        // reaction to anything the candidate said.
-        rationale:
-          t.rubric === null && t.rationale === "opening line from the blueprint"
-            ? null
-            : t.rationale,
-      };
-    } else if (t.role === "candidate" && lastQuestion) {
-      const dayFocus = focusDays.find((f) => f.day === lastQuestion?.targetDay);
-      pairs.push({
-        turnNumber: pairs.length + 1,
-        question: lastQuestion.text,
-        answer: t.content,
-        // Filled in below from the NEXT interviewer turn: an answer is scored
-        // by the call that reacts to it, so candidate rows are always written
-        // with rubric null (see route.ts). Reading t.rubric here found nothing
-        // on every real session and every answer fell back to "3/5".
-        rubric: null as Turn["rubric"],
-        targetDay: lastQuestion.targetDay,
-        depth: lastQuestion.depth,
-        topicTitle: dayFocus?.title ?? "AI Project Topic",
-        rationale: lastQuestion.rationale,
-      });
-      lastQuestion = null;
-    }
-  });
-
-  return pairs;
-}
-
-/**
- * The rubrics that actually exist, in answer order.
- *
- * An answer is scored by the interviewer turn that follows it, so the scores
- * live on interviewer rows; the opening line has none because nothing came
- * before it. Filtering candidate rows for rubrics -- which is what the report
- * used to do -- matched zero turns in every real session.
- */
-function answerRubrics(turns: Turn[]) {
-  return turns
-    .filter((t) => t.role === "interviewer" && t.rubric)
-    .map((t) => t.rubric!);
 }
 
 export function Report({
@@ -225,6 +74,11 @@ export function Report({
   const hasGaps = feedback.gaps.length > 0;
   const hasNext = feedback.next.length > 0;
   const hasTopics = panel && panel.topics.length > 0;
+  // Both of these are computed in page.tsx and were rendered nowhere. They are
+  // the only two panel signals that can report a shortfall, so dropping them
+  // left the report structurally unable to deliver bad news.
+  const unjustified = panel?.unjustified ?? [];
+  const explanation = panel?.explanation ?? null;
 
   const derivedSignals = candidate ? deriveSignals(candidate) : null;
   const struggledMissions = derivedSignals?.struggledDays ?? [];
@@ -460,6 +314,24 @@ export function Report({
             </section>
           )}
 
+          {/* Knowing it vs being able to say it — explanationSignal(rubrics).
+              Null when the two track each other, i.e. there is no finding. */}
+          {explanation && (
+            <section className="p-6 rounded-2xl border border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                  Knowing It vs Explaining It
+                </h2>
+              </div>
+              <p className="text-sm text-indigo-900 dark:text-[#C5D0C8] leading-relaxed">
+                {explanation}
+              </p>
+            </section>
+          )}
+
           {/* Topics Covered */}
           {hasTopics && (
             <section className="p-6 rounded-2xl border border-violet-500/20 bg-violet-50/50 dark:bg-violet-950/20 space-y-5">
@@ -476,10 +348,29 @@ export function Report({
                   <div key={t.day} className="space-y-2 p-4 rounded-xl bg-white/40 dark:bg-white/[0.02] border border-violet-200/50 dark:border-white/5">
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="text-violet-900 dark:text-white font-semibold truncate pr-2">{t.title}</span>
-                      <span className="text-[var(--app-accent-text)] font-bold">Good Understanding</span>
+                      {/* Was the hardcoded string "Good Understanding", printed
+                          next to every topic whatever the candidate said. */}
+                      <span
+                        className={`font-bold shrink-0 ${
+                          t.knowledgeAvg === null
+                            ? "text-violet-400 dark:text-[#7E8B84]"
+                            : t.knowledgeAvg >= 4
+                              ? "text-[var(--app-accent-text)]"
+                              : t.knowledgeAvg >= 3
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-rose-600 dark:text-rose-400"
+                        }`}
+                      >
+                        {t.level ?? "Not scored"}
+                        {t.knowledgeAvg !== null && ` (${rung(t.knowledgeAvg)})`}
+                      </span>
                     </div>
                     <p className="text-xs text-violet-700 dark:text-[#8B968F] leading-relaxed">{t.finding}</p>
-                    <ScoreBar pct={Math.min(100, (t.day / 31) * 100)} color="#8B5CF6" />
+                    {/* Was (t.day / 31) * 100 — the curriculum day number drawn
+                        as a progress bar. A day-28 topic showed 90%. */}
+                    {t.knowledgeAvg !== null && (
+                      <ScoreBar pct={(t.knowledgeAvg / 5) * 100} color="#8B5CF6" />
+                    )}
                   </div>
                 ))}
               </div>
@@ -540,7 +431,11 @@ export function Report({
               const sScore = qa.rubric?.specificity ?? null;
               const scored = k !== null && c !== null && sScore !== null;
 
-              let gradeBadge = `Good Answer 👍 (${k}/5)`;
+              // The middle band is 3/5 — "correct, and stops there". Calling
+              // that a "Good Answer" told candidates their thinnest answers
+              // had landed, which is the same verdict leak the reaction guard
+              // exists to stop, printed one screen later.
+              let gradeBadge = `Partly There 🛠️ (${k}/5)`;
               let badgeStyle = "bg-amber-100 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400";
 
               if (k !== null && k >= 4) {
@@ -691,64 +586,45 @@ export function Report({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-8"
         >
-          {/* Section 1: What NOT to Do (Super Simple Anti-Patterns) */}
-          <section className="p-6 rounded-2xl border border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 space-y-5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center">
-                <AlertOctagon className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-              </div>
-              <div>
-                <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400">
-                  What NOT to Do (Big Mistakes to Avoid 🛑)
-                </h2>
-                <p className="text-xs text-rose-800 dark:text-[#8B968F]">
-                  Important things to avoid when building your AI projects.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-white/40 dark:bg-white/[0.02] border border-rose-200/50 dark:border-rose-500/20 space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-400">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  DO NOT: Lock Secret Numbers inside Code
+          {/* Section 1: things THIS candidate asserted without backing.
+              This was four hardcoded "DO NOT" cards shown to everyone,
+              including a session with zero turns — the same defect the Next
+              Steps section below already had removed. The sharpest part was
+              that one of the four read "DO NOT: Claim Things You Didn't
+              Build" while `unjustified`, the real per-candidate, verbatim-
+              validated list of exactly that, was computed and thrown away. */}
+          {unjustified.length > 0 && (
+            <section className="p-6 rounded-2xl border border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 space-y-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center">
+                  <AlertOctagon className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                 </div>
-                <p className="text-xs text-rose-900 dark:text-[#C5D0C8] leading-relaxed">
-                  Don't type important settings or passwords right inside your code files. Put them in a separate setup file so you can change them easily without breaking things.
-                </p>
+                <div>
+                  <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400">
+                    Said, But Not Backed Up 🛑
+                  </h2>
+                  <p className="text-xs text-rose-800 dark:text-[#8B968F]">
+                    You asserted {unjustified.length === 1 ? "this" : "these"} without
+                    detail an interviewer could check. Be ready to show the code.
+                  </p>
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/40 dark:bg-white/[0.02] border border-rose-200/50 dark:border-rose-500/20 space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-400">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  DO NOT: Guess or Hide Errors
-                </div>
-                <p className="text-xs text-rose-900 dark:text-[#C5D0C8] leading-relaxed">
-                  If your computer program doesn't know the answer, don't let it guess silently. Always show a clear message so users know what happened.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-white/40 dark:bg-white/[0.02] border border-rose-200/50 dark:border-rose-500/20 space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-400">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  DO NOT: Send Giant Piles of Text at Once
-                </div>
-                <p className="text-xs text-rose-900 dark:text-[#C5D0C8] leading-relaxed">
-                  Don't overload the AI with huge amounts of text all in one go. Break your information into smaller, clean paragraphs so it stays fast.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-white/40 dark:bg-white/[0.02] border border-rose-200/50 dark:border-rose-500/20 space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-400">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  DO NOT: Claim Things You Didn't Build
-                </div>
-                <p className="text-xs text-rose-900 dark:text-[#C5D0C8] leading-relaxed">
-                  Only explain features that are actually built and working in your code. Don't use big fancy words if you haven't tested the code yourself!
-                </p>
-              </div>
-            </div>
-          </section>
+              <ul className="space-y-3">
+                {unjustified.map((c, i) => (
+                  <li
+                    key={i}
+                    className="p-4 rounded-xl bg-white/40 dark:bg-white/[0.02] border border-rose-200/50 dark:border-rose-500/20 flex gap-3"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" />
+                    <span className="text-xs text-rose-900 dark:text-[#C5D0C8] leading-relaxed">
+                      {c.text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Section 2: Cohort Learning History & Past Attempts */}
           {(struggledMissions.length > 0 || failedMissions.length > 0) && (

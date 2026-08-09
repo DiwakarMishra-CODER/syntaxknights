@@ -40,8 +40,14 @@ Those words name what a QUESTION demanded, not how well someone answered. Used a
 
 You may use these words in their ordinary English sense — discussing an actual trade-off in their system is fine. What is banned is using them as a label for performance.
 
-STRENGTHS.
+STRENGTHS. AN EMPTY LIST IS A REAL ANSWER.
 What they demonstrably showed, each anchored to a direct quote. Not "good communication" but: explained the retrieval fallback clearly — "if nothing clears the threshold we return a fallback saying we don't have that information".
+
+There is no minimum. If the transcript contains nothing they demonstrably explained — they typed filler, they answered nothing, everything was a hand-wave — return an EMPTY strengths list and let the gaps and next steps carry the report. Do not reach for the nearest thing that can be phrased kindly.
+
+The things that are NOT strengths, however true they are: showing up, answering all the questions, staying engaged, being honest that they did not know, writing at length, being willing to learn. None of those are the candidate explaining their system, which is the only thing this list is for. "You worked through all ten questions" tells a person who understood nothing that they did fine, and that is the one outcome this whole report exists to prevent.
+
+Effort is not evidence. Length is not evidence. Confidence is not evidence. A quote is evidence — and if you cannot find one, say nothing here.
 
 GAPS.
 Where the explanation did not hold up, phrased as what is missing rather than what is wrong. A gap is a thing they have not learned to say yet, not a defect. If they hand-waved, quote the hand-wave. Be honest — vague feedback helps nobody — but never sneer.
@@ -64,12 +70,18 @@ export const REPORTER_SCHEMA = {
   type: "object",
   properties: {
     summary: { type: "string" },
+    // NO minItems. It used to be 1, and that single number is what made the
+    // report congratulate a candidate who had said nothing: the schema
+    // demanded a strength, the transcript contained none, so the model
+    // invented one. Exactly the shape ANTI_INVENTION exists to stop, enforced
+    // by the schema against the prompt. An empty array is a valid report.
     strengths: {
       type: "array",
-      minItems: 1,
       items: {
         type: "string",
-        description: "Must contain a verbatim quote of the candidate in double quotes.",
+        description:
+          "Must contain a verbatim quote of the candidate in double quotes. " +
+          "Omit entirely rather than inventing one — an empty array is valid.",
       },
     },
     gaps: { type: "array", items: { type: "string" } },
@@ -333,20 +345,18 @@ export function degradeReport(
     !feedback.summary || fabricatedQuotes(feedback.summary, said).length > 0;
   const summary = summaryBad ? factualSummary(ctx) : feedback.summary;
 
-  const strengthsBackfilled = strengths.length === 0;
-  if (strengthsBackfilled) {
-    // Telling someone who stopped that they "worked through all N questions"
-    // is both false and tone-deaf. The normal-path wording is unchanged.
-    strengths.push(
-      ctx.endedEarly
-        ? ctx.questionCount === 0
-          ? "You opened the session and can pick it up again whenever you want."
-          : `You gave ${ctx.questionCount} answer${ctx.questionCount === 1 ? "" : "s"}` +
-            `${daysPhrase(ctx.daysCovered)} before ending the session.`
-        : `You worked through all ${ctx.questionCount} questions across days ` +
-          `${ctx.daysCovered.join(", ")} and stayed with each one.`
-    );
-  }
+  // NOTHING is backfilled here any more.
+  //
+  // This used to push "You worked through all N questions ... and stayed with
+  // each one" whenever no strength survived. It reads as praise, it is
+  // reachable by a candidate who typed filler for the whole hour, and it was
+  // the loudest thing on the screen for exactly the person who most needed to
+  // be told otherwise. Turning up is not a strength.
+  //
+  // An empty strengths list is contract-valid — `strengths[]` may be empty —
+  // and Report.tsx hides the panel rather than rendering an empty box, so the
+  // honest outcome is also the one that looks right.
+  const strengthsBackfilled = false;
 
   if (next.length === 0) {
     next.push(

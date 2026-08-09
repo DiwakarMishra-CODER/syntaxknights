@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { askPhrase } from "@/lib/depth";
+import type { TopicReach } from "@/lib/summary";
 
 import { DepthTrace, type TracePoint } from "./DepthTrace";
 
@@ -43,13 +44,10 @@ export interface PanelData {
   }>;
   rationale: string | null;
   claims: Array<{ text: string; day: number; unjustified: boolean; contradicted: boolean }>;
-  topics: Array<{
-    day: number;
-    title: string;
-    questionsAsked: number;
-    depthReached: number;
-    band: string;
-  }>;
+  /** The real shape, not a copy — a structural duplicate here silently drifts
+   *  out of date the moment a field is added to TopicReach, which is how the
+   *  report ended up unable to see the answer scores at all. */
+  topics: TopicReach[];
   unjustified: Array<{ text: string; day: number }>;
   /** Knowing it vs saying it. Null when the two track each other. */
   explanation: string | null;

@@ -1,15 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Report, type ReportPanel } from "@/components/Report";
-import { getRecentTurns, loadReport, loadSession } from "@/lib/db";
-import { deriveSignals } from "@/lib/signals";
-import {
-  compareToRecord,
-  explanationSignal,
-  topicsReached,
-  unjustifiedClaims,
-} from "@/lib/summary";
+import { Report } from "@/components/Report";
+import { ReportPoller } from "@/components/ReportPoller";
+import { loadReportView } from "@/lib/report-page";
 
 export const dynamic = "force-dynamic";
 
@@ -92,10 +86,12 @@ export default async function ReportPage({
 }) {
   const { sessionId } = await params;
 
-  const session = await loadSession(sessionId);
-  if (!session) notFound();
+  // Same loader the print route uses, so the printed numbers cannot drift
+  // from the ones on screen.
+  const data = await loadReportView(sessionId);
+  if (data.status === "missing") notFound();
 
-  if (session.status !== "done") {
+  if (data.status === "in_progress") {
     return (
       <Shell>
         <Notice
@@ -111,64 +107,47 @@ export default async function ReportPage({
     );
   }
 
-  const feedback = await loadReport(sessionId);
-  if (!feedback) {
+  if (data.status === "writing") {
     return (
       <Shell>
         <Notice
           title="Writing your report..."
-          body="Your interview is stored. We are generating your full technical report and performance analytics. Please refresh in a few seconds."
+          body="Your interview is stored. We are generating your full technical report and performance analytics."
+          action={<ReportPoller />}
         />
       </Shell>
     );
   }
 
-  const turns = await getRecentTurns(sessionId, 400);
-  const signals = deriveSignals(session.candidate);
-  const focusDays = session.blueprint?.focusDays ?? [];
-  const topics = topicsReached(turns, focusDays);
-
-  const rubrics = turns
-    .map((t) => t.rubric)
-    .filter((r): r is NonNullable<typeof r> => r !== null);
-
-  const panel: ReportPanel = {
-    topics,
-    explanation: explanationSignal(rubrics),
-    unjustified: unjustifiedClaims(turns.flatMap((t) => t.claims ?? [])),
-    comparison: compareToRecord({
-      firstTryRate: signals.firstTryRate,
-      coverage: signals.coverage,
-      missionsCompleted: session.candidate.signals.missionsCompleted,
-      missionsFirstTry: session.candidate.signals.missionsFirstTry,
-      skippedDays: signals.skippedDays,
-      failedDays: signals.failedDays,
-      struggledDays: signals.struggledDays,
-      abilityEstimate: session.state.abilityEstimate,
-      topics,
-    }),
-  };
-
   return (
     <Shell>
       <Report
-        feedback={feedback}
-        panel={panel}
-        turns={turns}
-        focusDays={focusDays}
-        candidate={session.candidate}
-        endedEarly={session.state.endedEarly}
+        feedback={data.feedback}
+        panel={data.panel}
+        turns={data.turns}
+        focusDays={data.focusDays}
+        candidate={data.candidate}
+        endedEarly={data.endedEarly}
       />
       <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-10 py-10 border-t border-[var(--app-border)] flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
-            href={`/interview?candidate=${session.candidate.member.id}`}
+            href={`/interview?candidate=${data.candidate.member.id}`}
             className={linkStyle}
           >
             Practice Again →
           </Link>
           <Link href="/dashboard" className={secondaryLinkStyle}>
             ← Back to Dashboard
+          </Link>
+          {/* Its own route: this page unmounts inactive tabs, so printing it
+              directly would capture only whichever tab is open. */}
+          <Link
+            href={`/report/${sessionId}/print?auto=1`}
+            target="_blank"
+            className={secondaryLinkStyle}
+          >
+            ⬇ Download PDF
           </Link>
         </div>
         <p className="text-xs text-[var(--app-muted)] font-mono">

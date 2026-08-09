@@ -68,10 +68,18 @@ export const ROLE_CONFIG: Record<Role, RoleConfig> = {
     thinkingLevel: "medium",
     maxOutputTokens: 16384,
   },
-  // 1 call per interview.
+  // 1 call per interview, and the last thing between the candidate and their
+  // feedback — measured at ~19s on "high", which was most of a ~30s final
+  // request. Dropped to "medium" for the same reason the planner was: the
+  // report is a summarisation of a transcript that is already in front of the
+  // model, not a reasoning problem, so the extra thinking bought latency.
+  //
+  // maxOutputTokens stays at 16384. It is a THOUGHT + OUTPUT budget, so a
+  // lower thinking level only widens the margin against the truncation that
+  // once ate a whole interview's feedback.
   reporter: {
     model: "gemini-3.6-flash",
-    thinkingLevel: "high",
+    thinkingLevel: "medium",
     maxOutputTokens: 16384,
   },
   // Kept so the merged turn can be un-merged; both on flash-lite so an
