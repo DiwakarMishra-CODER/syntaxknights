@@ -15,25 +15,25 @@ export const dynamic = "force-dynamic";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[#050806] text-[#F5F7F4] font-sans">
+    <main className="min-h-screen bg-[var(--app-bg)] text-[var(--app-fg)] font-sans transition-colors duration-300">
       {/* Ambient background glows matching landing page theme */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#1FD16A] opacity-[0.05] mix-blend-screen blur-[180px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#1FD16A] opacity-[0.03] mix-blend-screen blur-[140px] rounded-full" />
+        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[var(--app-accent)] opacity-[0.05] mix-blend-screen blur-[180px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-[var(--app-accent)] opacity-[0.03] mix-blend-screen blur-[140px] rounded-full" />
       </div>
 
       {/* Header nav matching landing page theme */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#080D0A]/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 w-full border-b border-[var(--app-border)] bg-[var(--app-header)] backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-xl bg-[#1FD16A]/10 border border-[#1FD16A]/30 flex items-center justify-center text-[#1FD16A] font-bold text-sm shadow-[0_0_15px_rgba(31,209,106,0.15)] group-hover:scale-105 transition-all">
+            <div className="w-8 h-8 rounded-xl bg-[var(--app-accent-soft)] border border-[var(--app-accent-border)] flex items-center justify-center text-[var(--app-accent-text)] font-bold text-sm shadow-[0_0_15px_rgba(31,209,106,0.15)] group-hover:scale-105 transition-all">
               M
             </div>
-            <span className="font-bold text-base text-white tracking-tight">
+            <span className="font-bold text-base text-[var(--app-fg-strong)] tracking-tight">
               MockMate
             </span>
           </Link>
-          <span className="text-xs font-mono uppercase tracking-widest text-[#1FD16A] px-3 py-1 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
+          <span className="text-xs font-mono uppercase tracking-widest text-[var(--app-accent-text)] px-3 py-1 rounded-full bg-[var(--app-accent-soft)] border border-[var(--app-accent-border)]">
             Interview Performance Report
           </span>
         </div>
@@ -55,9 +55,9 @@ function Notice({
 }) {
   return (
     <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 py-20 flex flex-col items-center text-center gap-6">
-      <div className="w-14 h-14 rounded-2xl bg-[#1FD16A]/10 border border-[#1FD16A]/20 flex items-center justify-center">
+      <div className="w-14 h-14 rounded-2xl bg-[var(--app-accent-soft)] border border-[var(--app-accent-border)] flex items-center justify-center">
         <svg
-          className="w-6 h-6 text-[#1FD16A]"
+          className="w-6 h-6 text-[var(--app-accent-text)]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -69,8 +69,8 @@ function Notice({
         </svg>
       </div>
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        <p className="text-sm text-[#8B968F] max-w-md leading-relaxed">
+        <h1 className="text-2xl font-bold text-[var(--app-fg-strong)]">{title}</h1>
+        <p className="text-sm text-[var(--app-body)] max-w-md leading-relaxed">
           {body}
         </p>
       </div>
@@ -80,10 +80,10 @@ function Notice({
 }
 
 const linkStyle =
-  "inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider bg-[#1FD16A] text-black hover:bg-[#1FD16A]/90 shadow-[0_0_15px_rgba(31,209,106,0.3)] transition-all cursor-pointer";
+  "inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider bg-[var(--app-accent)] text-[#050806] hover:opacity-90 shadow-[0_0_15px_rgba(31,209,106,0.3)] transition-all cursor-pointer";
 
 const secondaryLinkStyle =
-  "inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider border border-white/10 bg-white/5 text-[#C5D0C8] hover:border-white/20 hover:text-white transition-all cursor-pointer";
+  "inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider border border-[var(--app-border)] bg-[var(--app-glass)] text-[var(--app-muted)] hover:border-[var(--app-border-soft)] hover:text-[var(--app-fg-strong)] transition-all cursor-pointer";
 
 export default async function ReportPage({
   params,
@@ -159,7 +159,7 @@ export default async function ReportPage({
         candidate={session.candidate}
         endedEarly={session.state.endedEarly}
       />
-      <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-10 py-10 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-10 py-10 border-t border-[var(--app-border)] flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
             href={`/interview?candidate=${session.candidate.member.id}`}
@@ -171,7 +171,7 @@ export default async function ReportPage({
             ← Back to Dashboard
           </Link>
         </div>
-        <p className="text-xs text-[#7E8B84] font-mono">
+        <p className="text-xs text-[var(--app-muted)] font-mono">
           Session ID: {sessionId.slice(0, 18)}...
         </p>
       </div>

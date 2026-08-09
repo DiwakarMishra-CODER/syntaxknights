@@ -105,10 +105,10 @@ export function ConversationTranscript({
           onMouseEnter={() => e.traceIndex !== null && onHoverIndex?.(e.traceIndex)}
           onMouseLeave={() => onHoverIndex?.(null)}
         >
-          <div className="font-sans font-semibold text-[10px] uppercase tracking-widest text-[#7E8B84] mb-2">
+          <div className="font-sans font-semibold text-[10px] uppercase tracking-widest text-[var(--app-muted)] mb-2">
             Q{currentQuestionIndex} · {topicTitle} · Depth {depthInfo?.depth ?? "?"}
           </div>
-          <div className="font-sans text-[14px] leading-[1.5] text-[#F5F7F4] mb-3">
+          <div className="font-sans text-[14px] leading-[1.5] text-[var(--app-fg-strong)] mb-3">
             {e.text}
           </div>
         </div>
@@ -116,7 +116,7 @@ export function ConversationTranscript({
     } else if (e.kind === "answer") {
       blockContent.push(
         <div key={e.id} className={`px-6 mb-4 transition-opacity duration-200 ${opacityClass}`}>
-          <div className="font-sans text-[12px] leading-[1.6] text-[#CFD7D0] border-l border-white/10 pl-3">
+          <div className="font-sans text-[12px] leading-[1.6] text-[var(--app-fg)] border-l border-[var(--app-border)] pl-3">
             {e.text}
           </div>
         </div>
@@ -125,7 +125,7 @@ export function ConversationTranscript({
       // Typically we might not show acks in the transcript, but if we do:
       blockContent.push(
         <div key={e.id} className={`px-6 mb-2 transition-opacity duration-200 ${opacityClass}`}>
-          <div className="font-sans text-[13px] text-[#7E8B84] italic">
+          <div className="font-sans text-[13px] text-[var(--app-muted)] italic">
             {e.text}
           </div>
         </div>
@@ -141,7 +141,7 @@ export function ConversationTranscript({
       
       {thinking && (
         <div className="px-6 mt-4">
-          <span className="font-sans font-medium text-[10px] uppercase tracking-[0.14em] text-[#7E8B84] animate-pulse">
+          <span className="font-sans font-medium text-[10px] uppercase tracking-[0.14em] text-[var(--app-muted)] animate-pulse">
             Considering...
           </span>
         </div>

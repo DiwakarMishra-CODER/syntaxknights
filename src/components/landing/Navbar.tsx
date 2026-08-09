@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ArrowRight, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Sheet,
   SheetContent,
@@ -68,7 +69,8 @@ export function Navbar({ onOpenStartModal }: NavbarProps) {
           </ul>
 
           {/* Right: Start Interview CTA */}
-          <div className="hidden items-center md:flex">
+          <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
             <Button size="sm" onClick={onOpenStartModal}>
               Start Practice
               <ArrowRight className="h-3.5 w-3.5" />
@@ -102,6 +104,12 @@ export function Navbar({ onOpenStartModal }: NavbarProps) {
                     </a>
                   </SheetClose>
                 ))}
+                <SheetClose asChild>
+                  <div className="mt-3 flex w-full items-center justify-between rounded-lg border border-border px-2 py-3">
+                    <span className="text-sm text-muted-foreground">Theme</span>
+                    <ThemeToggle />
+                  </div>
+                </SheetClose>
                 <SheetClose asChild>
                   <Button className="mt-3 w-full" onClick={onOpenStartModal}>
                     Start Practice

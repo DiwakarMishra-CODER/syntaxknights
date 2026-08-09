@@ -16,7 +16,7 @@ export default function Home() {
   const handleStartPracticing = () => router.push("/dashboard");
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div className="dark relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <Navbar onOpenStartModal={handleStartPracticing} />
 
       <main className="relative z-10">

@@ -21,8 +21,8 @@ export function JourneyPanel({
   const currentDay = s?.currentDay ?? null;
 
   return (
-    <aside className="hidden lg:flex h-full w-[380px] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl">
-      <div className="font-sans font-semibold text-[10px] uppercase tracking-[0.14em] text-[#7E8B84] mb-8">
+    <aside className="hidden lg:flex h-full w-[380px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-glass)] p-6 shadow-2xl backdrop-blur-xl">
+      <div className="font-sans font-semibold text-[10px] uppercase tracking-[0.14em] text-[var(--app-muted)] mb-8">
         Interview Journey
       </div>
 
@@ -39,29 +39,29 @@ export function JourneyPanel({
               >
                 <div className="mt-[2px] flex items-center justify-center w-4 h-4 shrink-0">
                   {isCovered ? (
-                    <svg className="w-4 h-4 text-[#7E8B84]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-4 h-4 text-[var(--app-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   ) : isCurrent ? (
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-pulse shadow-[0_0_8px_rgba(22,163,74,0.6)]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--app-accent)] animate-pulse shadow-[0_0_8px_rgba(22,163,74,0.6)]" />
                   ) : (
-                    <span className="w-2.5 h-2.5 rounded-full border border-white/20" />
+                    <span className="w-2.5 h-2.5 rounded-full border border-[var(--app-border)]" />
                   )}
                 </div>
                 <div className="flex flex-col">
                   <span
                     className={`font-sans text-[14px] leading-tight transition-all duration-300 ${
                       isCurrent
-                        ? "text-[#F5F7F4] font-semibold"
+                        ? "text-[var(--app-fg-strong)] font-semibold"
                         : isCovered
-                        ? "text-[#7E8B84] line-through decoration-white/20"
-                        : "text-[#7E8B84]/60"
+                        ? "text-[var(--app-muted)] line-through"
+                        : "text-[var(--app-muted-2)]"
                     }`}
                   >
                     {f.title}
                   </span>
                   {isCurrent && (
-                    <span className="font-sans font-semibold text-[10px] text-[#16A34A] mt-1 uppercase tracking-widest">
+                    <span className="font-sans font-semibold text-[10px] text-[var(--app-accent-text)] mt-1 uppercase tracking-widest">
                       Active
                     </span>
                   )}
@@ -71,19 +71,17 @@ export function JourneyPanel({
           })}
         </ul>
 
-        <section className="mt-8 border-t border-white/10 pt-6">
-          <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7E8B84]">
+        <section className="mt-8 border-t border-[var(--app-border)] pt-6">
+          <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--app-muted)]">
             Interview depth
           </div>
-          {/* It said "INTERVIEW DEPTH" and nothing else, so a viewer had no
-              way to know what a dot was or which direction meant harder. */}
-          <p className="mt-2 font-sans text-[11px] leading-[1.6] text-[#7E8B84]/80">
+          <p className="mt-2 font-sans text-[11px] leading-[1.6] text-[var(--app-muted)]">
             Each dot is a question. It moves right as the questions get harder,
             and starts again when the topic changes.
           </p>
 
           {points.length === 0 ? (
-            <p className="mt-6 font-sans text-[11px] leading-[1.6] text-[#7E8B84]/60">
+            <p className="mt-6 font-sans text-[11px] leading-[1.6] text-[var(--app-muted-2)]">
               The line appears as you answer.
             </p>
           ) : (
