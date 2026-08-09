@@ -214,3 +214,6 @@ Commit every 20-30 min with real messages. The hackathon disqualifies
 repos whose first commit contains most of the project, or that show one
 large final commit. This is graded.
 Maintain PROMPTS.md as we go — written live, not reconstructed at the end.
+It is grouped by feature, not chronological: file each new prompt under the
+section it belongs to rather than appending to the end, or the grouping decays
+back into a flat tail. Prompts only, verbatim, no commentary.
