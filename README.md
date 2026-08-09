@@ -27,7 +27,7 @@ open data/VN20260809_194517.mp4        # macOS
 xdg-open data/VN20260809_194517.mp4    # Linux
 ```
 
-🔗 **Live deployment:** _link to be added_
+🔗 **Live:** **https://syntaxknightsai.vercel.app**
 
 Prefer to just run it? [Skip to Run it](#run-it) — `FIXTURE=1 npm run dev` gives you a full interview with **no API keys**.
 
