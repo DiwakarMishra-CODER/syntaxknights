@@ -36,6 +36,9 @@ const MockMateHeroScene = dynamic(
   }
 );
 
+/** The live-session card's inset from the bottom of the stage — `bottom-4`. */
+const LIVE_CARD_INSET = 16;
+
 export function Hero({ onOpenStartModal }: HeroProps) {
   const [activeBeat, setActiveBeat] = React.useState(0);
 
@@ -45,6 +48,29 @@ export function Hero({ onOpenStartModal }: HeroProps) {
       4500
     );
     return () => clearInterval(timer);
+  }, []);
+
+  // How much of the scene this card covers, so the scene can keep its own
+  // overlays out of it. This used to be the literal 170 passed to
+  // reserveBottom, but the card's height is whatever its text wraps to — and
+  // the text ROTATES every 4.5s between beats of different lengths, so no
+  // single number is right for more than a few seconds at a time. That is
+  // what put the Day 22 probe panel on top of this card.
+  const liveCardRef = React.useRef<HTMLDivElement>(null);
+  const [reserveBottom, setReserveBottom] = React.useState(190);
+
+  // useEffect, not useLayoutEffect: this component IS server-rendered (a
+  // "use client" component still prerenders), and useLayoutEffect warns there.
+  // Timing is not critical here — the scene that consumes this is a lazy,
+  // ssr:false import, so it mounts well after the first measurement lands.
+  React.useEffect(() => {
+    const el = liveCardRef.current;
+    if (!el) return;
+    const measure = () => setReserveBottom(el.offsetHeight + LIVE_CARD_INSET);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const beat = REPLAY_BEATS[activeBeat];
@@ -122,8 +148,11 @@ export function Hero({ onOpenStartModal }: HeroProps) {
           className="relative lg:col-span-6 lg:translate-x-8"
         >
           <div className="relative mx-auto w-full max-w-[560px]">
-            <MockMateHeroScene reserveBottom={170} />
-            <Card className="absolute bottom-4 left-4 right-4 border-primary/15 bg-card/80 shadow-[0_24px_48px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+            <MockMateHeroScene reserveBottom={reserveBottom} />
+            <Card
+              ref={liveCardRef}
+              className="absolute bottom-4 left-4 right-4 border-primary/15 bg-card/80 shadow-[0_24px_48px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+            >
               <CardContent className="gap-3 !py-4">
                 <div className="flex items-center justify-between text-xs uppercase tracking-[0.22em] text-primary">
                   <span className="flex items-center gap-2">

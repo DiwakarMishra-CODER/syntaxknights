@@ -470,3 +470,81 @@ landing page is fine. what is the fix for the duplicated next steps section?
 ```
 update promots.md it should ONLY have my promot not hat that prompt did. ONLUY PROMPTS
 ```
+
+## 42
+
+```
+pull the changes made.
+```
+
+## 43
+
+```
+run dev do it
+```
+
+## 44
+
+```
+ok.. so...the interview after giving the interview if i write useless stuff too it said nice response . even if it wasnt good. fix that. there was nothing good and it said good response
+```
+
+## 45
+
+```
+what xactly did you do?
+```
+
+## 46
+
+```
+so what change in response?
+```
+
+## 47
+
+```
+but verdict should be there i think? was it there before? just the ngative one like maintain language or something like that?
+```
+
+## 48
+
+```
+the problem is in the end report of interview not while the person is being interviewd fix there. not what you did
+```
+
+## 49
+
+```
+can we make report making faster? like report keeps making in bg while the user is giving interview and fastly gives us final reprt? and give option to download reprt as pdf
+```
+
+## 50
+
+```
+before we go forward with this..when ending interview on rubbish ans... we still se topic name and good understanding beside it even though i didnt ans anything fix that. and any more issues in report see first that
+```
+
+## 51
+
+```
+now do the report faster and pdf thing
+```
+
+## 52
+
+```
+so..i had fixed the collision in animation on the landing page hero section. you know the on on right hand side. and commited locally on this machine..then while merging with other commits that were pushed by my friends the collsion fix was lost. can you fix it again?from that commit or spertley... i dont know i just want it fixed
+```
+
+## 53
+
+```
+theres still this collision on my localhost
+```
+
+## 54
+
+```
+want this image as favicon. we have that next js logo rn in broswer
+```

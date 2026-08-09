@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import * as THREE from "three";
 import { AnimatePresence, motion } from "framer-motion";
@@ -32,6 +32,98 @@ const PALETTE = {
   },
 } as const;
 
+const STAGE_MARGIN = 16;
+/** Breathing room between a hub node and the panel pinned to it. */
+const NODE_GAP = 28;
+
+const clamp = (v: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(v, Math.max(lo, hi)));
+
+/**
+ * A panel pinned beside a projected 3D node, kept inside the stage and clear
+ * of whatever the caller has laid over the bottom.
+ *
+ * It MEASURES ITSELF. The previous version passed the card's size in as a
+ * literal — 280x132 — for a panel whose height is whatever its text wraps to.
+ * The real card is taller than 132, so the clamp reserved too little room and
+ * the panel still landed on the hero's live-session card. Anything that reads
+ * a rendered size has to measure it; a constant is a guess that goes stale the
+ * first time the copy or the breakpoint changes.
+ *
+ * useLayoutEffect, so the measured position is applied before the browser
+ * paints and no unclamped frame is ever visible.
+ */
+function ClampedCard({
+  x,
+  y,
+  side,
+  stageWidth,
+  stageHeight,
+  reserveBottom,
+  className,
+  initial,
+  animate,
+  exit,
+  children,
+}: {
+  x: number;
+  y: number;
+  /** Which side of the node the panel sits on. */
+  side: "left" | "right";
+  stageWidth: number;
+  stageHeight: number;
+  reserveBottom: number;
+  className?: string;
+  initial?: React.ComponentProps<typeof motion.div>["initial"];
+  animate?: React.ComponentProps<typeof motion.div>["animate"];
+  exit?: React.ComponentProps<typeof motion.div>["exit"];
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setBox({ w: el.offsetWidth, h: el.offsetHeight });
+    measure();
+    // The hero rotates its copy every few seconds and the panel reflows with
+    // it, so the height is not measured once — it is watched.
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const rawLeft = side === "right" ? x + NODE_GAP : x - box.w - NODE_GAP;
+  const left = stageWidth
+    ? clamp(rawLeft, STAGE_MARGIN, stageWidth - box.w - STAGE_MARGIN)
+    : rawLeft;
+
+  // Centred on the node, then pushed back inside. The top edge is computed
+  // directly rather than via translateY(-50%), so the clamp and the rendered
+  // position cannot disagree.
+  const top = stageHeight
+    ? clamp(
+        y - box.h / 2,
+        STAGE_MARGIN,
+        stageHeight - reserveBottom - STAGE_MARGIN - box.h
+      )
+    : y - box.h / 2;
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      style={{ left, top }}
+      initial={initial}
+      animate={animate}
+      exit={exit}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export const MockMateHeroScene: React.FC<{ reserveBottom?: number }> = ({
   reserveBottom = 0,
 }) => {
@@ -49,35 +141,13 @@ export const MockMateHeroScene: React.FC<{ reserveBottom?: number }> = ({
   const [stageHeight, setStageHeight] = useState<number>(0);
 
   /**
-   * Keep a fixed-width overlay card on screen.
-   *
-   * These are positioned from PROJECTED 3D coordinates, and a hub near the
-   * edge of the camera frustum projects past the viewport — so the card ran
-   * off the right edge and its text was cut mid-word.
+   * Bottom strip the caller has covered — the hero's live-session card.
+   * Node labels that would land inside it are faded rather than moved: they
+   * identify a specific dot, so pushing one out of the way would leave it
+   * pointing at nothing.
    */
-  const clampCard = (x: number, cardWidth: number, shiftLeft: number) => {
-    if (!stageWidth) return x - shiftLeft;
-    const margin = 16;
-    return Math.max(margin, Math.min(x - shiftLeft, stageWidth - cardWidth - margin));
-  };
-
-  /**
-   * The same problem on the other axis, plus one the caller owns.
-   *
-   * A hub low in the frustum put its card over the live-session card the hero
-   * lays on top of this scene, so two panels of text sat on each other.
-   * `reserveBottom` is however much vertical space the caller has covered.
-   * Cards are centred on the node (translateY(-50%)), so the extent is
-   * y +/- cardHeight / 2.
-   */
-  const clampCardY = (y: number, cardHeight: number) => {
-    if (!stageHeight) return y;
-    const margin = 16;
-    const half = cardHeight / 2;
-    const lo = margin + half;
-    const hi = stageHeight - reserveBottom - margin - half;
-    return hi < lo ? lo : Math.max(lo, Math.min(y, hi));
-  };
+  const inReservedStrip = (y: number) =>
+    stageHeight > 0 && reserveBottom > 0 && y > stageHeight - reserveBottom;
 
   // The 4 major curriculum hubs from the hackathon statement
   const hubLabels = ["RAG & VECTOR DBs", "PROMPT ENGINEERING", "AGENTIC AI", "MCP & DEPLOYMENT"];
@@ -405,11 +475,19 @@ export const MockMateHeroScene: React.FC<{ reserveBottom?: number }> = ({
             {nodePositions.map((pos, idx) => (
               <div
                 key={idx}
-                className={`absolute text-[10px] font-mono text-brand-soft bg-slate-100 dark:bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "opacity-50 scale-95" : "opacity-100 scale-100"}`}
+                className={`absolute text-[10px] font-mono text-brand-soft bg-slate-100 dark:bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "scale-95" : "scale-100"}`}
                 style={{
                   left: pos.x,
                   top: pos.y,
                   transform: "translate(-50%, -150%)",
+                  // Faded rather than moved: the label names this specific dot,
+                  // so relocating it out of the reserved strip would leave it
+                  // captioning empty space.
+                  opacity: inReservedStrip(pos.y)
+                    ? 0
+                    : sequencePhase === 5
+                      ? 0.5
+                      : 1,
                 }}
               >
                 {hubLabels[idx]}
@@ -442,38 +520,40 @@ export const MockMateHeroScene: React.FC<{ reserveBottom?: number }> = ({
 
         {/* Phase 3: The Probe / Interview Question (Attached to Hub 2: Agentic AI) */}
         {sequencePhase === 3 && nodePositions.length === 4 && (
-          <motion.div
+          <ClampedCard
             key="question-1"
+            x={nodePositions[2].x}
+            y={nodePositions[2].y}
+            side="left"
+            stageWidth={stageWidth}
+            stageHeight={stageHeight}
+            reserveBottom={reserveBottom}
             initial={{ opacity: 0, scale: 0.9, x: 20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9, x: -20 }}
             className="absolute z-40 w-[280px] glass-card-green p-4 rounded-xl shadow-2xl"
-            style={{
-              left: clampCard(nodePositions[2].x, 280, 308),
-              top: clampCardY(nodePositions[2].y, 132),
-              transform: "translateY(-50%)",
-            }}
           >
             <div className="text-[10px] font-mono text-brand-soft mb-2 uppercase">Day 22 Probe</div>
             <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;I see you took three attempts to pass the Multi-Agent Orchestration module. Walk me through the race condition you hit.&rdquo;
             </p>
-          </motion.div>
+          </ClampedCard>
         )}
 
         {/* Phase 4: Adaptive Follow-up (Attached to Hub 0: RAG) */}
         {sequencePhase === 4 && nodePositions.length === 4 && (
-          <motion.div
+          <ClampedCard
             key="question-2"
+            x={nodePositions[0].x}
+            y={nodePositions[0].y}
+            side="right"
+            stageWidth={stageWidth}
+            stageHeight={stageHeight}
+            reserveBottom={reserveBottom}
             initial={{ opacity: 0, scale: 0.9, x: -20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9, x: 20 }}
             className="absolute z-40 w-[280px] glass-card-green p-4 rounded-xl border-[#1FD16A]/40 shadow-2xl"
-            style={{
-              left: nodePositions[0].x,
-              top: nodePositions[0].y,
-              transform: "translate(10%, -50%)"
-            }}
           >
             <div className="text-[10px] font-mono text-brand mb-2 uppercase flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
@@ -482,22 +562,23 @@ export const MockMateHeroScene: React.FC<{ reserveBottom?: number }> = ({
             <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;Exactly. Now, if one of those agents needed to invoke a vector database tool, how would you manage the state lock?&rdquo;
             </p>
-          </motion.div>
+          </ClampedCard>
         )}
 
         {/* Phase 5: Knowledge gap / Topic Shift (Attached to Hub 3: MCP) */}
         {sequencePhase === 5 && nodePositions.length === 4 && (
-          <motion.div
+          <ClampedCard
             key="question-3"
+            x={nodePositions[3].x}
+            y={nodePositions[3].y}
+            side="left"
+            stageWidth={stageWidth}
+            stageHeight={stageHeight}
+            reserveBottom={reserveBottom}
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -20 }}
             className="absolute z-40 w-[280px] glass-card-green p-4 rounded-xl border-amber-500/40 shadow-2xl"
-            style={{
-              left: clampCard(nodePositions[3].x, 280, 308),
-              top: clampCardY(nodePositions[3].y, 132),
-              transform: "translateY(-50%)",
-            }}
           >
             <div className="text-[10px] font-mono text-amber-400 mb-2 uppercase flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -506,7 +587,7 @@ export const MockMateHeroScene: React.FC<{ reserveBottom?: number }> = ({
             <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;Candidate skipped Observability on Day 29. Pivoting to ask how they would monitor this MCP integration in production...&rdquo;
             </p>
-          </motion.div>
+          </ClampedCard>
         )}
 
         {/* Phase 6: Celebration / Interview Ready */}
