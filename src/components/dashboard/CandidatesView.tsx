@@ -66,7 +66,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
   }, [candidates, searchQuery, selectedRole]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-accent transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-brand transition-colors duration-300">
 
       {/* Ambient Background Glows — identical to Dashboard */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -84,7 +84,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
               onClick={() => router.push("/dashboard")}
               className="flex items-center gap-2.5 group"
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-[#1FD16A]/10 border border-emerald-200 dark:border-[#1FD16A]/30 flex items-center justify-center text-emerald-600 dark:text-accent font-mono font-bold text-sm shadow-sm transition-transform group-hover:scale-105">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-[#1FD16A]/10 border border-emerald-200 dark:border-[#1FD16A]/30 flex items-center justify-center text-emerald-600 dark:text-brand font-mono font-bold text-sm shadow-sm transition-transform group-hover:scale-105">
                 M
               </div>
               <span className="font-sans font-bold text-base tracking-tight text-slate-900 dark:text-white">
@@ -92,7 +92,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
               </span>
             </button>
             <span className="text-slate-300 dark:text-white/20">/</span>
-            <span className="text-xs font-mono text-emerald-600 dark:text-accent font-medium">
+            <span className="text-xs font-mono text-emerald-600 dark:text-brand font-medium">
               All Candidates
             </span>
           </div>
@@ -101,7 +101,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/dashboard")}
-              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-accent transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-brand transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Dashboard</span>
@@ -115,7 +115,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                 aria-label="Toggle Theme"
               >
                 {theme === "dark" ? (
-                  <Sun className="w-4 h-4 text-accent-soft" />
+                  <Sun className="w-4 h-4 text-brand-soft" />
                 ) : (
                   <Moon className="w-4 h-4 text-slate-700" />
                 )}
@@ -131,7 +131,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
         {/* Page Heading */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/80 dark:border-[#1FD16A]/25 mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-brand border border-emerald-200/80 dark:border-[#1FD16A]/25 mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
               Evaluation Portal
             </div>
@@ -179,8 +179,8 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                 onClick={() => setSelectedRole(role)}
                 className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all text-xs ${
                   selectedRole === role
-                    ? "bg-[#1FD16A] text-[#050806] font-semibold shadow-[0_0_10px_rgba(31,209,106,0.3)]"
-                    : "bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-600 dark:text-[#A4B3A9] hover:border-emerald-400 dark:hover:border-[#1FD16A]/50 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-emerald-700 text-white dark:bg-[#1FD16A] dark:text-[#050806] font-semibold shadow-[0_0_10px_rgba(31,209,106,0.3)]"
+                    : "bg-white dark:bg-white/[0.04] border border-slate-400 dark:border-white/10 text-slate-600 dark:text-[#A4B3A9] hover:border-emerald-400 dark:hover:border-[#1FD16A]/50 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 {role === "ALL" ? "All Roles" : role}
@@ -214,15 +214,15 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                         {candidate.member.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <span className="text-[11px] font-mono font-medium text-emerald-600 dark:text-accent block">
+                        <span className="text-[11px] font-mono font-medium text-emerald-600 dark:text-brand block">
                           {candidate.member.id}
                         </span>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-accent transition-colors truncate">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-brand transition-colors truncate">
                           {candidate.member.name}
                         </h3>
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/60 dark:border-[#1FD16A]/20 shrink-0 ml-1">
+                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-brand border border-emerald-200/60 dark:border-[#1FD16A]/20 shrink-0 ml-1">
                       {candidate.member.status}
                     </span>
                   </div>
@@ -230,11 +230,11 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                   {/* Meta Info */}
                   <div className="space-y-1.5 mb-4 text-xs text-slate-600 dark:text-[#C5D0C8]">
                     <div className="flex items-center gap-2">
-                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-accent shrink-0" />
+                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-brand shrink-0" />
                       <span className="truncate">{candidate.member.jobRole}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-accent shrink-0" />
+                      <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-brand shrink-0" />
                       <span>{candidate.member.yearsExperience} yrs exp · {candidate.signals.commitDays} commit days</span>
                     </div>
                   </div>
@@ -257,7 +257,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-accent group-hover:gap-1.5 transition-all">
+                  <div className="flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-brand group-hover:gap-1.5 transition-all">
                     <span>View Profile</span>
                     <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>

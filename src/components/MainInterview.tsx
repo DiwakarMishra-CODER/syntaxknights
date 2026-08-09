@@ -60,19 +60,19 @@ export function MainInterview({
   return (
     <div className="flex-1 flex flex-col min-w-0 w-full h-full bg-transparent relative overflow-hidden">
       {/* Top Navbar */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-[#050806]/85 backdrop-blur-xl shrink-0 z-20">
+      <header className="flex items-center justify-between px-5 py-3 border-b border-[var(--app-border)] bg-[var(--app-header)] backdrop-blur-xl shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#1FD16A]/30 bg-[#1FD16A]/10 font-bold text-xs text-accent shadow-[0_0_12px_rgba(31,209,106,0.15)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--app-accent-border)] bg-[var(--app-accent)]/10 font-bold text-xs text-[var(--app-accent-text)] shadow-[0_0_12px_rgba(31,209,106,0.15)]">
             M
           </div>
           <div>
-            <div className="font-semibold text-xs text-white tracking-tight flex items-center gap-2">
+            <div className="font-semibold text-xs text-[var(--app-fg-strong)] tracking-tight flex items-center gap-2">
               MockMate
-              <span className="text-[9px] uppercase font-mono font-medium text-accent px-2 py-0.5 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
+              <span className="text-[9px] uppercase font-mono font-medium text-[var(--app-accent-text)] px-2 py-0.5 rounded-full bg-[var(--app-accent)]/10 border border-[var(--app-accent-border)]">
                 Live Practice
               </span>
             </div>
-            <p className="text-[11px] text-[#7E8B84] truncate">
+            <p className="text-[11px] text-[var(--app-muted)] truncate">
               {candidateName} • {candidateRole}
             </p>
           </div>
@@ -80,11 +80,11 @@ export function MainInterview({
 
         {/* Center Topic & Progress */}
         <div className="flex items-center gap-2.5">
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium text-[#7E8B84] bg-white/5 border border-white/10">
-            <Sparkles className="w-3 h-3 text-accent" />
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium text-[var(--app-muted)] bg-[var(--app-glass)] border border-[var(--app-border)]">
+            <Sparkles className="w-3 h-3 text-[var(--app-accent-text)]" />
             {currentTopic}
           </span>
-          <div className="font-mono text-[11px] font-semibold text-accent bg-[#1FD16A]/10 border border-[#1FD16A]/30 px-3 py-0.5 rounded-full shadow-inner">
+          <div className="font-mono text-[11px] font-semibold text-[var(--app-accent-text)] bg-[var(--app-accent)]/10 border border-[var(--app-accent-border)] px-3 py-0.5 rounded-full shadow-inner">
             Q{questionCount} {targetQuestions ? `/ ${targetQuestions}` : ""}
           </div>
         </div>
@@ -95,19 +95,19 @@ export function MainInterview({
             <button
               onClick={onToggleMute}
               title={muted ? "Unmute sounds" : "Mute sounds"}
-              className="p-1.5 rounded-lg border border-white/10 bg-white/5 text-[#7E8B84] hover:text-white hover:border-white/20 transition-all cursor-pointer"
+              className="p-1.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-glass)] text-[var(--app-muted)] hover:text-[var(--app-fg-strong)] hover:border-[var(--app-border)] transition-all cursor-pointer"
             >
               {muted ? (
                 <VolumeX className="w-3.5 h-3.5 text-rose-400" />
               ) : (
-                <Volume2 className="w-3.5 h-3.5 text-accent" />
+                <Volume2 className="w-3.5 h-3.5 text-[var(--app-accent-text)]" />
               )}
             </button>
           )}
 
           <button
             onClick={onExit}
-            className="font-sans text-[11px] font-medium uppercase tracking-wider text-[#7E8B84] hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"
+            className="font-sans text-[11px] font-medium uppercase tracking-wider text-[var(--app-muted)] hover:text-[var(--app-fg-strong)] px-3 py-1.5 rounded-lg border border-[var(--app-border)] hover:border-[var(--app-border)] bg-[var(--app-glass)] hover:bg-[var(--app-glass)] transition-all cursor-pointer"
           >
             End Session
           </button>
@@ -127,10 +127,10 @@ export function MainInterview({
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-20 text-center"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#1FD16A]/10 border border-[#1FD16A]/30 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(31,209,106,0.15)]">
-                  <span className="w-2 h-2 rounded-full bg-[#1FD16A] animate-ping" />
+                <div className="w-10 h-10 rounded-xl bg-[var(--app-accent)]/10 border border-[var(--app-accent-border)] flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(31,209,106,0.15)]">
+                  <span className="w-2 h-2 rounded-full bg-[var(--app-accent)] animate-ping" />
                 </div>
-                <p className="font-sans text-xs font-medium text-[#7E8B84]">
+                <p className="font-sans text-xs font-medium text-[var(--app-muted)]">
                   Interviewer is preparing your technical session...
                 </p>
               </motion.div>
@@ -163,22 +163,22 @@ export function MainInterview({
                       className="flex items-start gap-3"
                     >
                       {/* Interviewer Avatar */}
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#1FD16A]/30 bg-[#1FD16A]/10 font-bold text-[11px] text-accent shadow-[0_0_10px_rgba(31,209,106,0.15)] mt-0.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[var(--app-accent-border)] bg-[var(--app-accent)]/10 font-bold text-[11px] text-[var(--app-accent-text)] shadow-[0_0_10px_rgba(31,209,106,0.15)] mt-0.5">
                         AI
                       </div>
 
                       <div className="flex-1 space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[11px] text-white">
+                          <span className="font-semibold text-[11px] text-[var(--app-fg-strong)]">
                             Interviewer
                           </span>
-                          <span className="font-mono text-[9px] text-accent px-2 py-0.5 rounded-full bg-[#1FD16A]/10 border border-[#1FD16A]/20">
+                          <span className="font-mono text-[9px] text-[var(--app-accent-text)] px-2 py-0.5 rounded-full bg-[var(--app-accent)]/10 border border-[var(--app-accent-border)]">
                             Q{currentQuestionNum} • {topicTitle}
                           </span>
                         </div>
 
                         {/* Compact Interviewer Card */}
-                        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 text-[#F5F7F4] font-sans text-[14px] leading-relaxed shadow-sm tracking-tight">
+                        <div className="p-4 rounded-xl bg-[var(--app-glass-2)] border border-[var(--app-border)] text-[var(--app-fg)] font-sans text-[14px] leading-relaxed shadow-sm tracking-tight">
                           {entry.text}
                         </div>
                       </div>
@@ -197,19 +197,19 @@ export function MainInterview({
                     >
                       <div className="flex flex-col items-end space-y-1.5 max-w-[85%]">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[11px] text-[#7E8B84]">
+                          <span className="font-semibold text-[11px] text-[var(--app-muted)]">
                             You
                           </span>
                         </div>
 
                         {/* Compact Candidate Response Bubble */}
-                        <div className="p-4 rounded-xl bg-[#1FD16A]/10 border border-[#1FD16A]/25 text-[#E2E8F0] font-sans text-[14px] leading-relaxed shadow-sm">
+                        <div className="p-4 rounded-xl bg-[var(--app-accent)]/10 border border-[var(--app-accent-border)] text-[var(--app-answer-text)] font-sans text-[14px] leading-relaxed shadow-sm">
                           {entry.text}
                         </div>
                       </div>
 
                       {/* Candidate Avatar */}
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 font-semibold text-[11px] text-white shadow-sm mt-0.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-glass)] font-semibold text-[11px] text-[var(--app-fg-strong)] shadow-sm mt-0.5">
                         You
                       </div>
                     </motion.div>
@@ -224,12 +224,12 @@ export function MainInterview({
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 max-w-sm"
+                className="flex items-center gap-2.5 p-3 rounded-xl bg-[var(--app-glass-3)] border border-[var(--app-border-soft)] max-w-sm"
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#1FD16A]/10 border border-[#1FD16A]/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-ping" />
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--app-accent)]/10 border border-[var(--app-accent-border)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)] animate-ping" />
                 </div>
-                <span className="font-sans text-[11px] font-medium text-[#7E8B84]">
+                <span className="font-sans text-[11px] font-medium text-[var(--app-muted)]">
                   Interviewer is analyzing your response...
                 </span>
               </motion.div>
@@ -238,7 +238,7 @@ export function MainInterview({
         </div>
 
         {/* Compact Bottom Input Bar */}
-        <div className="shrink-0 px-4 pb-4 md:px-8 border-t border-white/10 bg-[#050806]/95 backdrop-blur-xl pt-3 z-20">
+        <div className="shrink-0 px-4 pb-4 md:px-8 border-t border-[var(--app-border)] bg-[var(--app-header)] backdrop-blur-xl pt-3 z-20">
           <div className="max-w-3xl lg:max-w-4xl mx-auto">
             <Composer
               onSubmit={onSubmit}

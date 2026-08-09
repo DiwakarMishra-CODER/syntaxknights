@@ -170,11 +170,11 @@ export function InterviewScreen({
   }, [candidateId, send, sessionId, router]);
 
   return (
-    <main className="relative h-screen w-full bg-[#050806] text-[#F5F7F4] flex flex-col justify-between overflow-hidden">
+    <main className="relative flex h-screen w-full flex-col justify-between overflow-hidden bg-[var(--app-bg)] text-[var(--app-fg)]">
       {/* Background ambient glows blending seamlessly */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-[-10%] h-[700px] w-[1000px] -translate-x-1/2 rounded-full bg-[#1FD16A] opacity-[0.05] mix-blend-screen blur-[150px]" />
-        <div className="absolute bottom-[-15%] right-[-10%] h-[600px] w-[600px] rounded-full bg-[#1FD16A] opacity-[0.04] mix-blend-screen blur-[130px]" />
+        <div className="absolute left-1/2 top-[-10%] h-[700px] w-[1000px] -translate-x-1/2 rounded-full bg-[var(--app-accent)] opacity-[0.05] mix-blend-screen blur-[150px]" />
+        <div className="absolute bottom-[-15%] right-[-10%] h-[600px] w-[600px] rounded-full bg-[var(--app-accent)] opacity-[0.04] mix-blend-screen blur-[130px]" />
       </div>
 
       {/* Full Bleed Seamless Chat Interface */}
@@ -199,10 +199,10 @@ export function InterviewScreen({
       </div>
 
       {ending && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050806]/90 backdrop-blur-lg">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--app-overlay)] backdrop-blur-lg">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-9 w-9 rounded-full border-2 border-[#1FD16A] border-t-transparent animate-spin" />
-            <p className="font-sans text-sm font-medium text-[#7E8B84]">
+            <div className="h-9 w-9 rounded-full border-2 border-[var(--app-accent)] border-t-transparent animate-spin" />
+            <p className="font-sans text-sm font-medium text-[var(--app-muted)]">
               Generating technical interview report...
             </p>
           </div>

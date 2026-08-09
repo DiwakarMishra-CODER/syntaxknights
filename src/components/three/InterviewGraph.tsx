@@ -19,7 +19,7 @@ export const InterviewGraph: React.FC<InterviewGraphProps> = ({ activeStage }) =
   const activeIdx = STAGES.findIndex((s) => s.id === activeStage);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 glass-emerald w-full text-xs font-mono text-[#F3F7F5]">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 glass-emerald w-full text-xs font-mono text-slate-900 dark:text-[#F3F7F5]">
       {STAGES.map((stg, idx) => {
         const isActive = idx <= activeIdx;
         const isCurrent = stg.id === activeStage;
@@ -43,8 +43,8 @@ export const InterviewGraph: React.FC<InterviewGraphProps> = ({ activeStage }) =
                   isCurrent
                     ? "text-[#36E6B0] font-semibold"
                     : isActive
-                    ? "text-[#F3F7F5]"
-                    : "text-[#91A6A0]"
+                    ? "text-slate-900 dark:text-[#F3F7F5]"
+                    : "text-slate-500 dark:text-[#91A6A0]"
                 )}
               >
                 {stg.label}

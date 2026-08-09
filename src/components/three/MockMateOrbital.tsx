@@ -290,7 +290,7 @@ export const MockMateOrbital: React.FC = () => {
               isHovered ? "scale-110 z-20" : "scale-100 z-10"
             }`}
           >
-            <div className="flex items-center gap-2 bg-[#0B101D]/90 border border-slate-700/60 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg">
+            <div className="flex items-center gap-2 bg-white/90 dark:bg-[#0B101D]/90 border border-slate-700/60 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg">
               <span
                 className="w-2.5 h-2.5 rounded-full animate-node-pulse"
                 style={{ backgroundColor: nd.color, boxShadow: `0 0 10px ${nd.color}` }}

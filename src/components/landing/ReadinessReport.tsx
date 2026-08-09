@@ -33,7 +33,7 @@ export function ReadinessReport() {
   }, []);
 
   return (
-    <section className="relative z-10 bg-gradient-to-b from-background to-[#0B120E] py-24 text-foreground lg:py-32">
+    <section className="relative z-10 bg-gradient-to-b from-background to-[var(--bg-elevated)] py-24 text-foreground lg:py-32">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute right-0 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
         <div className="absolute left-0 top-24 h-72 w-72 rounded-full bg-[#73F0A0]/5 blur-[100px]" />
@@ -68,13 +68,13 @@ export function ReadinessReport() {
                     <Activity className="h-4 w-4" />
                     Live Evidence summary
                   </span>
-                  <span className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-accent-soft">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-brand-soft">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                     Analyzing
                   </span>
                 </div>
 
-                <blockquote className="rounded-2xl border border-white/5 bg-[#0A0A0A] p-5 text-sm leading-relaxed text-[#D6E0D9]">
+                <blockquote className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#0A0A0A] p-5 text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                   &ldquo;Redid Day 23 (MCP server build), then Day 24. You passed
                   both, but on the second attempt, and the interview showed the
                   gap is in tool schema design.&rdquo;
@@ -91,10 +91,10 @@ export function ReadinessReport() {
                       className={`rounded-xl border bg-secondary px-4 py-3 transition-colors duration-300 ${
                         metric.active
                           ? "border-primary/40 bg-[rgba(31,209,106,0.05)]"
-                          : "border-white/5"
+                          : "border-slate-200 dark:border-white/5"
                       }`}
                     >
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-[#9FB2A7]">
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-[#9FB2A7]">
                         {metric.label}
                       </div>
                       <div
@@ -118,12 +118,12 @@ export function ReadinessReport() {
                   Direct Transcript Evidence
                 </div>
 
-                <blockquote className="rounded-2xl bg-[#0A0A0A] p-4 text-sm italic leading-relaxed text-[#D6E0D9]">
+                <blockquote className="rounded-2xl bg-white dark:bg-[#0A0A0A] p-4 text-sm italic leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                   &ldquo;Correct but generic — that describes the diagram, not
                   the build. Pushing for a number he should know.&rdquo;
                 </blockquote>
 
-                <div className="flex items-center justify-between text-xs text-[#8B968F]">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8B968F]">
                   <span>Evaluated by MockMate AI</span>
                   <span className="flex items-center gap-1.5 text-primary">
                     Verbatim checked
@@ -134,7 +134,7 @@ export function ReadinessReport() {
             </Card>
           </div>
 
-          <Card className="border-white/5 bg-card/60 p-2 backdrop-blur-xl transition-colors hover:border-primary/20 lg:col-span-6">
+          <Card className="border-slate-200 dark:border-white/5 bg-card/60 p-2 backdrop-blur-xl transition-colors hover:border-primary/20 lg:col-span-6">
             <CardContent className="gap-6">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-card-title text-foreground">
@@ -147,15 +147,15 @@ export function ReadinessReport() {
                 {NEXT_STEPS.map((step) => (
                   <div
                     key={step.day}
-                    className="cursor-pointer rounded-2xl border border-transparent bg-[#0A0A0A] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-[#0E1712] hover:shadow-[0_4px_20px_rgba(31,209,106,0.05)]"
+                    className="cursor-pointer rounded-2xl border border-transparent bg-white dark:bg-[#0A0A0A] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-slate-50 dark:bg-[#0E1712] hover:shadow-[0_4px_20px_rgba(31,209,106,0.05)]"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <span className="text-[11px] uppercase tracking-[0.22em] text-primary">
                         {step.day}
                       </span>
-                      <span className="text-[11px] text-[#8B968F]">{step.title}</span>
+                      <span className="text-[11px] text-slate-500 dark:text-[#8B968F]">{step.title}</span>
                     </div>
-                    <p className="mt-3 text-sm leading-relaxed text-[#D6E0D9]">
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                       {step.note}
                     </p>
                   </div>

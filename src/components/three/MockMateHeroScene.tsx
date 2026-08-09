@@ -1,15 +1,83 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import * as THREE from "three";
 import { AnimatePresence, motion } from "framer-motion";
 
-export const MockMateHeroScene: React.FC = () => {
+/**
+ * The scene was built for a near-black page: pale mint particles, a white
+ * signal pulse and near-black fog. On white the particles measure about
+ * 1.3:1 and the pulse is invisible.
+ *
+ * Colour alone does not fix it — both point materials use AdditiveBlending,
+ * which can only ever brighten what is already there, so on a white
+ * background it is a no-op whatever hex you give it. Light mode needs normal
+ * blending as well.
+ */
+const PALETTE = {
+  dark: {
+    fog: 0x050806,
+    particle: 0x73f0a0,
+    line: 0x1fd16a,
+    signal: 0xffffff,
+    blending: THREE.AdditiveBlending,
+  },
+  light: {
+    fog: 0xf8fafc,
+    particle: 0x059669,
+    line: 0x047857,
+    signal: 0x0f172a,
+    blending: THREE.NormalBlending,
+  },
+} as const;
+
+export const MockMateHeroScene: React.FC<{ reserveBottom?: number }> = ({
+  reserveBottom = 0,
+}) => {
+  const { resolvedTheme } = useTheme();
+  // Undefined on the first paint, before next-themes has resolved. Dark is
+  // what the page did before any of this existed.
+  const palette = resolvedTheme === "light" ? PALETTE.light : PALETTE.dark;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [sequencePhase, setSequencePhase] = useState<number>(0);
   const [nodePositions, setNodePositions] = useState<{ x: number; y: number }[]>([]);
+  /** Container width, so overlay cards can be kept inside it. */
+  const [stageWidth, setStageWidth] = useState<number>(0);
+  const [stageHeight, setStageHeight] = useState<number>(0);
+
+  /**
+   * Keep a fixed-width overlay card on screen.
+   *
+   * These are positioned from PROJECTED 3D coordinates, and a hub near the
+   * edge of the camera frustum projects past the viewport — so the card ran
+   * off the right edge and its text was cut mid-word.
+   */
+  const clampCard = (x: number, cardWidth: number, shiftLeft: number) => {
+    if (!stageWidth) return x - shiftLeft;
+    const margin = 16;
+    return Math.max(margin, Math.min(x - shiftLeft, stageWidth - cardWidth - margin));
+  };
+
+  /**
+   * The same problem on the other axis, plus one the caller owns.
+   *
+   * A hub low in the frustum put its card over the live-session card the hero
+   * lays on top of this scene, so two panels of text sat on each other.
+   * `reserveBottom` is however much vertical space the caller has covered.
+   * Cards are centred on the node (translateY(-50%)), so the extent is
+   * y +/- cardHeight / 2.
+   */
+  const clampCardY = (y: number, cardHeight: number) => {
+    if (!stageHeight) return y;
+    const margin = 16;
+    const half = cardHeight / 2;
+    const lo = margin + half;
+    const hi = stageHeight - reserveBottom - margin - half;
+    return hi < lo ? lo : Math.max(lo, Math.min(y, hi));
+  };
 
   // The 4 major curriculum hubs from the hackathon statement
   const hubLabels = ["RAG & VECTOR DBs", "PROMPT ENGINEERING", "AGENTIC AI", "MCP & DEPLOYMENT"];
@@ -42,7 +110,7 @@ export const MockMateHeroScene: React.FC = () => {
     let height = container.clientHeight;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050806, 0.08);
+    scene.fog = new THREE.FogExp2(palette.fog, 0.08);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     camera.position.set(0, 0, 8);
@@ -108,11 +176,11 @@ export const MockMateHeroScene: React.FC = () => {
     
     // Base material
     const pMat = new THREE.PointsMaterial({
-      color: 0x73f0a0,
+      color: palette.particle,
       size: 0.08,
       transparent: true,
       opacity: 0.8,
-      blending: THREE.AdditiveBlending
+      blending: palette.blending
     });
     const pSystem = new THREE.Points(pGeo, pMat);
     mainGroup.add(pSystem);
@@ -121,14 +189,14 @@ export const MockMateHeroScene: React.FC = () => {
     const lineGeo = new THREE.BufferGeometry();
     const linePos = new Float32Array(6 * 3); // 6 lines between 4 hubs
     lineGeo.setAttribute("position", new THREE.BufferAttribute(linePos, 3));
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x1fd16a, transparent: true, opacity: 0 });
+    const lineMat = new THREE.LineBasicMaterial({ color: palette.line, transparent: true, opacity: 0 });
     const lineMesh = new THREE.LineSegments(lineGeo, lineMat);
     mainGroup.add(lineMesh);
 
     // Signal Particle (The Probe)
     const signalGeo = new THREE.BufferGeometry();
     signalGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array([0,0,0]), 3));
-    const signalMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
+    const signalMat = new THREE.PointsMaterial({ color: palette.signal, size: 0.2, transparent: true, opacity: 0, blending: palette.blending });
     const signalMesh = new THREE.Points(signalGeo, signalMat);
     mainGroup.add(signalMesh);
 
@@ -163,7 +231,7 @@ export const MockMateHeroScene: React.FC = () => {
         }
         lineMat.opacity = Math.max(0, lineMat.opacity - 0.05);
         signalMat.opacity = Math.max(0, signalMat.opacity - 0.05);
-        pMat.color.setHex(0x73f0a0);
+        pMat.color.setHex(palette.particle);
       } 
       // Phase 2, 3, 4: Move to Hubs (Curriculum Map)
       else if (currentPhase >= 2 && currentPhase <= 4) {
@@ -173,7 +241,7 @@ export const MockMateHeroScene: React.FC = () => {
           positions[i * 3 + 2] += (particleTargets[i * 3 + 2] - positions[i * 3 + 2]) * 0.04;
         }
         lineMat.opacity = Math.min(0.2, lineMat.opacity + 0.01);
-        pMat.color.setHex(0x73f0a0);
+        pMat.color.setHex(palette.particle);
       }
       // Phase 5: Map Expansion (Gap Search)
       else if (currentPhase === 5) {
@@ -248,7 +316,7 @@ export const MockMateHeroScene: React.FC = () => {
         signalMesh.geometry.attributes.position.needsUpdate = true;
       } else if (currentPhase === 6 || currentPhase === 1 || currentPhase === 2) {
         signalMat.opacity = Math.max(0, signalMat.opacity - 0.1);
-        signalMat.color.setHex(0xffffff); // Reset
+        signalMat.color.setHex(palette.signal); // Reset
       }
 
       renderer.render(scene, camera);
@@ -265,6 +333,8 @@ export const MockMateHeroScene: React.FC = () => {
           };
         });
         setNodePositions(screenCoords);
+          setStageWidth(width);
+          setStageHeight(height);
       }
     };
 
@@ -290,7 +360,7 @@ export const MockMateHeroScene: React.FC = () => {
       signalMat.dispose();
       renderer.dispose();
     };
-  }, []);
+  }, [palette]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[600px] flex items-center justify-center pointer-events-none">
@@ -308,16 +378,16 @@ export const MockMateHeroScene: React.FC = () => {
             className="absolute z-10 flex flex-col items-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           >
             <div className="glass-card-green px-6 py-4 rounded-xl flex items-center gap-3">
-              <span className="text-accent">📚</span>
+              <span className="text-brand">📚</span>
               <div className="flex flex-col">
-                 <span className="text-sm font-display tracking-widest text-[#F5F7F4]">31-DAY AI COHORT</span>
-                <span className="text-[10px] font-mono text-[#7E8B84]">Extracting Missions & Signals</span>
+                 <span className="text-sm font-display tracking-widest text-slate-900 dark:text-[#F5F7F4]">31-DAY AI COHORT</span>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-[#7E8B84]">Extracting Missions & Signals</span>
               </div>
             </div>
             <div className="h-6 w-[1px] bg-[#1FD16A]/50 my-2" />
             <div className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(31,209,106,0.15)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
-              <span className="text-[10px] font-mono text-accent-soft">MAPPING CURRICULUM</span>
+              <span className="text-[10px] font-mono text-brand-soft">MAPPING CURRICULUM</span>
             </div>
           </motion.div>
         )}
@@ -335,7 +405,7 @@ export const MockMateHeroScene: React.FC = () => {
             {nodePositions.map((pos, idx) => (
               <div
                 key={idx}
-                className={`absolute text-[10px] font-mono text-accent-soft bg-slate-100 dark:bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "opacity-50 scale-95" : "opacity-100 scale-100"}`}
+                className={`absolute text-[10px] font-mono text-brand-soft bg-slate-100 dark:bg-[#101813]/80 px-2 py-1 rounded border border-[#1FD16A]/20 backdrop-blur-md whitespace-nowrap transition-all duration-1000 ${sequencePhase === 5 ? "opacity-50 scale-95" : "opacity-100 scale-100"}`}
                 style={{
                   left: pos.x,
                   top: pos.y,
@@ -351,7 +421,7 @@ export const MockMateHeroScene: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white dark:bg-[#0A0A0A] border border-[rgba(31,209,106,0.3)] px-3 py-1.5 rounded text-[9px] text-slate-600 dark:text-[#D6E0D9] whitespace-nowrap flex items-center gap-1.5"
                   >
-                    Module 4 <span className="text-accent">→</span> Day 22
+                    Module 4 <span className="text-brand">→</span> Day 22
                   </motion.div>
                 )}
 
@@ -360,7 +430,7 @@ export const MockMateHeroScene: React.FC = () => {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1FD16A]/10 border border-[#1FD16A] px-2 py-1 rounded text-[9px] text-accent whitespace-nowrap shadow-[0_0_10px_rgba(31,209,106,0.4)] transition-opacity duration-1000`}
+                    className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1FD16A]/10 border border-[#1FD16A] px-2 py-1 rounded text-[9px] text-brand whitespace-nowrap shadow-[0_0_10px_rgba(31,209,106,0.4)] transition-opacity duration-1000`}
                   >
                     Signal: 3 Attempts (Struggled)
                   </motion.div>
@@ -379,12 +449,12 @@ export const MockMateHeroScene: React.FC = () => {
             exit={{ opacity: 0, scale: 0.9, x: -20 }}
             className="absolute z-40 w-[280px] glass-card-green p-4 rounded-xl shadow-2xl"
             style={{
-              left: nodePositions[2].x,
-              top: nodePositions[2].y,
-              transform: "translate(-110%, -50%)"
+              left: clampCard(nodePositions[2].x, 280, 308),
+              top: clampCardY(nodePositions[2].y, 132),
+              transform: "translateY(-50%)",
             }}
           >
-            <div className="text-[10px] font-mono text-accent-soft mb-2 uppercase">Day 22 Probe</div>
+            <div className="text-[10px] font-mono text-brand-soft mb-2 uppercase">Day 22 Probe</div>
             <p className="text-sm text-slate-900 dark:text-[#F5F7F4] leading-relaxed">
               &ldquo;I see you took three attempts to pass the Multi-Agent Orchestration module. Walk me through the race condition you hit.&rdquo;
             </p>
@@ -405,7 +475,7 @@ export const MockMateHeroScene: React.FC = () => {
               transform: "translate(10%, -50%)"
             }}
           >
-            <div className="text-[10px] font-mono text-accent mb-2 uppercase flex items-center gap-2">
+            <div className="text-[10px] font-mono text-brand mb-2 uppercase flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1FD16A] animate-pulse" />
               Adaptive Reaction
             </div>
@@ -424,9 +494,9 @@ export const MockMateHeroScene: React.FC = () => {
             exit={{ opacity: 0, scale: 0.9, y: -20 }}
             className="absolute z-40 w-[280px] glass-card-green p-4 rounded-xl border-amber-500/40 shadow-2xl"
             style={{
-              left: nodePositions[3].x,
-              top: nodePositions[3].y,
-              transform: "translate(-110%, -50%)"
+              left: clampCard(nodePositions[3].x, 280, 308),
+              top: clampCardY(nodePositions[3].y, 132),
+              transform: "translateY(-50%)",
             }}
           >
             <div className="text-[10px] font-mono text-amber-400 mb-2 uppercase flex items-center gap-2">
@@ -459,10 +529,10 @@ export const MockMateHeroScene: React.FC = () => {
               INTERVIEW READY
             </h2>
             <div className="mt-2 flex gap-2 w-full justify-center">
-              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-accent-soft whitespace-nowrap">
+              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-brand-soft whitespace-nowrap">
                 Context Loaded
               </span>
-              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-accent-soft whitespace-nowrap">
+              <span className="bg-slate-100 dark:bg-[#101813] border border-[#1FD16A]/30 px-3 py-1 rounded-full text-[9px] font-mono text-brand-soft whitespace-nowrap">
                 Agent Calibrated
               </span>
             </div>

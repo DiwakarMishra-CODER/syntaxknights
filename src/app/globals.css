@@ -6,32 +6,10 @@
 @custom-variant dark (&:is(.dark *));
 
 
-@custom-variant dark (&:is(.dark *));
 
-/* ─── shadcn/ui design tokens (brand-aligned) ─── */
-:root,
-.dark {
-  --radius: 0.875rem;
-  --background: #050806;
-  --foreground: #f5f7f4;
-  --card: #0b120e;
-  --card-foreground: #f5f7f4;
-  --popover: #0b120e;
-  --popover-foreground: #f5f7f4;
-  --primary: #1fd16a;
-  --primary-foreground: #050806;
-  --secondary: #101813;
-  --secondary-foreground: #f5f7f4;
-  --muted: #101813;
-  --muted-foreground: #7e8b84;
-  --accent: #141f18;
-  --accent-foreground: #f5f7f4;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #1c241e;
-  --input: #1c241e;
-  --ring: #1fd16a;
-}
+/* ─── shadcn/ui design tokens ───
+   Light values live on :root; dark values are applied by the
+   .dark class, which next-themes toggles on <html>. */
 
 @theme inline {
   --radius-lg: var(--radius);
@@ -50,6 +28,8 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
+  --color-brand: var(--text-accent);
+  --color-brand-soft: var(--text-accent-soft);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -59,6 +39,27 @@
 }
 
 :root {
+  --radius: 0.875rem;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #047857;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: #10b981;
+
   --shadow-glass: rgba(0, 0, 0, 0.05);
 
   --bg-void: #f8fafc;
@@ -84,6 +85,29 @@
   --accent-green: #10b981;
   --accent-lime: #34d399;
   --accent-glow: #6ee7b7;
+
+  /* ─── App shell (interview + report) theme tokens ───
+     Driven by .dark so they flip with the global theme toggle. */
+  --app-bg: #f8fafc;
+  --app-fg: #0f172a;
+  --app-fg-strong: #0f172a;
+  --app-muted: #475569;
+  --app-muted-2: #64748b;
+  --app-body: #334155;
+  --app-border: rgba(0, 0, 0, 0.08);
+  --app-border-soft: rgba(0, 0, 0, 0.05);
+  --app-header: rgba(255, 255, 255, 0.85);
+  --app-glass: rgba(255, 255, 255, 0.7);
+  --app-glass-2: rgba(248, 250, 252, 0.6);
+  --app-glass-3: rgba(248, 250, 252, 0.4);
+  --app-accent: #1FD16A;
+  --app-accent-text: #047857;
+  --app-accent-soft: rgba(31, 209, 106, 0.10);
+  --app-accent-border: rgba(31, 209, 106, 0.25);
+  --app-answer-bg: rgba(31, 209, 106, 0.08);
+  --app-answer-border: rgba(31, 209, 106, 0.20);
+  --app-answer-text: #065f46;
+  --app-overlay: rgba(248, 250, 252, 0.92);
 
 
 
@@ -218,16 +242,31 @@ body {
 /* ═══════════════════════════════════════════════
    GRADIENT TEXT UTILITIES
    ═══════════════════════════════════════════════ */
+/* Gradient headings.
+   background-clip:text makes `color` transparent, so a contrast checker reads
+   these as fine while they are in fact invisible: the dark stops measure
+   1.37:1, 1.93:1 and 1.84:1 against the light page. Light gets its own stops;
+   the dark ones are restored under .dark, unchanged. */
 .text-gradient-green {
-  background: linear-gradient(135deg, #73F0A0 0%, #1FD16A 50%, #34D399 100%);
+  background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+.dark .text-gradient-green {
+  background: linear-gradient(135deg, #73F0A0 0%, #1FD16A 50%, #34D399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
 .text-gradient-white {
-  background: linear-gradient(180deg, #FFFFFF 0%, #D6E0D9 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #475569 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark .text-gradient-white {
+  background: linear-gradient(180deg, #FFFFFF 0%, #D6E0D9 100%);
+  -webkit-background-clip: text;
   background-clip: text;
 }
 
@@ -476,6 +515,53 @@ body {
   --accent-lime: #73F0A0;
   --accent-glow: #8BE28F;
 
+  /* ─── App shell (interview + report) theme tokens ───
+     Mirrors the :root block; these are the original dark values. */
+  --app-bg: #050806;
+  --app-fg: #F5F7F4;
+  --app-fg-strong: #ffffff;
+  --app-muted: #7E8B84;
+  --app-muted-2: #8B968F;
+  --app-body: #C5D0C8;
+  --app-border: rgba(255, 255, 255, 0.10);
+  --app-border-soft: rgba(255, 255, 255, 0.05);
+  --app-header: rgba(8, 13, 10, 0.85);
+  --app-glass: rgba(255, 255, 255, 0.05);
+  --app-glass-2: rgba(255, 255, 255, 0.03);
+  --app-glass-3: rgba(255, 255, 255, 0.02);
+  --app-accent: #1FD16A;
+  --app-accent-text: #1FD16A;
+  --app-accent-soft: rgba(31, 209, 106, 0.10);
+  --app-accent-border: rgba(31, 209, 106, 0.25);
+  --app-answer-bg: rgba(31, 209, 106, 0.10);
+  --app-answer-border: rgba(31, 209, 106, 0.25);
+  --app-answer-text: #E2E8F0;
+  --app-overlay: rgba(5, 8, 6, 0.92);
+
+  /* shadcn tokens. These lived in a .dark block ABOVE :root, which meant
+     :root re-declared every one of them at equal specificity and later in
+     source -- so --background and friends stayed light in BOTH themes and
+     the toggle appeared to do nothing on any surface built from them. */
+  --background: #050806;
+  --foreground: #f5f7f4;
+  --card: #0b120e;
+  --card-foreground: #f5f7f4;
+  --popover: #0b120e;
+  --popover-foreground: #f5f7f4;
+  --primary: #1fd16a;
+  --primary-foreground: #050806;
+  --secondary: #101813;
+  --secondary-foreground: #f5f7f4;
+  --muted: #101813;
+  --muted-foreground: #7e8b84;
+  --accent: #141f18;
+  --accent-foreground: #f5f7f4;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #1c241e;
+  --input: #1c241e;
+  --ring: #1fd16a;
+  --radius: 0.875rem;
 }
 
 /* ═══════════════════════════════════════════════
@@ -484,5 +570,6 @@ body {
    measure 2.02:1 and 1.43:1 against the light page -- effectively invisible.
    The token swaps per theme so the dark design is untouched.
    ═══════════════════════════════════════════════ */
-.text-accent { color: var(--text-accent); }
-.text-accent-soft { color: var(--text-accent-soft); }
+/* Superseded by the --color-brand theme colour above: hand-written classes
+   cannot produce dark:/hover:/group-hover: variants, and the name collided
+   with Tailwind's --color-accent. Use text-brand / text-brand-soft. */

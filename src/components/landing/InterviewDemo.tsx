@@ -46,7 +46,7 @@ export function InterviewDemo() {
   }, []);
 
   return (
-    <section className="relative z-10 bg-gradient-to-b from-[#0B120E] to-background py-24 text-foreground lg:py-32">
+    <section className="relative z-10 bg-gradient-to-b from-[var(--bg-elevated)] to-background py-24 text-foreground lg:py-32">
       {/* Ambient */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-primary/5 blur-[120px]" />
@@ -85,16 +85,16 @@ export function InterviewDemo() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-                  <span className="text-[10px] text-accent-soft">Processing</span>
+                  <span className="text-[10px] text-brand-soft">Processing</span>
                 </div>
               </div>
 
-              <div className="relative space-y-4 overflow-hidden rounded-2xl bg-[#0A0A0A] p-5">
+              <div className="relative space-y-4 overflow-hidden rounded-2xl bg-white dark:bg-[#0A0A0A] p-5">
                 <div className="absolute bottom-0 left-0 top-0 w-[2px] bg-[rgba(31,209,106,0.1)]">
                   <div className="h-8 w-full animate-[scanline_3s_linear_infinite] bg-primary shadow-[0_0_8px_#1FD16A]" />
                 </div>
                 <div className="pl-4">
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-accent-soft">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-brand-soft">
                     Interviewer
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-foreground">
@@ -107,14 +107,14 @@ export function InterviewDemo() {
                   <div className="text-[10px] uppercase tracking-[0.22em] text-primary">
                     Tyler
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-[#D6E0D9]">
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                     It searches the vector database and sends what it finds to
                     the LLM.
                   </p>
                 </div>
 
                 <div className="ml-4 overflow-hidden rounded-xl border border-primary/10 bg-secondary px-4 py-3">
-                  <p className="whitespace-nowrap text-xs leading-relaxed text-[#D6E0D9]">
+                  <p className="whitespace-nowrap text-xs leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                     &ldquo;Correct but generic — that describes the diagram,
                     not the build.&rdquo;
                   </p>
@@ -131,10 +131,10 @@ export function InterviewDemo() {
                         : ""
                     }`}
                   >
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-[#9FB2A7]">
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-[#9FB2A7]">
                       {claim.tag}
                     </div>
-                    <p className="text-xs leading-relaxed text-[#D6E0D9]">
+                    <p className="text-xs leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                       {claim.text}
                     </p>
                   </div>
@@ -161,8 +161,8 @@ export function InterviewDemo() {
                       key={step.depth}
                       className={`flex items-start gap-4 rounded-xl border px-4 py-3 transition-all duration-500 ${
                         isActive
-                          ? "border-primary/20 bg-[#0E1712] shadow-[0_0_15px_rgba(31,209,106,0.08)]"
-                          : "border-transparent bg-[#0A0A0A]"
+                          ? "border-primary/20 bg-slate-50 dark:bg-[#0E1712] shadow-[0_0_15px_rgba(31,209,106,0.08)]"
+                          : "border-transparent bg-white dark:bg-[#0A0A0A]"
                       }`}
                     >
                       <div
@@ -171,7 +171,7 @@ export function InterviewDemo() {
                             ? "bg-primary text-background shadow-[0_0_12px_rgba(31,209,106,0.6)]"
                             : isPassed
                               ? "border border-primary/40 bg-secondary text-primary"
-                              : "bg-secondary text-[#7E8B84]"
+                              : "bg-secondary text-slate-500 dark:text-[#7E8B84]"
                         }`}
                       >
                         {step.depth}
@@ -184,7 +184,7 @@ export function InterviewDemo() {
                         >
                           {step.label}
                         </div>
-                        <p className="text-xs leading-relaxed text-[#A9B6AF]">
+                        <p className="text-xs leading-relaxed text-slate-500 dark:text-[#A9B6AF]">
                           {step.note}
                         </p>
                       </div>
@@ -197,11 +197,11 @@ export function InterviewDemo() {
                 <div className="absolute right-0 top-0 p-2">
                   <span className="flex h-2 w-2 animate-pulse rounded-full bg-primary" />
                 </div>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-accent-soft">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-brand-soft">
                   <GitBranch className="h-4 w-4" />
                   Claim ledger updating
                 </div>
-                <p className="mt-3 text-xs leading-relaxed text-[#D6E0D9]">
+                <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                   Every claim is filtered against what the candidate actually
                   said. The report only keeps what can be defended.
                 </p>

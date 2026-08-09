@@ -50,7 +50,7 @@ export function Hero({ onOpenStartModal }: HeroProps) {
   const beat = REPLAY_BEATS[activeBeat];
 
   return (
-    <section className="relative z-10 overflow-hidden bg-gradient-to-b from-background to-[#0B120E] pb-20 pt-32 lg:pb-28 lg:pt-40">
+    <section className="relative z-10 overflow-hidden bg-gradient-to-b from-background to-[var(--bg-elevated)] pb-20 pt-32 lg:pb-28 lg:pt-40">
       {/* Ambient background — pure CSS, no canvas */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(31,209,106,0.15)_0%,transparent_70%)] blur-3xl" />
@@ -99,7 +99,7 @@ export function Hero({ onOpenStartModal }: HeroProps) {
           </Reveal>
 
           <Reveal delay={320}>
-            <div className="flex flex-wrap items-center gap-5 pt-3 text-xs text-[#A9B6AF]">
+            <div className="flex flex-wrap items-center gap-5 pt-3 text-xs text-slate-500 dark:text-[#A9B6AF]">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                 Recorded replay
@@ -122,7 +122,7 @@ export function Hero({ onOpenStartModal }: HeroProps) {
           className="relative lg:col-span-6 lg:translate-x-8"
         >
           <div className="relative mx-auto w-full max-w-[560px]">
-            <MockMateHeroScene />
+            <MockMateHeroScene reserveBottom={170} />
             <Card className="absolute bottom-4 left-4 right-4 border-primary/15 bg-card/80 shadow-[0_24px_48px_rgba(0,0,0,0.6)] backdrop-blur-xl">
               <CardContent className="gap-3 !py-4">
                 <div className="flex items-center justify-between text-xs uppercase tracking-[0.22em] text-primary">
@@ -130,7 +130,7 @@ export function Hero({ onOpenStartModal }: HeroProps) {
                     <ShieldCheck className="h-4 w-4" />
                     Live session
                   </span>
-                  <span className="flex items-center gap-1.5 text-accent-soft">
+                  <span className="flex items-center gap-1.5 text-brand-soft">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                     Adaptive
                   </span>
@@ -138,7 +138,7 @@ export function Hero({ onOpenStartModal }: HeroProps) {
                 <p className="text-sm leading-relaxed text-foreground">
                   {beat.question}
                 </p>
-                <p className="text-sm leading-relaxed text-[#D6E0D9]">
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                   {beat.answer}
                 </p>
               </CardContent>

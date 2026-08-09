@@ -135,6 +135,11 @@ export interface TurnRubric {
   specificity: number;
   /** Objective texts the answer demonstrably touched. May be empty. */
   objectivesHit: string[];
+  /** Research-backed extended metrics (1-5) */
+  systemsThinking?: number;
+  evidenceScore?: number;
+  keyGaps?: string[];
+  idealResponse?: string;
 }
 
 export type TurnRole = "interviewer" | "candidate";

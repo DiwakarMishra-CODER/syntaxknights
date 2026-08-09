@@ -59,7 +59,7 @@ export function DepthTrace({
             <div
               key={label}
               className={`absolute text-center font-sans text-[8.5px] font-semibold uppercase leading-[1.25] tracking-[0.06em] transition-colors duration-500 ${
-                isCurrent ? "text-[#16A34A]" : "text-[#7E8B84]"
+                isCurrent ? "text-[var(--app-accent-text)]" : "text-[var(--app-muted)]"
               }`}
               style={{
                 left: x(depth),
@@ -97,7 +97,7 @@ export function DepthTrace({
                   x2={x(depth)}
                   y1={PAD_Y}
                   y2={Math.max(height, 80) - PAD_Y}
-                  stroke="rgba(255,255,255,0.1)"
+                  stroke="var(--app-border)"
                   strokeWidth={1}
                   strokeDasharray="2 4"
                 />
@@ -111,7 +111,7 @@ export function DepthTrace({
                 x2={width - PAD_X + 20}
                 y1={y(activeIndex)}
                 y2={y(activeIndex)}
-                stroke="#7E8B84"
+                stroke="var(--app-muted)"
                 strokeWidth={1}
                 strokeDasharray="2 2"
               />
@@ -132,7 +132,7 @@ export function DepthTrace({
                       : undefined
                   }
                   fill="none"
-                  stroke={isHead ? "#16A34A" : "#7E8B84"}
+                  stroke={isHead ? "var(--app-accent-text)" : "var(--app-muted)"}
                   strokeOpacity={isHead ? 1 : 0.45}
                   strokeWidth={isHead ? 2 : 1.75}
                   strokeLinejoin="round"
@@ -154,10 +154,10 @@ export function DepthTrace({
                      not measured from an answer. */
                   fill={
                     (isLast || isActive) && p.measured
-                      ? "#16A34A"
-                      : "rgba(255,255,255,0.05)"
+                      ? "var(--app-accent-text)"
+                      : "var(--app-glass)"
                   }
-                  stroke={isLast || isActive ? "#16A34A" : "#7E8B84"}
+                  stroke={isLast || isActive ? "var(--app-accent-text)" : "var(--app-muted)"}
                   strokeOpacity={p.measured ? (isLast || isActive ? 1 : 0.6) : 0.35}
                   strokeDasharray={p.measured ? undefined : "1.5 1.5"}
                   strokeWidth={1.5}
@@ -179,7 +179,7 @@ export function DepthTrace({
                   x2={width}
                   y1={0}
                   y2={0}
-                  stroke="#16A34A"
+                  stroke="var(--app-accent-text)"
                   strokeOpacity={0.2}
                   strokeWidth={1}
                   strokeDasharray="4 4"
@@ -188,7 +188,7 @@ export function DepthTrace({
               <circle
                 r={thinking ? 4.5 : 0}
                 fill="none"
-                stroke="#16A34A"
+                stroke="var(--app-accent-text)"
                 strokeWidth={1.5}
               />
             </g>

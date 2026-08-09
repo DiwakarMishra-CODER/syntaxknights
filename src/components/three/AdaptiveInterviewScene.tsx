@@ -279,19 +279,19 @@ export const AdaptiveInterviewScene: React.FC = () => {
               isHovered ? "scale-110 z-20" : "scale-100 z-10"
             }`}
           >
-            <div className="flex items-center gap-2 bg-[#0F231D]/90 border border-[#4BDCB4]/30 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg">
+            <div className="flex items-center gap-2 bg-white/90 dark:bg-[#0F231D]/90 border border-[#4BDCB4]/30 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg">
               <span
                 className="w-2.5 h-2.5 rounded-full animate-node-pulse"
                 style={{ backgroundColor: nd.color, boxShadow: `0 0 10px ${nd.color}` }}
               />
-              <span className="text-xs font-sans font-semibold text-[#F3F7F5] tracking-wide">
+              <span className="text-xs font-sans font-semibold text-slate-900 dark:text-[#F3F7F5] tracking-wide">
                 {nd.label}
               </span>
             </div>
 
             {/* Click Tooltip */}
             {clickedNode?.id === nd.id && (
-              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-48 p-3 rounded-xl bg-[#06100D] border border-[#36E6B0]/40 text-[11px] font-sans text-slate-300 shadow-2xl z-30">
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-48 p-3 rounded-xl bg-white dark:bg-[#06100D] border border-[#36E6B0]/40 text-[11px] font-sans text-slate-300 shadow-2xl z-30">
                 <div className="font-semibold text-[#36E6B0] mb-1">{nd.label} Stage</div>
                 {nd.description}
               </div>

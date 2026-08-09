@@ -1,13 +1,8 @@
 # PROMPTS
 
-A log of the prompts used to build this project, in order, with what each
-one changed and why.
+The prompts used to build this project, in order.
 
----
-
-## Entry 1 — Project skeleton
-
-**Prompt:**
+## 1
 
 ```
 Read CLAUDE.md first.
@@ -49,29 +44,7 @@ Finally, give me the exact commands to deploy this to Vercel, and list
 which environment variables I need to set in the Vercel dashboard.
 ```
 
-**Outcome:** Next.js 15.5.23 scaffolded (TypeScript, Tailwind v4, App
-Router, `src/`, no ESLint, no Turbopack). `@google/genai` and
-`@supabase/supabase-js` installed. Stub `POST /api/interview` returning
-`{ reply: "not implemented", done: false }`, with a JSON 400 on an
-unparseable or non-object body.
-
-**Notes:**
-- `create-next-app` refuses the folder name `SyntaxKnights` (npm forbids
-  capitals in package names), so the app was scaffolded under the name
-  `ai-interview-agent` and its contents moved into the repo root.
-- With `--src-dir`, the route lives at `src/app/api/interview/route.ts`.
-  The URL path is still `/api/interview`.
-- The stock `.gitignore` ships `.env*`, which covers `.env.local` but
-  would also have ignored `.env.local.example`. Added an explicit
-  `.env.local` line plus `!.env.local.example`.
-- `/data` is intentionally empty — `curriculum.json` and
-  `candidates.json` are supplied by hand.
-
----
-
-## Entry 2 — Data layer
-
-**Prompt:**
+## 2
 
 ```
 Read CLAUDE.md first.
@@ -109,40 +82,7 @@ Run the tests and show me the deriveSignals output for all five
 candidates. Then commit.
 ```
 
-**Outcome:** All seven files written and typechecking clean. The mission
-union uses `skipped: true` vs `skipped?: false` as the discriminant, so
-reading `.attempts` on a possibly-skipped mission is a compile error;
-`isSkipped()` / `isAttempted()` guards are exported.
-
-**BLOCKED — `data/curriculum.json` and `data/candidates.json` do not
-exist yet.** Only `.gitkeep` is in `/data`. The structure above was taken
-from the prompt's own description rather than from the files, and the
-five candidate assertions could not be run. All 10 tests currently fail
-with `Could not read .../candidates.json. Drop candidates.json into
-/data.` The `deriveSignals` arithmetic was instead proved against
-synthetic fixtures built to the described shapes.
-
-**Notes:**
-- Loaders validate on read and throw named errors (day count ≠ 31,
-  unknown `type`, `module.days` not a 2-element pair) so a shape mismatch
-  surfaces loudly instead of silently producing wrong signals.
-- `member`'s internal key names are not specified, so `candidateId()`,
-  `candidateName()` and `candidateExperience()` probe a few likely keys.
-  One place to fix once the real file lands.
-- Data files are read with `fs` at runtime, so `next.config.ts` sets
-  `outputFileTracingIncludes` — without it Vercel omits `/data` from the
-  bundle and it works locally but 404s in production.
-- Static curriculum/candidate JSON is cached at module scope. That is
-  immutable reference data, not session state — the CLAUDE.md ban is on
-  per-session data, which only ever round-trips through Supabase.
-- `appendTurn` derives the next `turn_number` from the table when the
-  caller omits it, so nothing has to hold a counter in memory.
-
----
-
-## Entry 3 — LLM wrapper
-
-**Prompt:**
+## 3
 
 ```
 Read CLAUDE.md first, especially the Gemini 3.x section.
@@ -175,123 +115,20 @@ Run it against my real keys and show me the output.
 Then commit.
 ```
 
-**STEP 1 findings** (docs cross-checked against the installed
-`@google/genai@2.16.0` type definitions, which are authoritative for the
-pinned version):
-
-- **Call shape** is `ai.interactions.create()`, not `generateContent`,
-  and its parameters are **snake_case**: `model`, `input`,
-  `system_instruction`, `generation_config`, `response_format`. The
-  reply is `interaction.output_text`; usage is `interaction.usage`.
-- **`thinking_level`** lives *inside* `generation_config`, not at top
-  level. The SDK type is `"minimal" | "low" | "medium" | "high"`, so all
-  four levels CLAUDE.md specifies are valid, including `"minimal"` for
-  the evaluator. It replaced `thinking_budget`, which errors on 3.5+.
-- **Removed sampling params** — `temperature`, `top_p` and `top_k` are
-  absent from the `GenerationConfig` type entirely; there is no field to
-  set. Docs: "In future model generations, supplying these parameters
-  returns an HTTP 400 error. Remove these parameters from all requests."
-- **Schema-enforced JSON** — `response_format: { type: "text",
-  mime_type: "application/json", schema }` where `schema` is a JSON
-  Schema object. The older `responseSchema` / `responseMimeType` fields
-  still exist on the legacy surface but are marked deprecated in favour
-  of `response_format`.
-- **Rate limits** — the docs page no longer publishes free-tier numbers
-  (it points at AI Studio). It confirms `429 RESOURCE_EXHAUSTED` and
-  advises wait-and-retry, so the rotation policy is ours to design.
-
-**Outcome:** `src/lib/llm.ts` written to match, with `ROLE_CONFIG` at the
-top as the only place models or thinking levels are named. Round-robin
-rotation, 429 → immediate next key, all-keys-limited → 1s/2s/4s backoff
-across max 3 rounds, one soft retry for malformed JSON or transient API
-errors, then a typed `LLMError` carrying
-`kind: config | rate_limited | malformed_output | api_error`.
-
-**BLOCKED — `.env.local` does not exist, so `npm run test:llm` could not
-be run against real keys.** Verified without them: pool parsing (1 key
-and 6 keys, tolerating whitespace and a trailing comma), the `config`
-error path, and that two bad keys rotate and terminate in a typed
-`LLMError[api_error]` rather than a crash — the request does reach
-`https://generativelanguage.googleapis.com/v1beta/interactions`, so the
-call shape is structurally accepted by the SDK.
-
-**Notes:**
-- The round-robin cursor is a module-level integer. That is not session
-  state — a cold start simply restarts the rotation at key 0.
-- One `GoogleGenAI` client is memoised per key index.
-- `callLLM` is overloaded: with `schema` it returns parsed `T`, without
-  it returns `string`.
-
----
-
-## Entry 4 — Publish to GitHub
-
-**Prompt:**
+## 4
 
 ```
 push to this repo https://github.com/DiwakarMishra-CODER/syntaxknights
 and dont credit yourself just me
 ```
 
-**Outcome:** History rewritten to strip the `Co-Authored-By` trailer from
-all three commits, then pushed to a fresh `main`. Verified with
-`git log --format='%B' | grep -i claude` returning nothing.
+## 5
 
-**Notes:**
-- The scaffold branch was `master`; renamed to `main` before pushing
-  since the remote was empty and GitHub defaults to `main`.
-- Checked before pushing that no key-shaped strings were in tracked
-  files and that only `.env.local.example` was tracked, never
-  `.env.local`.
-- `gh` is not installed on this machine; pushed over HTTPS using the
-  existing `osxkeychain` credential helper.
-- The data files landed in the working tree mid-push, which unblocked
-  the five candidate tests that Entry 2 recorded as blocked. They were
-  left untracked at this point pending a decision on publishing them —
-  resolved in Entry 6.
+```
+[redacted — this message contained a live Gemini API key, and this repo is public]
+```
 
----
-
-## Entry 5 — Wiring up real credentials
-
-**Prompt:** redacted — the message contained a live Gemini API key, and
-this repo is public. In substance: supplied one Gemini API key and asked
-what else the env needed, then asked where to paste `supabase/schema.sql`
-in the Supabase dashboard, then confirmed it ran with "Success. No rows
-returned". The Supabase project URL and service role key were pasted
-into `.env.local` directly.
-
-**Outcome:** `.env.local` created (gitignored, never committed). Both
-smoke tests now pass against live services:
-
-- `npm run test:llm` — `gemini-3.6-flash` 5576ms (in 29 / out 1 /
-  thought 89) and `gemini-3.5-flash-lite` 3668ms (in 58 / out 55 /
-  thought 0). The thought-token split confirms `thinking_level` is
-  actually being applied per role. Schema-enforced JSON returned a
-  correctly shaped object with no parse fallback.
-- `npm run test:db` — new `scripts/test-db.ts` round-trips every helper
-  in `db.ts` against the real tables (15 checks), then deletes the test
-  session so `turns` and `reports` cascade. All pass; all three tables
-  verified back at 0 rows afterwards.
-
-**Notes:**
-- `NEXT_PUBLIC_SUPABASE_URL` was first set to the REST endpoint
-  (`.../rest/v1/`). `supabase-js` appends `/rest/v1/` itself, so that
-  doubles the path and 404s every query. It must be the bare project URL.
-- `supabase-js` constructs a Realtime client eagerly, and Node 20 has no
-  global `WebSocket` (it landed in Node 22), so `createClient` threw
-  before any query ran. Fixed by passing `ws` as the realtime transport
-  in both `db.ts` and the script. We never use realtime — the
-  constructor just has to not throw.
-- Tables are created with RLS off. The only access path is the
-  server-side service_role key, which bypasses RLS anyway, and the
-  project has no auth or anon access by design.
-
----
-
-## Entry 6 — Reconcile types against the real data; static imports
-
-**Prompt:**
+## 6
 
 ```
 Steps 1-5 from earlier are still unverified — you only reported on step 6.
@@ -344,1098 +181,292 @@ Skip step 6 — check-db.ts already passed 15/15.
 Then commit and push. There are unpushed commits (ebb861e and earlier).
 ```
 
-**Outcome:** Three mismatches found between the types built from the
-written description and the real files. All five 3dp assertions passed
-on the first run with no adjustment. 11 tests green, typecheck clean,
-`next build` succeeds.
-
-**Mismatches found:**
-- `curriculum.cohort` is a plain string
-  (`"AI Cohort · 31 days · 8 modules"`), not an unknown/object. Typed as
-  `string`.
-- `CurriculumModule` is `{ n, title, days }`. The description only
-  mentioned `days`, so the guessed `name?` field did not exist and the
-  module number `n` was missing. Both corrected.
-- `member` is
-  `{ id, name, jobRole, yearsExperience, education, status }`. The
-  guessed optional `experience?: string` did not exist.
-
-**Consequence of that last one:** the probing `candidateExperience()`
-matched `yearsExperience` and stringified it, so `profileNote` was
-comparing a *number of years* against a regex written for phrases like
-"senior" or "8 years". `"4"` and `"20"` both failed that regex, so Diane
-read as junior and Gerald's 20 years never registered. This is the
-source of the odd `stated experience ("4")` line flagged in the previous
-session. With `yearsExperience: number` typed directly the clause now
-uses a numeric threshold, and Gerald (20y, 4% first try) and Harold
-(28y, 56%) both surface the mismatch correctly.
-
-**Notes:**
-- `@/*` maps to `./src/*`, so `@/data/curriculum.json` would have
-  resolved to `src/data/`. Added a more specific `"@/data/*":
-  ["./data/*"]` mapping ahead of it, mirrored in `vitest.config.ts`
-  since Vitest does not read tsconfig paths.
-- TypeScript widens the imported JSON's `type` field to `string`, so the
-  `DayType` union cannot be enforced statically on a JSON import. The
-  existing runtime `validateCurriculum()` still enforces it on first
-  access, which is where a bad value would matter anyway.
-- Static imports mean no filesystem access at runtime, so
-  `outputFileTracingIncludes` is no longer needed and was removed.
-  Confirmed with a real `next build`.
-
----
-
-## Entry 7 — PROMPTS.md audit
-
-**Prompt:**
+## 7
 
 ```
 can you keep updating prompts.md properly? are we doing it rn?
 ```
 
-**Outcome:** Audited. An entry had been committed alongside every code
-commit from the start, so the log is genuinely live rather than
-reconstructed. Three gaps found and fixed in this entry:
+## 8
 
-- The GitHub publish turn had no entry at all. Added as Entry 4, which
-  renumbered the two that followed.
-- Entry 5 (credentials) had a paraphrased prompt. Kept paraphrased, but
-  now says explicitly *why*: the original message contained a live API
-  key and this repo is public.
-- Entry 6 had a summarised prompt where entries 1-3 were verbatim. Now
-  verbatim.
-
-**Convention going forward:** one entry per work session, appended
-before the commit that carries the work, with the prompt verbatim in a
-fenced block. Redact only credentials, and say so when redacting.
-
----
-
-## Entry 8 — Latency experiment and the Planner
-
-**Prompt:** add a per-call `thinking` override to `callLLM`, sweep the
+```
+add a per-call `thinking` override to `callLLM`, sweep the
 interviewer role across high/medium/low/minimal on a realistic ~2000-token
 input and report latency + thought tokens; then build the Planner
 (`src/lib/prompts/planner.ts`), `scripts/plan.ts`, and run it for
 CAND-018, CAND-017, CAND-011, CAND-010 and CAND-008.
+```
 
-**STEP 0 — the sweep did not support picking a thinking level.**
+## 9
 
-At ~1500 input tokens, 2 trials each on gemini-3.6-flash:
-
-| level | mean | trials | thought tokens |
-|---|---|---|---|
-| high | 19066ms | 24070, 14062 | 622 |
-| medium | 12841ms | 13045, 12636 | 488 |
-| low | 17934ms | 10882, 24985 | 123 |
-| minimal | 17543ms | 18167, 16918 | 0 |
-
-Thought tokens scale cleanly with the level, so `thinking_level` is
-definitely being applied. Latency does not follow it at all — `minimal`
-(0 thought tokens) averaged slower than `medium`. Within-level spread
-reached 14s while between-level differences were ~5s, so the ranking is
-noise. The actionable finding is that **no thinking level gets a call
-under ~11s**, so thinking_level is not the lever for the latency problem.
-A follow-up 5-trial run on the two contenders was rate-limited before it
-could finish.
-
-**THE REAL BLOCKER — gemini-3.6-flash is capped at 20 requests per DAY.**
-
-The 429 body is explicit: `Quota exceeded for metric:
-generate_content_free_tier_requests, limit: 20, model: gemini-3.6-flash`.
-Honouring the API's own `Please retry in 58.7s` and waiting it out still
-returned 429, and a same-moment probe of gemini-3.5-flash-lite succeeded
-— so the quota is per model and daily, not per minute. Planner,
-Interviewer and Reporter all use gemini-3.6-flash. One 10-turn interview
-is ~12 calls on that model, so a single key allows roughly one and a half
-interviews per day.
-
-**Two wrapper fixes this exposed:**
-- The backoff guessed 1s/2s/4s and gave up after 7s, while the API was
-  stating exactly how long to wait. It now parses `Please retry in Xs`
-  and honours it, falling back to exponential when absent.
-- Waiting ~59s is fine offline but impossible in a serverless handler, so
-  `maxWaitMs` was added — default 8s so request paths fail fast and
-  degrade, with offline scripts passing 70s to wait the window out.
-- Added a per-call `model` override alongside `thinking`, since free-tier
-  quota is per model and having a fallback beats having no answer.
-
-**Outcome:** Planner built and 5/5 blueprints generated. Every one
-satisfied the hard requirements: 4-5 focus days, targetQuestions 10, arc
-summing exactly to targetQuestions, no SETUP days.
-
-The strategy rules held against the real records. Tyler (3% first-try)
-got startDepth 1-2 and rebuild_confidence throughout. Diane (100%
-first-try) got startDepth 4-5 and pressure_test. Mia's day-10 reason
-correctly cited her skipped days 7 and 8; Gerald's day-10 reason
-correctly identified it as one of his three genuine failures; Harold's
-day-15 pick correctly targeted his skipped 14/15 as a probe_gap.
-
-**CAVEAT — these blueprints were generated on gemini-3.5-flash-lite, not
-the configured gemini-3.6-flash**, because that model's daily quota was
-exhausted by the sweep. They must be regenerated on the real model before
-this is considered verified.
-
-**Known weakness:** `missions[]` is a ~10-day subset, so for a focus day
-outside that subset the model infers the record rather than reading it.
-For Diane (100% coverage, 100% first-try) the inference is sound; for
-Harold (56% first-try) the day-25 claim that he "passed this on a
-standard attempt" is not supported by his record. Worth constraining in
-the prompt, or restricting focus days to those present in `missions[]`.
-
----
-
-## Entry 9 — Invert the routing, ground the Planner, merge the turn
-
-**Prompt:** (0) invert role→model routing on the hypothesis that
+```
+(0) invert role→model routing on the hypothesis that
 gemini-3.6-flash's 20 RPD is a new-model restriction while GA models are
 far more generous, and add passive quota telemetry instead of spending
 quota to probe; (1) fix the Planner fabricating Harold's day-25 record by
 restricting focusDays to the candidate's own missions[] and adding a
 grounding rule; (2) merge Evaluator + Interviewer into one call; (3) A/B
 both paths on the same model.
+```
 
-A `scripts/probe-quota.ts` run was started and then cancelled to stop it
-spending quota. It salvaged two facts before being killed:
-gemini-3.6-flash returned 429 at 0 successes with `limit: 20`, and
-gemini-3.5-flash-lite reached 17 consecutive successes with no 429 on a
-key that had already served many calls that day.
+## 10
 
-**0 — Routing inverted.** `turn` → flash-lite "medium"; `planner` and
-`reporter` → 3.6-flash "high". `interviewer` and `evaluator` kept, both
-moved to flash-lite so an A/B against `turn` varies only the merge.
-Marked in llm.ts and CLAUDE.md as a hypothesis pending telemetry.
-
-Telemetry lands in `.quota-log.json` (gitignored, JSON Lines despite the
-name so appends are O(1)) via `src/lib/quota-log.ts`, with
-`npm run quota:report` for per-model per-day totals. It is
-fire-and-forget: on Vercel the filesystem is read-only outside /tmp, so
-the first failed write disables it permanently rather than throwing.
-
-**Interviews per day, 6-key pool:** the binding constraint is
-gemini-3.6-flash at 20 RPD/key. Planner + Reporter = 2 calls per
-interview, so 10 interviews per key per day, **60 across 6 keys**. Under
-the old routing the turn loop also sat on 3.6-flash — 12 calls per
-interview, 1.6 interviews per key per day, 10 across 6 keys. The
-inversion is a 6x improvement. flash-lite at 10 calls per interview is
-not binding at any plausible GA ceiling.
-
-**1 — Hallucination fixed, but regeneration is BLOCKED.** The root cause
-was that the prompt listed all 29 non-SETUP days while the record covers
-only ~10, so the model filled the gaps. `buildPlannerInput` now sends a
-MISSION RECORD of only the candidate's own missions with real outcomes,
-plus an explicit selectable-days list, and the system prompt forbids
-referencing any absent day. `validateBlueprint` now hard-rejects
-out-of-record days in code, so a fabrication cannot survive even if the
-model attempts one.
-
-Regenerating on gemini-3.6-flash returned 0/5 — that model's daily quota
-was already spent. `src/lib/prompts/planner.test.ts` proves the fix
-without API calls: Harold's selectable days are 4, 5, 14, 15, 21, 22, 23,
-27, 28, 31 — day 25, the exact day previously fabricated, is absent and
-is now rejected with `focus day 25 is not in this candidate's mission
-record`. 20 tests pass. **The five blueprints still need regenerating on
-gemini-3.6-flash once quota resets.**
-
-**2 — Turn merged.** `src/lib/prompts/turn.ts`, one flash-lite call
-returning rubric + claims + reaction + question + action + targetDay +
-depth + rationale. `evaluator.ts` and `interviewer.ts` written as the
-separate path and kept for reversion.
-
-**3 — A/B, one run, 3 calls, both paths on flash-lite:**
-
-| path | calls | latency | in | out | thought | total |
-|---|---|---|---|---|---|---|
-| A separate | 2 | 11521ms | 1184 | 200 | 605 | 1989 |
-| B merged | 1 | 6973ms | 1154 | 209 | 632 | 1995 |
-
-B halves the requests and is 39% faster. Tokens are a wash — the merged
-prompt is bigger, so the saving is in REQUESTS, which is exactly the
-scarce resource.
-
-**Honest read: B is better on economics and rubric, worse on claim
-fidelity.** B's rubric (2/2/1) is better calibrated than A's flat 1/1/1
-for an answer that was vague rather than absent. But B extracted the
-claim "configured termination grace period to handle active streaming
-sessions" when the candidate only said "we set it up properly so sessions
-keep working" — a fabricated mechanism, the same failure class as the
-Planner's day 25. A's claim quoted the hand-wave faithfully. B's question
-then presupposed that invented mechanism. A's question was honest but a
-weak yes/no.
-
-The fabrication is a prompt problem, not an argument against merging, so
-TURN_SYSTEM gained an EXTRACT-NEVER-INVENT rule using this exact failure
-as the worked example, plus a bar on questions presupposing unmentioned
-mechanisms. **That fix is unverified** — re-running would have exceeded
-the one-run budget.
-
----
-
-## Entry 10 — Generalise anti-invention; build the orchestrator
-
-**Prompt:** treat the two invention failures as one systemic risk — extract
+```
+treat the two invention failures as one systemic risk — extract
 the rule into `src/lib/prompts/shared.ts`, apply it to every prompt that
 converts input into a structured record, and back it with code-level
 validation the way `validateBlueprint` already backs focus days. Then
 build `src/lib/orchestrator.ts` as a pure state machine enforcing the
 graded hard requirements, with thorough mocked tests. No API calls.
+```
 
-**1 — Anti-invention generalised.** `ANTI_INVENTION` is now a single
-constant carrying both real failures as worked examples (Harold's day 25,
-and "termination grace period" from "we set it up properly"), interpolated
-into `PLANNER_SYSTEM` and `TURN_SYSTEM`. A test asserts both prompts
-contain it, so a future prompt cannot quietly drop it.
+## 11
 
-The code-level half is `verifyClaims` / `filterInventedClaims`. A claim may
-paraphrase freely in ordinary English, but if it names a term from a
-technical glossary, the candidate must have used that term. The glossary is
-seeded from the curriculum's own `tools` arrays so it tracks the real
-syllabus, plus ~70 curated infra and ML terms. `runTurn` now filters claims
-against the candidate's own words before returning, so an invented claim
-can never enter the ledger — which matters because every later turn probes
-against that ledger.
-
-Deliberately narrow: policing only glossary terms keeps "they ship a new
-build and swap it in gradually" legal while rejecting "configured
-termination grace period". Precision over recall, because a false positive
-silently drops a real claim.
-
-A test caught a genuine bug in `normalise`: it preserved `.` so version
-numbers like `3.5` survive, which meant a sentence-final period glued
-itself to the word and `"health checks."` never matched the term
-`"health check"`. Dots now survive only between digits.
-
-**2 — Orchestrator.** Pure state machine, no I/O, no clock, no randomness.
-The model proposes; this decides what is allowed. Every rule is
-deterministic because "covered at least 4 days" is graded and must not
-depend on an LLM remembering to count.
-
-`SessionState` was rewritten to the orchestrator's shape and is entirely
-JSON-serialisable — `daysCovered` is an array, not a Set, precisely because
-it round-trips through a jsonb column on every request. `db.ts` and
-`scripts/test-db.ts` were updated to match.
-
-49 tests pass. The adversarial suite runs a full interview against four
-pathological models — one that always concludes, one that never leaves day
-28, one always weak, one always strong — and asserts all four still reach
-8 questions and 4 days.
-
-**A real bug the adversarial tests caught:** `daysCovered` was crediting
-the day the model *proposed*, not the day an override actually redirected
-to. So a forced topic switch never counted toward coverage, and the 4-day
-floor was unreachable by override — exactly the scenario the override
-exists for. The floors were enforced in name only until this was fixed.
-
-**3 — Queued for quota reset (~12:30pm IST), not run:**
-- a) Regenerate five blueprints on gemini-3.6-flash — **5 calls of the
-  20/day budget**, leaving 15.
-- b) Re-run the A/B once to verify the claim-fidelity fix — **3 calls on
-  gemini-3.5-flash-lite** (2 for path A, 1 for path B), none on 3.6-flash.
-
----
-
-## Entry 11 — Quota-aware key selection and pinning
-
-**Prompt:** make `llm.ts` consult `.quota-log.json` before picking a key —
+```
+make `llm.ts` consult `.quota-log.json` before picking a key —
 skip any key that has already 429'd today for the requested model, prefer
 the key with fewest successes, and throw a clear
 `LLMError[quota_exhausted]` naming the model and reset time rather than
 cycling the pool for more 429s. Add `GEMINI_KEY_INDEX=n` pinning for
 scripts. Extend `quota-report.ts` with per-key per-model AVAILABLE /
 EXHAUSTED verdicts. No API calls; test with mocked log data.
-
-**Outcome:** 63 tests pass, typecheck clean, no API calls made.
-
-- `orderKeysByQuota()` is a pure function over mocked tallies, so the
-  selection policy is unit-testable without touching the network. Keys
-  that 429'd today for that model are dropped; the rest sort by fewest
-  successes with a rotating tie-break so load does not pile onto key 0.
-- Exhaustion is per model per key. A key spent on gemini-3.6-flash is
-  still AVAILABLE for flash-lite, and the tests assert exactly that.
-- `GEMINI_KEY_INDEX` pins a key for scripts and bypasses selection
-  entirely. It validates rather than silently falling back to key 0, and
-  errors if the index exceeds the configured pool.
-- The retry loop now recomputes the key order after any round that saw a
-  429, so a key that dies mid-call drops out of subsequent attempts.
-
-**Pacific-day accounting:** RPD resets at midnight Pacific, so events are
-grouped by their Pacific calendar date via `Intl` rather than by a UTC
-offset — DST would break a hardcoded offset twice a year. Tested at the
-boundary: 06:59Z on 8 Aug counts as 7 Aug Pacific, 07:00Z as 8 Aug.
-
-**On Vercel this degrades to plain round-robin.** The filesystem is
-read-only outside /tmp, so there is no log to read and the tally map is
-empty — which `orderKeysByQuota` treats as "all keys unused". A test
-covers that case. Quota-aware selection is a local development
-instrument; production still relies on rotation plus honouring 429s.
-
-**Current availability:**
-
-```
-gemini-3.5-flash-lite      #0     3 ok     0 429  AVAILABLE
-gemini-3.6-flash           #0     0 ok    15 429  EXHAUSTED (limit 20)
 ```
 
-**Only ONE key is configured.** There is no key #1 to pin to yet.
+## 12
 
-**Note:** a `str.replace` patch to quota-report.ts silently no-opped
-because it was applied without an assert, unlike the earlier patches in
-this session. Caught by the missing section in the output. Guard every
-scripted edit with an assertion.
-
----
-
-## Entry 12 — Queued runs executed: blueprints and A/B re-run
-
-**Prompt:** proceed with 3(a) and 3(b). Use automatic key selection for
+```
+proceed with 3(a) and 3(b). Use automatic key selection for
 3(a) rather than pinning, since that is the production code path. Confirm
 the planner runs at thinking_level "high" per config.
+```
 
-**Step 0 result (previous turn):** one call on key #1 against
-gemini-3.6-flash succeeded while key #0 was 429ing on the same model in
-the same minute. **Free-tier quota is per key, not per project** — the
-shared `AQ.Ab8RN6...` prefix does not mean a shared budget. CLAUDE.md's
-60-interviews/day figure stands.
+## 13
 
-**Config confirmed before running:** `ROLE_CONFIG.planner` is
-gemini-3.6-flash / thinking "high"; `planInterview` passes no thinking
-override and `PLAN_MODEL` was unset. Every log line in the run reads
-`thinking=high`.
-
-**3(a) — 5/5 blueprints on gemini-3.6-flash, exactly 5 requests.**
-Automatic selection alternated keys #2 and #1 by the fewest-successes
-rule, which is the production path working as designed. Latency
-17.6-34.1s, ~2000-2900 thought tokens each.
-
-**The fabrication is gone.** All 24 focus-day reasons across the five
-candidates were cross-checked against the real mission records: every
-attempt count, skip and failure matches. Harold's five:
-
-| day | reason claims | record |
-|---|---|---|
-| 28 | passed on his first attempt | passed first try |
-| 27 | passed on his first try | passed first try |
-| 21 | required 5 attempts | passed after 5 attempts |
-| 15 | skipped Day 14 and Day 15 entirely | both SKIPPED |
-| 31 | completed the capstone in 2 attempts | passed after 2 attempts |
-
-Strategy rules also held against the real records: Tyler (3% first-try)
-got rebuild_confidence at depth 1-2 throughout; Diane (100%) got
-pressure_test at depth 3-4; Gerald's genuine failures got
-rebuild_confidence at depth 1 while his skip got probe_gap.
-
-**3(b) — A/B re-run, 3 calls, both paths on flash-lite.**
-
-| path | calls | latency | in | out | thought | total |
-|---|---|---|---|---|---|---|
-| A separate | 2 | 11792ms | 1207 | 242 | 457 | 1906 |
-| B merged | 1 | 7427ms | 1509 | 216 | 963 | 2688 |
-
-**The claim-fidelity fix held, and the prompt did the work — not the
-filter.** B's claims came back as direct quotes ("we set it up properly
-so sessions keep working", "Kubernetes takes care of most of it"), both
-marked unjustified, with `rejectedClaims: []`. Logging pre-filter claims
-on both paths is what makes that readable: a clean B would otherwise be
-ambiguous between "the prompt worked" and "the filter caught it". The
-filter never had to fire.
-
-B's question also stopped presupposing: "Where is the active conversation
-state stored when those pods roll?" versus the previous run's "what
-termination grace period did you configure", which assumed a mechanism the
-candidate never mentioned. B chose `clarify` and dropped depth 4 -> 3,
-which is the correct scaffolding response to a vague answer.
-
-**Correction to the earlier A/B read: B is not token-neutral.** This run B
-used 2688 tokens against A's 1906 — 41% MORE, driven by a larger merged
-prompt and more thought tokens. The first run happened to come out level.
-The merge still wins because requests, not tokens, are the scarce resource
-on a per-day quota: 10 requests per interview instead of 20. The script
-printed "-41% fewer tokens", which reads as a saving; the label now says
-"41% MORE" so a future run cannot be misread.
-
----
-
-## Entry 13 — Full interview loop CLI
-
-**Prompt:** build `scripts/interview.ts` wiring orchestrator + turn +
+```
+build `scripts/interview.ts` wiring orchestrator + turn +
 reporter, loading Tyler's saved blueprint from `/fixtures` rather than
 re-planning; print a state panel after each turn; print the full
 transcript and final report at the end. Run it for CAND-017 with
 FIXTURE_RECORD=1.
-
-**Built:**
-- `fixtures/blueprint-CAND-017.json` — Tyler's blueprint saved from the
-  3.6-flash run, so a session costs 0 planner calls.
-- `src/lib/prompts/reporter.ts` — the fourth role, which had never been
-  built. Sends the claim ledger and per-answer rubric scores, never the
-  transcript. Carries `ANTI_INVENTION`, so it cannot invent a strength
-  the candidate did not show.
-- `scripts/interview.ts` — the loop, with `FIXTURE_RECORD=1` to save a
-  replay and `FIXTURE_REPLAY=<path>` to re-run a saved session with
-  **zero API calls**.
-
-**A type mismatch this surfaced:** `Turn.rubric` was typed
-`Record<string, number>` while the real rubric carries
-`objectivesHit: string[]`. The rubric is a stored jsonb shape, so
-`TurnRubric` moved into `types.ts` and `turn.ts` re-exports it —
-prompts should not own a persistence type.
-
-**Verified end to end with zero API calls** by replaying a synthetic
-fixture whose model always says `conclude` from question 3 and never
-leaves day 3. The real loop overrode it four times in a row —
-`conclude blocked at question 3 with 1/4 days covered`, then 2/4, 3/4,
-4/4 — walking coverage to `[3, 10, 22, 28, 31]` and finishing with
-`questions 8 · floors met: YES`. The orchestrator's guarantees hold in
-the assembled system, not just in unit tests.
-
-**NOT RUN — the live session needs a human at the keyboard.** The script
-reads the candidate's answers from stdin. I cannot type Tyler's answers:
-inventing them would spend the budget on a transcript that is not the
-user's, and fabricated input is precisely the failure this project has
-spent two sessions eliminating. Handed over as:
-
-```
-FIXTURE_RECORD=1 npm run interview CAND-017
 ```
 
-Budget when they run it: ~10 flash-lite turn calls + 1 reporter call on
-3.6-flash, against 34 remaining 3.6-flash calls across keys #1 and #2.
+## 14
 
----
-
-## Entry 14 — Reporter gets the transcript, guarded by verbatim validation
-
-**Prompt:** the Reporter never receives the transcript, which defeats its
+```
+the Reporter never receives the transcript, which defeats its
 purpose — strengths and gaps are meant to quote the candidate's own words,
 and verbatim validation has nothing to validate against. Pass the full
 transcript in and keep every guard: ANTI_INVENTION, verbatim checking with
 one retry, claims from the filtered ledger. Add a test that a strength
 quoting words the candidate never said is rejected. Confirm the prompt
 requires at least one direct quote in each strength and each gap.
+```
 
-**Outcome:** 78 tests pass, typecheck clean, no API calls.
+## 15
 
-The reporter now receives the full transcript, clearly labelled so only
-CANDIDATE lines are quotable. `verifyReport()` extracts every quoted span
-(straight or curly) from summary, strengths, gaps and next, and requires
-each to appear in the concatenated candidate turns. Words must match in
-order; whitespace and case are normalised so a sentence-initial capital
-does not fail an otherwise exact quote, but no word may be added, dropped
-or changed — `"we build a docker image in CI"` is rejected against
-`"We build a container image in CI"`.
-
-On failure the report is rejected and retried ONCE, with the offending
-strings named in the input — not the system prompt, which stays
-byte-identical for caching. A second failure throws `ReportError`.
-
-**Prompt requirement confirmed**, and asserted by a test:
-`Every strength MUST contain at least one direct quote of the candidate's
-own words, in double quotes, copied EXACTLY as they said it. Every gap
-MUST do the same wherever they actually spoke to the topic.`
-
-**One deviation, argued rather than assumed.** Requiring a quote in every
-gap can force invention: a gap is often that a topic never came up, and
-silence cannot be quoted. Under a hard rule the model's only way to
-satisfy it is to manufacture a quote — the exact failure the guard exists
-to prevent. So the prompt requires quotes in gaps *wherever they spoke to
-the topic* and gives an explicit escape valve ("evaluation never came up
-in this conversation"), and the code warns on an unquoted gap instead of
-rejecting. Unquoted STRENGTHS are still a hard rejection, because a
-strength is by definition something they showed, so a quote always exists.
-
-A test also covers a subtle failure: quoting the INTERVIEWER's words back
-as though the candidate said them. Only candidate turns are quotable.
-
-CLAUDE.md's "never send the full transcript" rule now carries this as a
-documented exception rather than being silently contradicted by the code.
-
-**Risk worth flagging:** a report that fails validation twice throws, so a
-live session could end after ten answered turns with no feedback at all.
-Not yet mitigated.
-
----
-
-## Entry 15 — Reporter degrades instead of throwing
-
-**Prompt:** never return no feedback. On a second validation failure, drop
+```
+never return no feedback. On a second validation failure, drop
 the offending strengths and gaps, keep what validated, and return the
 report; if that leaves strengths empty, emit one honest unquoted line.
 Log the degradation. Never throw on the request path. Add a test that a
 report where 2 of 3 strengths fail returns the surviving one. Keep the
 gaps rule as a warning.
+```
 
-**Outcome:** 84 tests pass, typecheck clean, no API calls. `ReportError`
-is gone — `writeReport` no longer throws on validation.
+## 16
 
-`degradeReport()` is pure and keeps everything that validated:
-- strengths with fabricated quotes, or with no quote at all, are dropped
-- gaps are dropped ONLY for fabricated quotes; unquoted gaps survive
-- next items with fabricated quotes are dropped
-- a summary containing a fabricated quote is replaced with a factual line
-  built from state alone (`answered N questions across days X, Y, Z`),
-  which invents nothing
-- if no strength survives, one honest unquoted line is emitted; if no next
-  item survives, one grounded suggestion is
-
-**A design tension the tests exposed.** My first attempt asserted the
-degraded report satisfies `verifyReport().ok`. It does not, and should
-not: the backfilled strength is deliberately unquoted, which that gate
-rejects by design. The correct invariant for degraded output is narrower
-— **no fabricated quote survives** — and the test now asserts exactly
-that, plus a direct check that none of the invented phrases appear
-anywhere in the returned object. Writing the loose assertion first is
-what made the distinction visible.
-
-**Item 2 confirmed:** the gaps rule stays a warning.
-`verifyReport().unquotedGaps` is reported and logged, never a rejection,
-and `degradeReport` preserves unquoted gaps untouched.
-
-**Remaining hole, not closed:** `writeReport` can still throw an
-`LLMError` if the reporter's API call itself fails (rate limit, network).
-That is a different failure from validation and the route will need its
-own fallback — `degradeReport` is exported so the route can build a
-grounded report from state without a model call.
-
----
-
-## Entry 16 — Seven fixes from the first live run
-
-**Prompt:** fix the six issues diagnosed from the CAND-017 log plus the
+```
+fix the six issues diagnosed from the CAND-017 log plus the
 dangling end, in order, no API calls. Fix the off-by-one architecturally
 rather than by relabelling; fix multi-line input; never end on an
 unanswered question; make the follow-up cap quality-aware; fix depth and
 non-substantive scoring; fix question quality in TURN_SYSTEM; loosen the
 planner. Then the user re-runs the session.
+```
 
-**Outcome:** 92 tests pass, typecheck clean, no API calls.
+## 17
 
-**1. Off-by-one removed at the root.** `applyTurn` is gone. The
-orchestrator now computes a `TurnDirective` BEFORE the call —
-`nextDirective(state, blueprint)` — which is rendered into the prompt as
-explicit instruction ("You MUST move on to X now — 3 follow-ups already
-used"). The model writes its question for the correct topic, and
-`recordTurn` files it under the model's own `targetDay`. Nothing is
-rewritten after generation, so there is nothing to be off by one.
-
-Coverage now credits the day a question was ACTUALLY about. A test proves
-a directed-but-not-yet-asked day is not credited, and a replay asserts
-all ten interviewer stamps match their question text. A model that
-ignores the directive is recorded honestly and flagged as a violation
-rather than silently relabelled.
-
-**2. Multi-line input.** `readAnswer` accumulates lines until a lone "."
-or `/send`, then echoes the captured text with a character count so
-truncation is visible immediately. The last run lost a Docker answer at
-the first newline and scored it as a non-answer.
-
-**3. No dangling end.** When the floors are met the model's `question`
-field becomes a closing beat rather than a probe, and the CLI then reads
-one final "last word" from the candidate before the report.
-
-**4. Quality-aware follow-up cap.** `followUpAllowance` starts at 3 and
-rises to 5 after an answer scoring knowledge >= 4 on the same thread,
-resetting on a topic change. In the last run the cap fired on turn [10],
-the best answer of the interview.
-
-**5. Depth and scoring.** New topics take their depth from the current
-ability estimate rather than the blueprint's `startDepth`, which is why
-depth never exceeded 3 last time. `substantive: false` on the turn output
-skips the rubric entirely, leaving ability untouched — "hello" no longer
-seeds the estimate at 2.20.
-
-**6. Question quality.** TURN_SYSTEM rewritten: day numbers are banned
-outright ("a real interviewer has never seen the syllabus"), objectives
-are explicitly context and not a checklist, consequence questions are
-preferred over inventory ones with the previous run's own bad questions
-as worked examples, cross-topic questions are preferred, acknowledgments
-must vary and may be omitted, and **chasing a revealed weakness outranks
-the plan** — with the wildcard CORS and the missing query router from the
-last run named as the examples that were missed.
-
-**7. Planner loosened.** Focus days may now be ANY curriculum day; only
-performance CLAIMS are restricted to days in `missions[]`, enforced by a
-regex guard that rejects an off-record reason containing passed/failed/
-attempts/skipped. At least two distinct strategies are required — the
-last plan was five identical `rebuild_confidence` days with no
-`verify_depth` anywhere. Mid-to-late and SHIP_IT/CAPSTONE days are
-preferred, and early scaffolding days discouraged: day 3 consumed 4 of 9
-questions and produced the trivia.
-
-**Not yet verified live** — step 8 is the user's run.
-
----
-
-## Entry 17 — Six fixes from the second live run, and the lost report
-
-**Prompt:** raise the reporter ceiling and audit every other role's;
+```
+raise the reporter ceiling and audit every other role's;
 make writeReport degrade on EVERY callLLM failure path, not just
 validation; stop `clarify` resetting the follow-up counter; tighten
 never-reveal-correctness with the two leaking questions as bad examples
 and enforce the omit-reaction rule; add severity ranking when one answer
 contains two weaknesses; then regenerate the report from the fixture.
+```
 
-**Root cause of the lost report — arithmetic, not model behaviour.**
-`maxOutputTokens` is a budget for THOUGHT + OUTPUT on thinking models.
-The reporter at 4096 with thinking "high" spent 3597 thinking and had 482
-left for JSON; both attempts landed within ~16 tokens of the cap and were
-truncated mid-object, which is why they failed to parse. Giving the
-reporter the full transcript is what pushed thinking that high.
+## 18
 
-The audit found two more heading the same way:
-
-| role | cap | observed peak | used |
-|---|---|---|---|
-| reporter | 4096 | 4081 | 100% — FAILED |
-| planner | 4096 | 3500 | 85% |
-| turn | 2048 | 1517 | 74% |
-| interviewer | 2048 | 708 | 35% |
-| evaluator | 1024 | 142 | 14% |
-
-Ceilings are now 16384 for the 3.6-flash roles and 8192/4096 for
-flash-lite. Headroom that goes unused costs nothing.
-
-**writeReport can no longer throw on any path.** Every `callLLM` failure
-— rate limit, truncation, unparseable output — is caught and falls
-through to `degradeReport`, which now accepts a null report and builds
-one from session state alone. `parseJson` in llm.ts repairs markdown
-fences and surrounding prose first, but deliberately does NOT try to
-repair truncation: a cut-off object is unrecoverable and the fix for that
-is headroom, not cleverness. Tested with a mocked reporter that throws
-on every attempt.
-
-**A second bug this exposed, not in the original list:** the session
-recording was written AFTER the report, so the reporter throwing
-discarded the entire 24-turn interview. I had told the user the opposite.
-The recording now writes before the report, and includes the transcript.
-Run 2 was reconstructed by hand from the terminal output into
-`fixtures/session-CAND-017-run2.json`.
-
-**clarify no longer resets the counter.** `followUpCount` incremented
-only on `action === "follow_up"` and reset to 0 on anything else, so
-alternating follow_up/clarify never tripped the cap — one topic took 6 of
-10 questions. It now counts any turn spent on the same thread.
-
-**Verdict-leaking questions.** "In a healthcare app, returning a general
-paragraph instead of a precise deductible could cause real confusion" and
-"You're relying entirely on a prompt instruction for critical financial
-data" both tell the candidate they were wrong. Both are now BAD examples
-in the prompt, against GOOD rewrites that carry the same probe with no
-verdict. The omit-reaction rule is enforced in code: after two
-consecutive acknowledgements the directive requires an empty reaction and
-the caller strips it if the model emits one anyway.
-
-**Severity ranking.** In one answer Tyler revealed both a missing query
-router and a wildcard CORS origin on a healthcare app. The model chased
-the router — the one matching its current topic — and dropped the
-wildcard. The prompt now ranks weaknesses by consequence, with patient
-data and privacy above architecture, and carries this exact miss as the
-worked example.
-
-**Report regenerated, 1 call, no degradation** — it passed verbatim
-validation on the first attempt. Notably its NEXT section caught the
-wildcard CORS the interviewer itself walked past: "replace the wildcard
-in allow_origins for CORS with specific origin URLs." 97 tests pass.
-
----
-
-## Entry 18 — The HTTP endpoint
-
-**Prompt:** solve the timeout risk first (check Vercel's real limit, try
+```
+solve the timeout risk first (check Vercel's real limit, try
 reporter at thinking "medium"), then wire the orchestrator into
 `app/api/interview/route.ts` with the exact contract, stateless via
 Supabase, never returning an invalid response; build a conformance script
 and run its `--dry` failure cases.
+```
 
-**1a — the timeout risk was based on an outdated assumption.** Vercel's
-current docs: with fluid compute, enabled by default, the limits are
-**Hobby 300s default AND 300s maximum**; Pro 300s default, 800s maximum.
-The old 10s Hobby ceiling is gone. A final request of ~30s (turn ~7s +
-reporter ~19s) fits with roughly 10x margin. `export const maxDuration =
-120` is set explicitly in the route anyway rather than trusting a default
-that could change.
+## 19
 
-**1b — reporter at thinking "medium": 16.0s vs 18.5s at "high"**, on the
-same fixture. 13% faster, 4426 tokens vs 4658, and it passed verbatim
-validation on the first attempt with comparable grounding. Since there is
-no longer any timeout pressure, the role stays on "high" per CLAUDE.md;
-`writeReport` now accepts a `thinking` override so the cheaper setting is
-one argument away if that changes.
+```
+confirm everything is pushed, then update CLAUDE.md.
+```
 
-**2 — the route.** Stateless as specified: `loadSession` at the top,
-`saveSessionState` at the bottom, every request, nothing held between
-invocations. The response builder can only ever emit `reply`, `done` and
-`feedback` — rubric, claims, rationale, violations and state are all
-persisted and none of them can reach the client, because the response
-type is a union that has no room for them.
+## 20
 
-`consecutiveReactions` moved into `SessionState`. It drives the
-omit-reaction rule, and in a serverless handler there is nowhere else it
-could live: a module variable would have worked locally and silently
-reset on every cold start during judging.
-
-Re-sending the opening request is idempotent — it replays the stored
-opening line rather than spending another planner call.
-
-**3 — no invalid response is reachable.** Client errors return HTTP 400
-but still carry the contract shape so a conformance parser never
-encounters a surprise body. A failed turn call returns a safe question
-with the state untouched, so the next request resumes cleanly rather than
-losing the interview to a 500. The reporter path is wrapped even though
-`writeReport` already cannot throw.
-
-**4 — conformance `--dry`: 28 passed, 0 failed, 0 LLM calls.** Covers
-malformed JSON, empty body, missing sessionId, unknown sessionId, unknown
-candidate, empty message, and a message on a finished session. The last
-one needed a completed session, so the script creates and marks one
-directly through the db helpers rather than running an interview to get
-there. Test rows cleaned up afterwards; all three tables verified back to
-0.
-
-Day coverage is asserted against the persisted turns rather than the
-response, because days are deliberately not observable through the API.
-
-**Not run:** the full interview path. It costs ~11 LLM calls and the user
-should decide when to spend them.
-
----
-
-## Entry 19 — CLAUDE.md brought up to date
-
-**Prompt:** confirm everything is pushed, then update CLAUDE.md.
-
-**State:** local and remote both at `cc805bd`, working tree clean —
-everything was already pushed.
-
-**Updated CLAUDE.md** to match what we measured rather than what we
-assumed at the start. The spec's intent is untouched; only the facts that
-turned out wrong, and the rules learned by breaking things:
-
-- **Quota shape corrected.** "Free tier is ~5-15 RPM per project" was
-  wrong in both directions: the binding limit on gemini-3.6-flash is 20
-  requests per DAY, and it is per key AND per model, not per project.
-  Pooling keys therefore does multiply capacity — ~10 interviews/day per
-  key, ~60 across six.
-- **maxOutputTokens is a THOUGHT + OUTPUT budget.** Documented under the
-  Gemini section with the incident that taught it: the reporter had 482
-  tokens left for JSON after thinking, truncated mid-object, and looked
-  like schema non-compliance. Re-check the ceiling whenever input grows
-  or thinking rises.
-- **Vercel duration.** 300s on every plan with fluid compute; the old 10s
-  Hobby ceiling is gone. The ~30s final request fits with 10x margin.
-- **Architecture rules** that must not be undone: constraints go INTO the
-  prompt and are never applied on top of the output; the model is never
-  trusted to count; anti-invention is a shared prompt rule PLUS code
-  enforcement; and the interviewer voice rules (no day numbers,
-  objectives are context, chase the more severe weakness, never reveal
-  correctness even inside a question).
-- **Scripts table** with the LLM cost of each, so it is obvious which
-  commands are free.
-
-**Flagged, not silently fixed:** four files now exceed the doc's own
-"~300 lines" rule — `llm.ts` at 578, `reporter.ts` at 400, `turn.ts` at
-319, `interview.ts` at 315. The rule was left as written rather than
-relaxed to match the code.
-
----
-
-## Entry 20 — The interview screen
-
-**Prompt:** build the interview screen with zero API calls — server-side
+```
+build the interview screen with zero API calls — server-side
 fixture replay first, a separate state endpoint, then an "instrument"
 visual direction with a depth trace as the signature element. Write a
 design plan and self-critique it before building.
+```
 
-**Design plan and revision** (full text in the conversation). The
-self-critique caught four defaults in my own first plan: chat-left /
-panel-right is the universal AI layout; my panel was a card grid with the
-shadows removed; I had put the element I was told to spend all boldness on
-into 15% of a sidebar; and serif-human / mono-machine is a well-worn AI
-trope. Revisions: the panel became one continuous ruled strip with an
-annotation gutter and no boxes at all, the trace moved to the top of the
-panel full-bleed, transcript turns and trace segments cross-highlight on
-hover, and trace opacity encodes recency so "live" is literal.
+## 21
 
-**Architecture.** `FIXTURE=1` replays a recorded session through the real
-route. `engine.ts` is the only seam — `plan`, `turn`, `report` — so the
-orchestrator, state machine, Supabase persistence and response builder all
-still run for real and only the model calls are substituted. Verified by
-curl that a replayed response carries exactly `reply` + `done`, identical
-to live. `FIXTURE_SPEED` scales the simulated latency.
-
-The frozen contract was not touched. Panel data comes from a new
-`GET /api/session/[sessionId]/state`.
-
-**A fixture bug caught while wiring it:** the recording is run 1 (days 3,
-10, 22, 28, 31) but `blueprint-CAND-017.json` had been overwritten with
-the regenerated plan (10, 20, 28, 31), so the coverage panel showed days
-the recording never visits. Fixed by pairing each recording with its own
-blueprint file.
-
-**Contrast, measured rather than eyeballed.** The first palette put every
-apparatus label at `#8b979d` — **2.78:1**, which fails AA and is exactly
-the "small grey text disappears on compressed video" failure the brief
-warned about. Darkened to `#646e73` (4.64:1 on the panel ground) keeping
-the cool cast. Structural rules went from 1.19:1 to 1.52:1, and the
-textarea border — a real UI component needing 3:1 — to `#808e95` at
-3.14:1. All pairs now pass.
-
-**Trace geometry extracted to `traceGeometry.ts`** and tested directly:
-14 tests covering a synthetic climb to 5 and drop to 1, the flat fixture,
-out-of-range clamping, the empty and single-point cases, and the pen
-parking a step ahead while thinking. Vitest 4's bundler will not compile
-JSX under Next's `jsx: "preserve"`, and extracting the maths was a better
-answer than adding a plugin — the test now exercises logic rather than
-markup strings. 111 tests pass.
-
-**NOT verified: how it actually looks.** The Chrome extension was
-declined, so no screenshot was taken and the self-critique in step 4 of
-the brief is unfinished. Everything measurable was checked — contrast
-ratios, geometry, build, both routes, replay shape — but nobody has
-looked at it yet.
-
----
-
-## Entry 21 — Merging the landing page with the interview screen
-
-**Prompt:** pull the teammate's changes, then make both pages intact and
+```
+pull the teammate's changes, then make both pages intact and
 connected.
+```
 
-**The collision.** `8f0a96c` added a MockMate landing page (20 components)
-and rewrote three files the interview screen depended on:
-`page.tsx`, `layout.tsx` and `globals.css`. The pull was a clean
-fast-forward with no git conflict, but functionally it left the interview
-screen unreachable and unstyled — every design token, both typefaces and
-all three animations were gone. The test suite still passed, because
-nothing in it covers CSS.
+## 22
 
-**Resolution — additive, nothing un-merged.**
-- The interview moved to `/interview`; the landing page keeps `/`.
-- Design tokens went back into `globals.css` as an appended, clearly
-  labelled block rather than a restoration of the old file.
-- `.interview-root` re-establishes background, colour, font and letter
-  spacing. The landing page styles `body` dark with its own font and a
-  negative letter-spacing, and all of that inherits everywhere — so the
-  interview could not rely on inheritance.
-- A "The Interview" link was added to the desktop and mobile nav. Their
-  "Start Practicing" modal was left alone: it is someone else's form and
-  rewiring it without understanding what it collects was not worth the
-  risk.
-
-**Typography reused rather than added.** Their layout already loads
-Newsreader, which was the exact face chosen for questions, so that voice
-survived untouched. Apparatus moved from IBM Plex Mono to the
-already-loaded JetBrains Mono — Plex was the more deliberate choice, but
-not worth a fourth webfont on a page judged over shared video.
-
-**Verified:** both routes 200, landing links to `/interview`, tokens
-present in the served CSS, `.interview-root` applied, 111 tests pass,
-conformance `--dry` still 28/28, and a full replayed turn through the real
-endpoint returns exactly `reply` + `done` with the panel state populated.
-
-**Still unverified: how any of it looks.** No screenshot has been taken.
-
----
-
-## Entry 22 — Start Practicing routes to the live interview
-
-**Prompt:** make "Start Practicing" go to /interview too. Also: from now
+```
+make "Start Practicing" go to /interview too. Also: from now
 on, commit and push only when asked.
+```
 
-**Change:** one edit in `src/app/page.tsx`. All three "Start Practicing"
-buttons — Header, Hero and FinalCTA — receive their handler from the same
-place, so replacing `() => setStartModalOpen(true)` with a
-`router.push("/interview")` covers every one without touching any of the
-landing-page components.
+## 23
 
-**Consequence flagged, not acted on:** `StartInterviewModal` now has no
-trigger and is dead code. Left in place rather than deleting a teammate's
-component.
-
-**Also noticed:** `PricingSection`, `FAQSection`, `HowItThinks`,
-`InteractiveSandbox` and `TargetAudience` exist but are not rendered by
-`page.tsx`.
-
-**Self-inflicted breakage worth recording:** running `next build` while
-`next dev` was serving the same `.next` directory corrupted it and both
-routes returned 500. Cleared `.next` and restarted. Do not run a
-production build against a live dev server.
-
-## Entry 23 — The glass effect
-
-**Prompt:** "still cant see the glass effect in the containers on landing
+```
+"still cant see the glass effect in the containers on landing
 page add that. and bg was also not all black" → "there is still no glass
 effect on localhost 3k" → "STILL NOT THERE" → "and start pracising doesnt
 go anywhere"
+```
 
-Three wrong guesses before measuring. The glass was rendering the whole
-time — the panel sat seven RGB points from its own background. An aurora
-gradient I had amplified from 10% to 40% was tinting the black
-background; reverted. The dead button was unrelated: an SVG `<title>`
-with array children threw during render and aborted the navigation.
+## 24
 
----
-
-## Entry 24 — Making the interview adapt
-
-**Prompt:** "my friends will do frontend work. we gotta make the main
+```
+"my friends will do frontend work. we gotta make the main
 part the interview better. how to do it. use ml or what"
+```
 
-No ML. A live run had produced a depth trace of 2,2,2,2,2,2,2,2,2,2,1,1
-for a candidate whose answers plainly varied — nothing was deciding
-difficulty. Added `depth.ts` (a bounded walk, ±1 per turn, ceiling
-tracking demonstrated ability) and `ability.ts` (EWMA over knowledge
-scores, plus a mode machine written as a transition function — the old
-cascade made recovery a one-way door). `adaptive.sim.test.ts` runs whole
-interviews against adversarial fake models and asserts the trace is not
-flat and differs between candidates.
+## 25
 
----
-
-## Entry 25 — Scores
-
-**Prompt:** "can you verify here what happens when interview ends. like
+```
+"can you verify here what happens when interview ends. like
 what is shown the result of the interiview" → "should we give
 scores?improvemnts? etc"
+```
 
-Decided no scores. A number would tell the candidate which answers were
-wrong after an interview built so they could not infer that, and imply a
-precision the rubric cannot support. Replaced with how far they got in
-each area, what they claimed without backing it, and `compareToRecord` —
-what their 31-day record predicted against what the hour showed.
+## 26
 
----
-
-## Entry 26 — Ending early
-
-**Prompt:** "keep an end interview button? and then we the results on a
+```
+"keep an end interview button? and then we the results on a
 new page?"
+```
 
-The blocker was the session id: minted client-side from `Date.now()`, so
-it existed nowhere else and any navigation destroyed it. Moved into the
-URL. Added `POST /api/session/[id]/end` and `/report/[sessionId]`.
-`markDone` runs before the reporter, or an in-flight turn can land during
-those ~19s and ask another question after the candidate pressed End. The
-graded floors are untouched — a candidate ending early is a different
-thing from the system concluding, and never claims to be one.
+## 27
 
----
-
-## Entry 27 — Ten fixes from a live run
-
-**Prompt:** a numbered list of ten defects from the Sarah Johnson
+```
+a numbered list of ten defects from the Sarah Johnson
 interview, grouped by priority, "No API calls needed for any of this."
+```
 
-Two were correctness bugs: the chart's caption said the line "falls when
-you struggle" when new topics deliberately open a rung lower, and a
-non-answer still escalated difficulty because the depth walk read the
-previous answer's scores. One reported item was not a bug — the
-"hardcoded localhost" link is relative — and was reported back rather
-than "fixed". Also stopped the report using the ladder's internal names:
-"reached redesign level" is the best result and reads as an instruction.
+## 28
 
----
-
-## Entry 28 — Scrolling
-
-**Prompt:** "the scrolling stll not good or working. and also cant see
+```
+"the scrolling stll not good or working. and also cant see
 the below text in side panel and cant scroll to see either" → "it still
 dosnt scroll...wtf are you doing you cant fix it?"
+```
 
-Two failed guesses from reading the JSX, then measured with a real
-browser. Every pane was scrollable — `scrollTop` could be set
-programmatically — but no wheel event scrolled anything. `LenisProvider`
-was mounted globally: Lenis calls `preventDefault()` on every wheel event
-and animates the document, which is right for a marketing page and fatal
-for a split view whose columns scroll internally. Scoped to the landing
-route. A second bug underneath: the transcript measured "was the reader
-at the bottom" in a layout effect, which runs after React commits the new
-entry, so it latched false permanently after one turn.
+## 29
 
----
-
-## Entry 29 — Reading the panel cold
-
-**Prompt:** "now wtf would somneone understand what the graph is about
+```
+"now wtf would somneone understand what the graph is about
 cause we only see lines when responses come... those 5 things written
 redisgn etc and claims wtf are those" → "should we show those 5 qs on
 left side?"
+```
 
-Screenshotted the panel and read it as a first-time visitor. The largest
-text said "Moving to edge case (depth 4)"; the axis named rungs needing a
-legend nobody has; one label was clipped; "Claims" was three lowercase
-fragments with no framing. Axis now reads "what it is / how you used it /
-why that way / where it breaks / rebuild it", sourced from `lib/depth` so
-it cannot drift from the prompt. Chart moved to the left panel, which was
-empty while the centre fought the question for room.
+## 30
 
----
-
-## Entry 30 — Preserving the new landing page
-
-**Prompt:** "so..changes have been amde to the repo. we have a new
+```
+"so..changes have been amde to the repo. we have a new
 landing page... i wanna preserve all the ui of landing page ALL ok. and
 interview page will be what i have now."
+```
 
-Two files conflicted. The danger was what merged cleanly: the new
-`globals.css` not only drops the interview's design tokens but redefines
-them — `--color-paper: #0A0A0A` — so `bg-paper` rendered black. Fixed by
-re-declaring the values on `.interview-root` rather than fighting import
-order, and moving them into `interview-theme.css`, a file a landing
-rewrite has no reason to touch. They had been deleted three times.
+## 31
 
----
-
-## Entry 31 — Speed, and where the calls go
-
-**Prompt:** "ok so is it faster now? intial load and also after givig a
+```
+"ok so is it faster now? intial load and also after givig a
 response?" · "i wanna use pinecone db. i heard its faster and better." ·
 "what about if we use pgvector too in supabase" · "are we wasting any api
 calls uselessly somehwere"
+```
 
-Measured before answering. Cold start fell from 91s to 1.7s by caching
-blueprints — the planner's input is only the candidate's static record,
-so re-planning bought an identical answer with a call from a 20-per-day
-budget. Per-answer stayed ~8s, which is one model call and unchanged.
+## 32
 
-Declined Pinecone and pgvector with numbers: an in-memory scan of all 31
-curriculum days takes 0.078ms against a 442ms database round trip, and
-the database is under 1% of a request. The audit found 70 calls over two
-days with one wasted round trip.
-
----
-
-## Entry 32 — Two people rebuilt the same screen
-
-**Prompt:** "i want to keep the ui of what ishan pushed in interview. and
+```
+"i want to keep the ui of what ishan pushed in interview. and
 keep the logic and functioning to what i built. see properly and tell me
 how we will do that. properly"
+```
 
-Tractable because the new components were presentational — props in, no
-fetching — and already spoke the existing types. So the container kept
-its logic (session in the URL, hydration, Begin gate, End → report) and
-the view was swapped wholesale. Their chart had hardcoded axis labels
-that had drifted from the real ladder; those now come from `lib/depth`.
-Two layout bugs found by rendering rather than reading:
-`justify-content: center` on an overflowing scroll box makes the top of a
-long question unreachable, and the composer sat inside that same box.
+## 33
 
----
-
-## Entry 33 — Making it feel human
-
-**Prompt:** "the response doesnt feel human. like i wrote rubbish and it
+```
+"the response doesnt feel human. like i wrote rubbish and it
 just moved on like a chatbot didnt say nothing" → "i want it to feel more
 human . like the interviwer tells us how our prev response was. relly
 good, something missing... like in internshala interviews"
+```
 
-Half declined, with the reason given: "really good" and "something's
-missing" are verdicts, and a candidate told they did well doubles down
-while one told they did badly starts performing for the grader — the
-rubric then describes a different person. The other half was the real
-problem. The reaction now reflects the substance back in the candidate's
-own words ("So the classifier decides before anything else runs") rather
-than "Okay." A non-answer gets acknowledged: mangled input is met with
-"That didn't quite come through" and the same question re-asked; an
-honest "I don't know" is taken graciously and never repeated back.
+## 34
 
----
+```
+we could show timeline in end report and all the question wise analysis everything too? and keep the score? and fix that 80% bug?
+```
+
+## 35
+
+```
+hey ishan pushed something have a look. light dark dont work in that toiggle though. i want what light dark tioggle i had made before merging botth their commits. you know that collding animation and light mode aniation+ text fixes
+```
+
+## 36
+
+```
+fix the light dark mode we spent so much time on it. we should have that.
+```
+
+## 37
+
+```
+first fix bg on light mode and also the text what we had decided before the merge.and in candidate page these green boxes not visiable. the light mode colour is good there. but on landing page is weird. fix all that first
+```
+
+## 38
+
+```
+i told you to fix this. the hover no text. and in gren boxes no text you couldnt fking do it
+```
+
+## 39
+
+```
+so it works right the interview?
+```
+
+## 40
+
+```
+landing page is fine. what is the fix for the duplicated next steps section?
+```
+
+## 41
+
+```
+update promots.md it should ONLY have my promot not hat that prompt did. ONLUY PROMPTS
+```

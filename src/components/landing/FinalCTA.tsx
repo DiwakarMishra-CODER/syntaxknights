@@ -12,7 +12,7 @@ interface FinalCTAProps {
 
 export function FinalCTA({ onOpenStartModal }: FinalCTAProps) {
   return (
-    <section className="relative z-10 overflow-hidden bg-gradient-to-b from-[#0B120E] to-background py-24 text-foreground lg:py-32">
+    <section className="relative z-10 overflow-hidden bg-gradient-to-b from-[var(--bg-elevated)] to-background py-24 text-foreground lg:py-32">
       {/* Ambient effects */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-16 h-72 w-[600px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(31,209,106,0.12)_0%,transparent_70%)] blur-3xl" />
@@ -51,9 +51,9 @@ export function FinalCTA({ onOpenStartModal }: FinalCTAProps) {
             </a>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-[#8B968F]">
+          <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-slate-500 dark:text-[#8B968F]">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-accent-soft" />
+              <ShieldCheck className="h-3.5 w-3.5 text-brand-soft" />
               Quotes you back
             </span>
             <span>Recorded replay</span>

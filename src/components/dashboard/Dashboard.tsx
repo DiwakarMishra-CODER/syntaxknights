@@ -77,7 +77,7 @@ export default function Dashboard({
   }, [candidates, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-accent transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-brand transition-colors duration-300">
       
       {/* Ambient Background Glows matching landing page aesthetic */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -94,14 +94,14 @@ export default function Dashboard({
             onClick={() => router.push('/')}
             className="flex items-center gap-2.5 group"
           >
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-[#1FD16A]/10 border border-emerald-200 dark:border-[#1FD16A]/30 flex items-center justify-center text-emerald-600 dark:text-accent font-mono font-bold text-sm shadow-sm transition-transform group-hover:scale-105">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-[#1FD16A]/10 border border-emerald-200 dark:border-[#1FD16A]/30 flex items-center justify-center text-emerald-600 dark:text-brand font-mono font-bold text-sm shadow-sm transition-transform group-hover:scale-105">
               M
             </div>
             <div className="flex items-center gap-2">
               <span className="font-sans font-bold text-base tracking-tight text-slate-900 dark:text-white">
                 MockMate
               </span>
-              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/60 dark:border-[#1FD16A]/20">
+              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-brand border border-emerald-200/60 dark:border-[#1FD16A]/20">
                 Dashboard
               </span>
             </div>
@@ -111,7 +111,7 @@ export default function Dashboard({
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
-              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-accent transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-brand transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Home</span>
@@ -124,7 +124,7 @@ export default function Dashboard({
                 title="Toggle Theme"
                 aria-label="Toggle Theme"
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-accent-soft" /> : <Moon className="w-4 h-4 text-slate-700" />}
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-brand-soft" /> : <Moon className="w-4 h-4 text-slate-700" />}
               </button>
             )}
           </div>
@@ -138,7 +138,7 @@ export default function Dashboard({
         <section className="flex flex-col items-center text-center max-w-3xl mx-auto space-y-6">
           
           {/* Cohort Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/80 dark:border-[#1FD16A]/25 shadow-sm">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium uppercase tracking-wider bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-brand border border-emerald-200/80 dark:border-[#1FD16A]/25 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-[#1FD16A] animate-pulse" />
             {curriculum.cohort} • Evaluation Portal
           </div>
@@ -156,7 +156,7 @@ export default function Dashboard({
           {/* Big Search Bar */}
           <div className="w-full relative group pt-2">
             <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <Search className="w-5 h-5 text-slate-400 dark:text-[#8B968F] group-focus-within:text-accent transition-colors" />
+              <Search className="w-5 h-5 text-slate-400 dark:text-[#8B968F] group-focus-within:text-brand transition-colors" />
             </div>
             
             <input
@@ -181,7 +181,7 @@ export default function Dashboard({
           {/* View All Candidates Button */}
           <button
             onClick={() => router.push('/candidates')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-sans font-semibold transition-all duration-200 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-[#C5D0C8] hover:border-emerald-400 dark:hover:border-[#1FD16A]/50 hover:text-emerald-600 dark:hover:text-accent shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-sans font-semibold transition-all duration-200 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-[#C5D0C8] hover:border-emerald-400 dark:hover:border-[#1FD16A]/50 hover:text-emerald-600 dark:hover:text-brand shadow-sm"
           >
             <span>View All Candidates ({candidates.length})</span>
           </button>
@@ -193,7 +193,7 @@ export default function Dashboard({
           <section className="space-y-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#0B120E]/80 backdrop-blur-xl shadow-sm">
               <div className="flex flex-col items-center text-center mb-8">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-600 dark:text-accent border border-emerald-200/80 dark:border-[#1FD16A]/20">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-600 dark:text-brand border border-emerald-200/80 dark:border-[#1FD16A]/20">
                   <BookOpen className="w-6 h-6" />
                 </div>
                 <h2 className="text-2xl font-sans font-bold text-slate-900 dark:text-[#F5F7F4]">
@@ -212,20 +212,20 @@ export default function Dashboard({
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs bg-emerald-100 dark:bg-[#1FD16A]/15 text-emerald-700 dark:text-accent">
+                        <span className="w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs bg-emerald-100 dark:bg-[#1FD16A]/15 text-emerald-700 dark:text-brand">
                           M{mod.n}
                         </span>
                         <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-[#7E8B84]">
                           Days {mod.days[0]}–{mod.days[1]}
                         </span>
                       </div>
-                      <h3 className="font-sans font-bold text-sm text-slate-900 dark:text-[#F5F7F4] leading-snug group-hover:text-emerald-600 dark:group-hover:text-accent transition-colors">
+                      <h3 className="font-sans font-bold text-sm text-slate-900 dark:text-[#F5F7F4] leading-snug group-hover:text-emerald-600 dark:group-hover:text-brand transition-colors">
                         {mod.title}
                       </h3>
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400 dark:text-[#7E8B84]">
                       <span>Checkpoints verified</span>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-accent" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-brand" />
                     </div>
                   </div>
                 ))}
@@ -248,7 +248,7 @@ export default function Dashboard({
               </span>
               <button
                 onClick={() => setSearchQuery("")}
-                className="text-xs font-mono text-emerald-600 dark:text-accent hover:underline"
+                className="text-xs font-mono text-emerald-600 dark:text-brand hover:underline"
               >
                 Clear
               </button>
@@ -279,11 +279,11 @@ export default function Dashboard({
                             {candidate.member.name.charAt(0)}
                           </div>
                           <div>
-                            <h3 className="font-sans font-bold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-accent transition-colors">
+                            <h3 className="font-sans font-bold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-brand transition-colors">
                               {candidate.member.name}
                             </h3>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-xs font-mono text-emerald-600 dark:text-accent font-medium">
+                              <span className="text-xs font-mono text-emerald-600 dark:text-brand font-medium">
                                 {candidate.member.id}
                               </span>
                               <span className="text-slate-300 dark:text-slate-700">•</span>
@@ -293,7 +293,7 @@ export default function Dashboard({
                             </div>
                           </div>
                         </div>
-                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-accent border border-emerald-200/60 dark:border-[#1FD16A]/20">
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-[#1FD16A]/10 text-emerald-700 dark:text-brand border border-emerald-200/60 dark:border-[#1FD16A]/20">
                           {candidate.member.status}
                         </span>
                       </div>
@@ -301,11 +301,11 @@ export default function Dashboard({
                       {/* Candidate Meta Info */}
                       <div className="space-y-2 py-3 border-y border-slate-100 dark:border-white/5 text-xs text-slate-600 dark:text-[#C5D0C8]">
                         <div className="flex items-center gap-2">
-                          <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-accent shrink-0" />
+                          <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-brand shrink-0" />
                           <span className="truncate">{candidate.member.yearsExperience} Yrs Exp • {candidate.member.education}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-accent shrink-0" />
+                          <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-brand shrink-0" />
                           <span>{candidate.signals.commitDays} Active Commit Days</span>
                         </div>
                       </div>

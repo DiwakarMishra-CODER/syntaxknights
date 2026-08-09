@@ -51,7 +51,7 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
 
         {isSubmitted ? (
           <div className="py-10 text-center space-y-3">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#1FD16A]/15 text-lg font-bold text-accent-soft">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#1FD16A]/15 text-lg font-bold text-brand-soft">
               ✓
             </div>
             <h3 className="text-xl font-sans font-semibold text-[#F5F2EB]">
@@ -64,7 +64,7 @@ export const StartInterviewModal: React.FC<StartInterviewModalProps> = ({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <span className="mb-1 block text-[11px] font-mono font-semibold uppercase tracking-wider text-accent">
+              <span className="mb-1 block text-[11px] font-mono font-semibold uppercase tracking-wider text-brand">
                 New Session Calibration
               </span>
               <h3 className="text-xl font-sans font-semibold text-[#F5F2EB]">

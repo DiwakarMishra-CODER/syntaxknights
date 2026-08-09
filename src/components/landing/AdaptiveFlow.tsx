@@ -41,7 +41,7 @@ const MOMENTS = [
 
 export function AdaptiveFlow() {
   return (
-    <section className="relative z-10 bg-gradient-to-b from-[#0B120E] via-background to-[#0B120E] py-24 text-foreground lg:py-32">
+    <section className="relative z-10 bg-gradient-to-b from-[var(--bg-elevated)] via-background to-[var(--bg-elevated)] py-24 text-foreground lg:py-32">
       {/* Ambient */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-0 top-1/3 h-96 w-96 rounded-full bg-primary/5 blur-[120px]" />
@@ -84,11 +84,11 @@ export function AdaptiveFlow() {
                         {person.name}
                       </h3>
                     </div>
-                    <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-accent-soft">
+                    <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-brand-soft">
                       {person.firstTry}
                     </span>
                   </div>
-                  <div className="space-y-3 text-sm leading-relaxed text-[#D6E0D9]">
+                  <div className="space-y-3 text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                     <p>
                       Completed: <span className="text-foreground">{person.completed}</span>
                     </p>
@@ -101,7 +101,7 @@ export function AdaptiveFlow() {
             <div className="flex items-center justify-center px-3 text-primary">
               <div className="space-y-2 text-center">
                 <Sparkles className="mx-auto h-5 w-5" />
-                <div className="text-[11px] uppercase tracking-[0.24em] text-[#8B968F]">
+                <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500 dark:text-[#8B968F]">
                   same record, different pressure
                 </div>
                 <ArrowRight className="mx-auto h-4 w-4 rotate-90 lg:rotate-0" />
@@ -146,7 +146,7 @@ export function AdaptiveFlow() {
                   <h3 className="font-display text-card-title text-foreground">
                     {moment.title}
                   </h3>
-                  <p className="text-sm leading-relaxed text-[#D6E0D9]">
+                  <p className="text-sm leading-relaxed text-slate-600 dark:text-[#D6E0D9]">
                     {moment.body}
                   </p>
                 </CardContent>

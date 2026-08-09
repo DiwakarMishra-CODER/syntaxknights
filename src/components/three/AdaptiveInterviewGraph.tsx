@@ -67,7 +67,7 @@ export const AdaptiveInterviewGraph: React.FC<AdaptiveInterviewGraphProps> = ({
                   ? "text-slate-900 dark:text-[#F5F7F4] font-medium"
                   : isActive
                   ? "text-slate-900 dark:text-[#F5F7F4]/90"
-                  : "text-[#7E8B84]"
+                  : "text-slate-500 dark:text-[#7E8B84]"
               )}
             >
               {stg.label}
