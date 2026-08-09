@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   compareToRecord,
+  questionTimeline,
   explanationSignal,
   topicFindings,
   topicsReached,
   unjustifiedClaims,
 } from "./summary";
-import type { Claim, FocusDay, Turn } from "./types";
+import type { Claim, FocusDay, Turn, TurnRubric } from "./types";
 
 const iTurn = (
   turnNumber: number,
@@ -319,5 +320,80 @@ describe("explanationSignal", () => {
       const s = explanationSignal(rubrics(set));
       expect(s).not.toMatch(/\d/);
     }
+  });
+});
+
+describe("questionTimeline — the panels' data, after the fact", () => {
+  const q = (
+    turnNumber: number,
+    content: string,
+    targetDay: number | null,
+    depth: number | null,
+    rationale: string | null,
+    rubric: TurnRubric | null = { knowledge: 3, communication: 3, specificity: 3, objectivesHit: [] }
+  ): Turn => ({
+    turnNumber,
+    role: "interviewer",
+    content,
+    targetDay,
+    depth,
+    rubric,
+    claims: [],
+    rationale,
+  });
+
+  const answer = (turnNumber: number): Turn => ({
+    turnNumber,
+    role: "candidate",
+    content: "an answer",
+    targetDay: null,
+    depth: null,
+    rubric: null,
+    claims: [],
+    rationale: null,
+  });
+
+  const days = [
+    { day: 10, title: "Retrieval", reason: "r", startDepth: 2, strategy: "probe_gap" as const },
+    { day: 28, title: "Deployment", reason: "r", startDepth: 2, strategy: "verify_depth" as const },
+  ];
+
+  it("numbers questions only, ignoring the candidate's turns", () => {
+    const t = questionTimeline(
+      [q(1, "one?", 10, 2, null, null), answer(2), q(3, "two?", 10, 3, "because X")],
+      days
+    );
+    expect(t.map((e) => e.number)).toEqual([1, 2]);
+    expect(t.map((e) => e.question)).toEqual(["one?", "two?"]);
+  });
+
+  it("gives the opener no rationale — it reacted to nothing", () => {
+    const t = questionTimeline(
+      [q(1, "opener?", 10, 2, "opening line from the blueprint", null), q(2, "next?", 10, 3, "because X")],
+      days
+    );
+    expect(t[0].rationale).toBeNull();
+    expect(t[1].rationale).toBe("because X");
+  });
+
+  it("marks where a new area began", () => {
+    const t = questionTimeline(
+      [q(1, "a?", 10, 2, "r"), q(2, "b?", 10, 3, "r"), q(3, "c?", 28, 2, "r")],
+      days
+    );
+    expect(t.map((e) => e.startsTopic)).toEqual([true, false, true]);
+    expect(t.map((e) => e.title)).toEqual(["Retrieval", "Retrieval", "Deployment"]);
+  });
+
+  it("skips the closing line written by /end", () => {
+    // It carries no day and no depth, so it is not a question.
+    const t = questionTimeline([q(1, "a?", 10, 2, "r"), q(2, "You ended the interview here.", null, null, null)], days);
+    expect(t).toHaveLength(1);
+  });
+
+  it("carries the rung for display, and the band name with it", () => {
+    const t = questionTimeline([q(1, "a?", 10, 4, "r")], days);
+    expect(t[0].depth).toBe(4);
+    expect(t[0].band).toBe("edge case");
   });
 });

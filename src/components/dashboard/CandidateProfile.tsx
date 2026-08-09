@@ -69,7 +69,7 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-[#1FD16A] transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-accent transition-colors duration-300">
       
       {/* Ambient Background Glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -84,7 +84,7 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/dashboard')}
-              className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-[#1FD16A] transition-colors"
+              className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-accent transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="font-sans">Dashboard</span>
@@ -102,7 +102,7 @@ export default function CandidateProfile({ candidate }: { candidate: Candidate }
               title="Toggle Theme"
               aria-label="Toggle Theme"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-[#73F0A0]" /> : <Moon className="w-4 h-4 text-slate-700" />}
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-accent-soft" /> : <Moon className="w-4 h-4 text-slate-700" />}
             </button>
           )}
         </div>

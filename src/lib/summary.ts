@@ -83,6 +83,8 @@ export interface TopicFinding {
   title: string;
   finding: string;
   questionsAsked: number;
+  /** The rung reached, 1-5. For a progress bar that means something. */
+  depthReached: number;
 }
 
 /**
@@ -104,6 +106,7 @@ export function topicFindings(topics: TopicReach[]): TopicFinding[] {
     day: t.day,
     title: t.title,
     questionsAsked: t.questionsAsked,
+    depthReached: t.depthReached,
     // Terse on purpose. Two areas reached at the same rung genuinely ARE the
     // same finding, and depth plus question count are the only honest inputs
     // here — so the line is short enough to read as a table row rather than as
@@ -114,6 +117,64 @@ export function topicFindings(topics: TopicReach[]): TopicFinding[] {
       ` — ${t.questionsAsked} question${t.questionsAsked === 1 ? "" : "s"}` +
       (soleLeader && t.depthReached === top ? ". Your strongest area." : ""),
   }));
+}
+
+/**
+ * Every question, in order, with how hard it was and why it was asked.
+ *
+ * All of this used to be on screen DURING the interview, where it leaked the
+ * assessment: the rationale is the model's own account of what it is probing,
+ * so a candidate reading it is answering a question they have been shown the
+ * mark scheme for. After the interview it is the opposite — the single most
+ * useful thing the product can tell someone about how they were read.
+ *
+ * Pure. Built from turns already stored; no extra model call.
+ */
+export interface TimelineEntry {
+  /** 1-based, counting questions only. */
+  number: number;
+  question: string;
+  title: string;
+  depth: number;
+  band: string;
+  /** Why this question followed the previous answer. Null for the opener. */
+  rationale: string | null;
+  /** True when this question opened a new area. */
+  startsTopic: boolean;
+}
+
+export function questionTimeline(
+  turns: Turn[],
+  focusDays: FocusDay[] = []
+): TimelineEntry[] {
+  const titleFor = (day: number) =>
+    focusDays.find((f) => f.day === day)?.title ?? findDay(day)?.title ?? `Day ${day}`;
+
+  const out: TimelineEntry[] = [];
+  let previousDay: number | null = null;
+
+  for (const t of turns) {
+    if (t.role !== "interviewer") continue;
+    if (t.targetDay === null || t.depth === null) continue;
+
+    // The opening line is not a question — it carries no rubric and its
+    // "rationale" is a fixed string from the blueprint, not a reaction to
+    // anything the candidate said.
+    const isOpener = t.rubric === null && t.rationale === "opening line from the blueprint";
+
+    out.push({
+      number: out.length + 1,
+      question: t.content,
+      title: titleFor(t.targetDay),
+      depth: t.depth,
+      band: bandFor(t.depth),
+      rationale: isOpener ? null : t.rationale,
+      startsTopic: t.targetDay !== previousDay,
+    });
+    previousDay = t.targetDay;
+  }
+
+  return out;
 }
 
 /**

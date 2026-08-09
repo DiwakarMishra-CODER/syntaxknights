@@ -77,7 +77,7 @@ export default function Dashboard({
   }, [candidates, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-[#1FD16A] transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-accent transition-colors duration-300">
       
       {/* Ambient Background Glows matching landing page aesthetic */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -111,7 +111,7 @@ export default function Dashboard({
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
-              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-[#1FD16A] transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-accent transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Home</span>
@@ -124,7 +124,7 @@ export default function Dashboard({
                 title="Toggle Theme"
                 aria-label="Toggle Theme"
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-[#73F0A0]" /> : <Moon className="w-4 h-4 text-slate-700" />}
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-accent-soft" /> : <Moon className="w-4 h-4 text-slate-700" />}
               </button>
             )}
           </div>
@@ -156,7 +156,7 @@ export default function Dashboard({
           {/* Big Search Bar */}
           <div className="w-full relative group pt-2">
             <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <Search className="w-5 h-5 text-slate-400 dark:text-[#8B968F] group-focus-within:text-[#1FD16A] transition-colors" />
+              <Search className="w-5 h-5 text-slate-400 dark:text-[#8B968F] group-focus-within:text-accent transition-colors" />
             </div>
             
             <input
@@ -181,7 +181,7 @@ export default function Dashboard({
           {/* View All Candidates Button */}
           <button
             onClick={() => router.push('/candidates')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-sans font-semibold transition-all duration-200 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-[#C5D0C8] hover:border-emerald-400 dark:hover:border-[#1FD16A]/50 hover:text-emerald-600 dark:hover:text-[#1FD16A] shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-sans font-semibold transition-all duration-200 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-[#C5D0C8] hover:border-emerald-400 dark:hover:border-[#1FD16A]/50 hover:text-emerald-600 dark:hover:text-accent shadow-sm"
           >
             <span>View All Candidates ({candidates.length})</span>
           </button>
@@ -219,7 +219,7 @@ export default function Dashboard({
                           Days {mod.days[0]}–{mod.days[1]}
                         </span>
                       </div>
-                      <h3 className="font-sans font-bold text-sm text-slate-900 dark:text-[#F5F7F4] leading-snug group-hover:text-emerald-600 dark:group-hover:text-[#1FD16A] transition-colors">
+                      <h3 className="font-sans font-bold text-sm text-slate-900 dark:text-[#F5F7F4] leading-snug group-hover:text-emerald-600 dark:group-hover:text-accent transition-colors">
                         {mod.title}
                       </h3>
                     </div>
@@ -279,7 +279,7 @@ export default function Dashboard({
                             {candidate.member.name.charAt(0)}
                           </div>
                           <div>
-                            <h3 className="font-sans font-bold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-[#1FD16A] transition-colors">
+                            <h3 className="font-sans font-bold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-accent transition-colors">
                               {candidate.member.name}
                             </h3>
                             <div className="flex items-center gap-1.5 mt-0.5">

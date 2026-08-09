@@ -1,7 +1,7 @@
 # PROMPTS
 
-A live log of the prompts used to build this project. Written as we go,
-not reconstructed at the end.
+A log of the prompts used to build this project, in order, with what each
+one changed and why.
 
 ---
 
@@ -1259,3 +1259,183 @@ component.
 `next dev` was serving the same `.next` directory corrupted it and both
 routes returned 500. Cleared `.next` and restarted. Do not run a
 production build against a live dev server.
+
+## Entry 23 — The glass effect
+
+**Prompt:** "still cant see the glass effect in the containers on landing
+page add that. and bg was also not all black" → "there is still no glass
+effect on localhost 3k" → "STILL NOT THERE" → "and start pracising doesnt
+go anywhere"
+
+Three wrong guesses before measuring. The glass was rendering the whole
+time — the panel sat seven RGB points from its own background. An aurora
+gradient I had amplified from 10% to 40% was tinting the black
+background; reverted. The dead button was unrelated: an SVG `<title>`
+with array children threw during render and aborted the navigation.
+
+---
+
+## Entry 24 — Making the interview adapt
+
+**Prompt:** "my friends will do frontend work. we gotta make the main
+part the interview better. how to do it. use ml or what"
+
+No ML. A live run had produced a depth trace of 2,2,2,2,2,2,2,2,2,2,1,1
+for a candidate whose answers plainly varied — nothing was deciding
+difficulty. Added `depth.ts` (a bounded walk, ±1 per turn, ceiling
+tracking demonstrated ability) and `ability.ts` (EWMA over knowledge
+scores, plus a mode machine written as a transition function — the old
+cascade made recovery a one-way door). `adaptive.sim.test.ts` runs whole
+interviews against adversarial fake models and asserts the trace is not
+flat and differs between candidates.
+
+---
+
+## Entry 25 — Scores
+
+**Prompt:** "can you verify here what happens when interview ends. like
+what is shown the result of the interiview" → "should we give
+scores?improvemnts? etc"
+
+Decided no scores. A number would tell the candidate which answers were
+wrong after an interview built so they could not infer that, and imply a
+precision the rubric cannot support. Replaced with how far they got in
+each area, what they claimed without backing it, and `compareToRecord` —
+what their 31-day record predicted against what the hour showed.
+
+---
+
+## Entry 26 — Ending early
+
+**Prompt:** "keep an end interview button? and then we the results on a
+new page?"
+
+The blocker was the session id: minted client-side from `Date.now()`, so
+it existed nowhere else and any navigation destroyed it. Moved into the
+URL. Added `POST /api/session/[id]/end` and `/report/[sessionId]`.
+`markDone` runs before the reporter, or an in-flight turn can land during
+those ~19s and ask another question after the candidate pressed End. The
+graded floors are untouched — a candidate ending early is a different
+thing from the system concluding, and never claims to be one.
+
+---
+
+## Entry 27 — Ten fixes from a live run
+
+**Prompt:** a numbered list of ten defects from the Sarah Johnson
+interview, grouped by priority, "No API calls needed for any of this."
+
+Two were correctness bugs: the chart's caption said the line "falls when
+you struggle" when new topics deliberately open a rung lower, and a
+non-answer still escalated difficulty because the depth walk read the
+previous answer's scores. One reported item was not a bug — the
+"hardcoded localhost" link is relative — and was reported back rather
+than "fixed". Also stopped the report using the ladder's internal names:
+"reached redesign level" is the best result and reads as an instruction.
+
+---
+
+## Entry 28 — Scrolling
+
+**Prompt:** "the scrolling stll not good or working. and also cant see
+the below text in side panel and cant scroll to see either" → "it still
+dosnt scroll...wtf are you doing you cant fix it?"
+
+Two failed guesses from reading the JSX, then measured with a real
+browser. Every pane was scrollable — `scrollTop` could be set
+programmatically — but no wheel event scrolled anything. `LenisProvider`
+was mounted globally: Lenis calls `preventDefault()` on every wheel event
+and animates the document, which is right for a marketing page and fatal
+for a split view whose columns scroll internally. Scoped to the landing
+route. A second bug underneath: the transcript measured "was the reader
+at the bottom" in a layout effect, which runs after React commits the new
+entry, so it latched false permanently after one turn.
+
+---
+
+## Entry 29 — Reading the panel cold
+
+**Prompt:** "now wtf would somneone understand what the graph is about
+cause we only see lines when responses come... those 5 things written
+redisgn etc and claims wtf are those" → "should we show those 5 qs on
+left side?"
+
+Screenshotted the panel and read it as a first-time visitor. The largest
+text said "Moving to edge case (depth 4)"; the axis named rungs needing a
+legend nobody has; one label was clipped; "Claims" was three lowercase
+fragments with no framing. Axis now reads "what it is / how you used it /
+why that way / where it breaks / rebuild it", sourced from `lib/depth` so
+it cannot drift from the prompt. Chart moved to the left panel, which was
+empty while the centre fought the question for room.
+
+---
+
+## Entry 30 — Preserving the new landing page
+
+**Prompt:** "so..changes have been amde to the repo. we have a new
+landing page... i wanna preserve all the ui of landing page ALL ok. and
+interview page will be what i have now."
+
+Two files conflicted. The danger was what merged cleanly: the new
+`globals.css` not only drops the interview's design tokens but redefines
+them — `--color-paper: #0A0A0A` — so `bg-paper` rendered black. Fixed by
+re-declaring the values on `.interview-root` rather than fighting import
+order, and moving them into `interview-theme.css`, a file a landing
+rewrite has no reason to touch. They had been deleted three times.
+
+---
+
+## Entry 31 — Speed, and where the calls go
+
+**Prompt:** "ok so is it faster now? intial load and also after givig a
+response?" · "i wanna use pinecone db. i heard its faster and better." ·
+"what about if we use pgvector too in supabase" · "are we wasting any api
+calls uselessly somehwere"
+
+Measured before answering. Cold start fell from 91s to 1.7s by caching
+blueprints — the planner's input is only the candidate's static record,
+so re-planning bought an identical answer with a call from a 20-per-day
+budget. Per-answer stayed ~8s, which is one model call and unchanged.
+
+Declined Pinecone and pgvector with numbers: an in-memory scan of all 31
+curriculum days takes 0.078ms against a 442ms database round trip, and
+the database is under 1% of a request. The audit found 70 calls over two
+days with one wasted round trip.
+
+---
+
+## Entry 32 — Two people rebuilt the same screen
+
+**Prompt:** "i want to keep the ui of what ishan pushed in interview. and
+keep the logic and functioning to what i built. see properly and tell me
+how we will do that. properly"
+
+Tractable because the new components were presentational — props in, no
+fetching — and already spoke the existing types. So the container kept
+its logic (session in the URL, hydration, Begin gate, End → report) and
+the view was swapped wholesale. Their chart had hardcoded axis labels
+that had drifted from the real ladder; those now come from `lib/depth`.
+Two layout bugs found by rendering rather than reading:
+`justify-content: center` on an overflowing scroll box makes the top of a
+long question unreachable, and the composer sat inside that same box.
+
+---
+
+## Entry 33 — Making it feel human
+
+**Prompt:** "the response doesnt feel human. like i wrote rubbish and it
+just moved on like a chatbot didnt say nothing" → "i want it to feel more
+human . like the interviwer tells us how our prev response was. relly
+good, something missing... like in internshala interviews"
+
+Half declined, with the reason given: "really good" and "something's
+missing" are verdicts, and a candidate told they did well doubles down
+while one told they did badly starts performing for the grader — the
+rubric then describes a different person. The other half was the real
+problem. The reaction now reflects the substance back in the candidate's
+own words ("So the classifier decides before anything else runs") rather
+than "Okay." A non-answer gets acknowledged: mangled input is met with
+"That didn't quite come through" and the same question re-asked; an
+honest "I don't know" is taken graciously and never repeated back.
+
+---

@@ -66,7 +66,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
   }, [candidates, searchQuery, selectedRole]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-[#1FD16A] transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050806] text-slate-900 dark:text-[#F5F7F4] font-sans relative overflow-hidden selection:bg-[#1FD16A]/25 selection:text-accent transition-colors duration-300">
 
       {/* Ambient Background Glows — identical to Dashboard */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -101,7 +101,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/dashboard")}
-              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-[#1FD16A] transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-[#8B968F] hover:text-emerald-600 dark:hover:text-accent transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Dashboard</span>
@@ -115,7 +115,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                 aria-label="Toggle Theme"
               >
                 {theme === "dark" ? (
-                  <Sun className="w-4 h-4 text-[#73F0A0]" />
+                  <Sun className="w-4 h-4 text-accent-soft" />
                 ) : (
                   <Moon className="w-4 h-4 text-slate-700" />
                 )}
@@ -217,7 +217,7 @@ export default function CandidatesView({ candidates }: { candidates: Candidate[]
                         <span className="text-[11px] font-mono font-medium text-emerald-600 dark:text-[#1FD16A] block">
                           {candidate.member.id}
                         </span>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-[#1FD16A] transition-colors truncate">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-accent transition-colors truncate">
                           {candidate.member.name}
                         </h3>
                       </div>

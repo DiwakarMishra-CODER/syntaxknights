@@ -162,7 +162,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
                 ? "Preparing session..."
                 : "Ready"}
             </span>
-            <span className="text-[#1FD16A] tabular-nums">{progress}%</span>
+            <span className="text-accent tabular-nums">{progress}%</span>
           </div>
         </div>
       </div>
