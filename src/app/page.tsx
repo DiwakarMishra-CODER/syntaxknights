@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
@@ -12,20 +12,6 @@ import { Footer } from "@/components/landing/Footer";
 
 export default function Home() {
   const router = useRouter();
-
-  useEffect(() => {
-    // Only show preloader if not already shown in this session
-    const alreadyShown =
-      typeof window !== "undefined" &&
-      Boolean(
-        (window as any).__MOCKMATE_LOADED__ ||
-        sessionStorage.getItem("mockmate_preloader_shown") === "true"
-      );
-
-    if (!alreadyShown) {
-      setShowPreloader(true);
-    }
-  }, []);
 
   const handleStartPracticing = () => router.push("/dashboard");
 

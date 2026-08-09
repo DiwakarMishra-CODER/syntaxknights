@@ -153,6 +153,7 @@ export function AdaptiveFlow() {
               </Card>
             ))}
           </div>
+          </div>
         </Reveal>
       </div>
     </section>

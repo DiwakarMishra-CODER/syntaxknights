@@ -178,7 +178,7 @@ body {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     inset 0 0 20px rgba(255, 255, 255, 0.03),
-    0 20px 40px var(var(--shadow-glass, rgba(0,0,0,0.6)));
+    0 20px 40px var(--shadow-glass, rgba(0,0,0,0.6));
   transition: all var(--motion-medium) var(--ease-out-expo);
 }
 .glass-card:hover {
